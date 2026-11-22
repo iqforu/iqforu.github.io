@@ -3,88 +3,415 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IQ FOR U – Firebase Practice</title>
+<title>IQ FOR U – Free OSSSC Weekly Mock Test (Odisha)</title>
+<meta name="description" content="IQ FOR U free weekly mock tests for OSSSC, OSSC and other Odisha government exams. Maths, Reasoning, Computer and GK from previous papers, with rank, Top 10 and answer key.">
+<meta property="og:title" content="IQ FOR U – Free OSSSC Weekly Mock Test">
+<meta property="og:description" content="Weekly online mock tests for OSSSC / OSSC aspirants. Live rank, Top 10 and answer key.">
+<meta name="theme-color" content="#14213d">
 <style>
-  body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#f3f5fa;margin:0;color:#14213d}
-  .card{max-width:420px;margin:40px auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
-  h2{margin:0 0 4px} p{color:#5b6475;margin:0 0 16px}
-  button{width:100%;padding:12px;border:0;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px}
-  .main{background:#1f3a8a;color:#fff} .gold{background:#e0a526;color:#14213d} .ghost{background:#eef1f7;color:#14213d}
-  input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd3e0;border-radius:10px;font-size:16px}
-  .msg{margin-top:12px;padding:10px;border-radius:10px;background:#e8f6ee;color:#14663a;display:none}
-  .err{background:#fdecec;color:#a11}
+  :root{
+    --navy:#14213d; --navy2:#1f3a8a; --gold:#e0a526; --gold-soft:#fdf3dc;
+    --bg:#f3f5fa; --card:#fff; --ink:#14213d; --muted:#5b6475; --line:#dde2ec;
+    --ok:#14804a; --ok-soft:#e6f5ec; --bad:#c0392b; --bad-soft:#fdecec; --skip:#6b7280; --skip-soft:#eef0f4;
+    --r:14px; --sh:0 4px 18px rgba(20,33,61,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+  button{font:inherit;cursor:pointer}
+  .top{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20}
+  .top .in{max-width:980px;margin:auto;display:flex;align-items:center;gap:12px;padding:10px 16px}
+  .brand{font-weight:800;font-size:20px;letter-spacing:.5px} .brand span{color:var(--gold)}
+  .top .sp{flex:1}
+  .top .who{font-size:13px;opacity:.85;text-align:right;line-height:1.2}
+  .wrap{max-width:980px;margin:auto;padding:16px}
+  .btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;background:var(--navy2);color:#fff;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+  .btn.gold{background:var(--gold);color:var(--navy)} .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.sm{padding:7px 12px;font-size:14px} .btn.block{width:100%}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .top .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:18px;margin-bottom:14px}
+  .hero{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:var(--r);padding:26px 20px;margin-bottom:14px}
+  .hero h1{margin:0 0 6px;font-size:26px;line-height:1.2} .hero p{margin:0 0 14px;opacity:.9}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  .chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;background:var(--skip-soft);color:var(--skip)}
+  .hero .chip{background:rgba(255,255,255,.14);color:#fff}
+  .c-live{background:var(--ok-soft);color:var(--ok)} .c-up{background:var(--gold-soft);color:#8a5a00} .c-done{background:#e8eefc;color:var(--navy2)} .c-bad{background:var(--bad-soft);color:var(--bad)}
+  h2{font-size:19px;margin:0 0 10px} h3{margin:0 0 6px;font-size:17px}
+  .muted{color:var(--muted)} .small{font-size:13px}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .exam .meta{font-size:13.5px;color:var(--muted);margin:6px 0 12px}
+  .steps{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin:0;padding:0;list-style:none}
+  .steps li{background:var(--bg);border-radius:12px;padding:12px;font-size:14px} .steps b{display:block;color:var(--navy2)}
+  label{display:block;font-weight:600;font-size:14px;margin:10px 0 4px}
+  input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+  .msg{padding:10px 12px;border-radius:10px;margin-top:10px;font-size:14px}
+  .msg.err{background:var(--bad-soft);color:var(--bad)} .msg.ok{background:var(--ok-soft);color:var(--ok)} .msg.info{background:var(--gold-soft);color:#7a4b00}
+  .warn-ig{background:#fff3cd;color:#7a4b00;padding:12px 16px;font-size:14px;text-align:center}
+  table{width:100%;border-collapse:collapse;font-size:14px} th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left} th{font-size:12.5px;color:var(--muted)}
+  td.n,th.n{text-align:right}
+  .stat{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:10px 0}
+  .stat div{background:var(--bg);border-radius:12px;padding:10px} .stat b{display:block;font-size:22px} .stat span{font-size:12.5px;color:var(--muted)}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:20px 16px 40px}
+  footer a{color:var(--navy2)}
+  /* exam */
+  .xbar{position:sticky;top:0;z-index:30;background:var(--navy);color:#fff}
+  .xbar .in{max-width:980px;margin:auto;display:flex;align-items:center;gap:10px;padding:8px 16px}
+  .timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:20px;background:rgba(255,255,255,.12);border-radius:10px;padding:4px 10px}
+  .timer.low{background:var(--bad);color:#fff}
+  .strip{display:flex;gap:6px;overflow-x:auto;padding:8px 16px;background:#fff;border-bottom:1px solid var(--line);max-width:980px;margin:auto}
+  .strip button{min-width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;font-weight:700;font-size:13px;flex:0 0 auto}
+  .strip button.a{background:var(--ok);color:#fff;border-color:var(--ok)} .strip button.cur{outline:3px solid var(--gold);outline-offset:1px}
+  .qhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:13.5px;color:var(--muted)}
+  .qtext{font-size:17px;white-space:pre-wrap;margin:0 0 14px}
+  .opt{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:9px;font-size:16px;color:var(--ink)}
+  .opt b{flex:0 0 28px;height:28px;border-radius:50%;background:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+  .opt.sel{border-color:var(--navy2);background:#eef2ff} .opt.sel b{background:var(--navy2);color:#fff}
+  .nav{display:flex;gap:8px;justify-content:space-between;margin-top:8px}
+  .modal{position:fixed;inset:0;background:rgba(10,15,30,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .modal .card{max-width:460px;width:100%;margin:0}
+  .rv{border-top:1px solid var(--line);padding:12px 0} .rv .o{font-size:14.5px;padding:3px 0}
+  .rv .o.c{color:var(--ok);font-weight:700} .rv .o.w{color:var(--bad);text-decoration:line-through}
+  .center{text-align:center} .hide{display:none!important}
+  body.inexam #top, body.inexam footer{display:none}
+  @media(max-width:560px){ .hero h1{font-size:22px} .qtext{font-size:16px} }
 </style>
 </head>
 <body>
-<div class="card">
-  <h2>IQ FOR U</h2>
-  <p id="who">Firebase practice: login and save your name.</p>
-
-  <button class="main" id="login" type="button">Login with Google</button>
-
-  <div id="box" style="display:none">
-    <input id="nm" placeholder="Type your name" autocomplete="name">
-    <button class="gold" id="save" type="button">Save to Firebase</button>
-    <button class="ghost" id="logout" type="button">Logout</button>
-  </div>
-  <div class="msg" id="msg"></div>
-</div>
+<div id="ig" class="warn-ig hide">⚠️ Google login does not work inside Instagram / Facebook. Tap <b>⋮</b> (top right) → <b>Open in Chrome / external browser</b>.</div>
+<header class="top" id="top"><div class="in">
+  <div class="brand">IQ <span>FOR</span> U</div><div class="sp"></div>
+  <div class="who" id="who"></div>
+  <button class="btn ghost sm" id="authBtn" type="button">Login</button>
+</div></header>
+<main id="app"><div class="wrap"><div class="card center muted">Loading…</div></div></main>
+<footer id="foot"></footer>
 
 <script type="module">
+import { firebaseConfig, SITE } from "./config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp }
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// =====================================================================
-// 👇 STEP 5: Firebase console nunchi copy chesina firebaseConfig ikkada paste cheyyandi
-//    (ee 7 lines delete chesi, mee config paste cheyyandi)
-// =====================================================================
-const firebaseConfig = {
-  apiKey: "AIzaSyBX066wfnDzNJXTBB2wZWfjJ_cLrg4wijI",
-  authDomain: "iqforu-pactice.firebaseapp.com",
-  projectId: "iqforu-pactice",
-  storageBucket: "iqforu-pactice.firebasestorage.app",
-  messagingSenderId: "782226390380",
-  appId: "1:782226390380:web:4c735a93ddcff530130749"
-};
-// =====================================================================
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
 const $ = s => document.querySelector(s);
-const show = (t, bad) => { const m = $('#msg'); m.textContent = t; m.className = 'msg' + (bad ? ' err' : ''); m.style.display = 'block'; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ms = t => t && typeof t.toMillis === 'function' ? t.toMillis() : (t instanceof Date ? t.getTime() : Number(t) || 0);
+const fmtDT = t => new Date(ms(t)).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'numeric', minute:'2-digit', hour12:true });
+const DISTRICTS = ['Angul','Balangir','Balasore','Bargarh','Bhadrak','Boudh','Cuttack','Deogarh','Dhenkanal','Gajapati','Ganjam','Jagatsinghpur','Jajpur','Jharsuguda','Kalahandi','Kandhamal','Kendrapara','Kendujhar','Khordha','Koraput','Malkangiri','Mayurbhanj','Nabarangpur','Nayagarh','Nuapada','Puri','Rayagada','Sambalpur','Subarnapur','Sundargarh','Other state'];
+const errText = e => {
+  const c = (e && e.code) || '';
+  if (c.includes('permission-denied')) return 'Not allowed now (time over or exam not open).';
+  if (c.includes('unavailable') || c.includes('network')) return 'No internet. Please check your connection and try again.';
+  if (c.includes('popup-closed')) return 'Login window was closed. Please try again.';
+  if (c.includes('popup-blocked')) return 'Popup was blocked. Allow popups for this site, or open in Chrome.';
+  if (c.includes('unauthorized-domain')) return 'This website is not added in Firebase → Authentication → Authorized domains.';
+  return (e && e.message) || String(e);
+};
 
-$('#login').onclick = async () => {
+let USER = null, PROFILE = null, EXAMS = [], ATT = {}, SKEW = 0;   // SKEW = serverTime - localTime (ms)
+const now = () => Date.now() + SKEW;
+
+// Instagram / Facebook in-app browser warning
+if (/Instagram|FBAN|FBAV|FB_IAB/i.test(navigator.userAgent)) $('#ig').classList.remove('hide');
+$('#foot').innerHTML = `© ${new Date().getFullYear()} ${esc(SITE.name)} · ${esc(SITE.tagline)}${SITE.instagram ? ` · <a href="${esc(SITE.instagram)}" target="_blank" rel="noopener">Instagram</a>` : ''}`;
+
+$('#authBtn').onclick = async () => {
+  if (USER) { if (confirm('Logout?')) await signOut(auth); return; }
+  login();
+};
+async function login() {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (e) { show('Login failed: ' + e.code + '. Open this link in Chrome (not inside Instagram).', true); }
-};
-$('#logout').onclick = () => signOut(auth);
+  catch (e) { toast(errText(e), 'err'); }
+}
+function toast(t, kind) {
+  const d = document.createElement('div'); d.className = 'msg ' + (kind || 'info');
+  d.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;max-width:92vw;box-shadow:var(--sh)';
+  d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 4500);
+}
 
-$('#save').onclick = async () => {
-  const name = $('#nm').value.trim();
-  if (!name) return show('Type your name first.', true);
-  try {
-    await setDoc(doc(db, 'students', auth.currentUser.uid), {
-      name: name, email: auth.currentUser.email, savedAt: serverTimestamp()
-    });
-    show('✅ Saved! Firebase console → Firestore → students lo chudandi.');
-  } catch (e) { show('Save failed: ' + e.code, true); }
-};
-
-onAuthStateChanged(auth, async user => {
-  $('#login').style.display = user ? 'none' : 'block';
-  $('#box').style.display = user ? 'block' : 'none';
-  $('#msg').style.display = 'none';
-  if (!user) { $('#who').textContent = 'Firebase practice: login and save your name.'; return; }
-  $('#who').textContent = 'Logged in: ' + user.email;
-  try {
-    const snap = await getDoc(doc(db, 'students', user.uid));
-    if (snap.exists()) $('#nm').value = snap.data().name || '';
-  } catch (e) { show('Read failed: ' + e.code + ' (check Firestore Rules, Step 4)', true); }
+onAuthStateChanged(auth, async u => {
+  USER = u; PROFILE = null; ATT = {};
+  $('#authBtn').textContent = u ? 'Logout' : 'Login';
+  $('#who').innerHTML = u ? esc(u.displayName || u.email) : '';
+  if (u) {
+    try { const s = await getDoc(doc(db, 'users', u.uid)); PROFILE = s.exists() ? s.data() : null; } catch (e) { PROFILE = null; }
+    if (!PROFILE) return profileView();
+    $('#who').innerHTML = esc(PROFILE.name) + '<br><span style="font-size:11.5px">' + esc(PROFILE.district) + '</span>';
+  }
+  home();
 });
+
+// ---------------------------------------------------------------- profile
+function profileView(edit) {
+  stopExam();
+  const p = PROFILE || {};
+  $('#app').innerHTML = `<div class="wrap"><div class="card" style="max-width:460px;margin:auto">
+    <h2>${edit ? 'Edit profile' : 'Welcome! One-time profile'}</h2>
+    <p class="muted small">Your name and district are shown in the rank list.</p>
+    <label for="pn">Full name</label><input id="pn" maxlength="60" value="${esc(p.name || (USER.displayName || ''))}">
+    <label for="pd">District</label><select id="pd"><option value="">Select district</option>${DISTRICTS.map(d => `<option ${p.district === d ? 'selected' : ''}>${d}</option>`).join('')}</select>
+    <div style="display:flex;gap:8px;margin-top:16px">${edit ? '<button class="btn ghost" id="pc" type="button">Cancel</button>' : ''}<button class="btn gold block" id="ps" type="button">Save &amp; continue</button></div>
+    <div id="pm"></div></div></div>`;
+  if (edit) $('#pc').onclick = home;
+  $('#ps').onclick = async () => {
+    const name = $('#pn').value.trim().replace(/\s+/g, ' '), district = $('#pd').value;
+    if (name.length < 3) return $('#pm').innerHTML = '<div class="msg err">Enter your full name.</div>';
+    if (!district) return $('#pm').innerHTML = '<div class="msg err">Select your district.</div>';
+    $('#ps').disabled = true;
+    try {
+      const d = { name, district, email: USER.email || '', updatedAt: serverTimestamp() };
+      await setDoc(doc(db, 'users', USER.uid), d); PROFILE = d;
+      $('#who').innerHTML = esc(name) + '<br><span style="font-size:11.5px">' + esc(district) + '</span>';
+      home();
+    } catch (e) { $('#ps').disabled = false; $('#pm').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; }
+  };
+}
+
+// ---------------------------------------------------------------- home
+async function home() {
+  stopExam();
+  $('#app').innerHTML = `<div class="wrap">
+    <section class="hero">
+      <h1>${esc(SITE.name)} Weekly Mock Test</h1>
+      <p>${esc(SITE.tagline)} – Maths, Reasoning, Computer &amp; GK from previous papers. Rank, Top 10 and answer key after every test.</p>
+      ${USER ? `<button class="btn gold" id="hp" type="button">✏️ ${esc(PROFILE ? PROFILE.name : 'Profile')}</button>` : '<button class="btn gold" id="hl" type="button">Login with Google to start</button>'}
+      <div class="chips"><span class="chip">📝 OSSSC / OSSC pattern</span><span class="chip">⏱ Timed test</span><span class="chip">🏆 Top 10 &amp; rank</span><span class="chip">✅ Answer key</span></div>
+    </section>
+    <section class="card"><h2>Mock tests</h2><div id="list" class="grid"><div class="muted">Loading tests…</div></div></section>
+    <section class="card"><h2>How it works</h2><ul class="steps">
+      <li><b>1. Login</b>Use your Gmail. Open this link in Chrome.</li>
+      <li><b>2. Start</b>When the test is LIVE, tap Start. The timer begins.</li>
+      <li><b>3. Submit</b>Answer and submit before the timer ends. One attempt only.</li>
+      <li><b>4. Result</b>After the test closes: score, rank, Top 10 and answer key.</li>
+    </ul></section></div>`;
+  if ($('#hl')) $('#hl').onclick = login;
+  if ($('#hp')) $('#hp').onclick = () => profileView(true);
+  try {
+    const qs = await getDocs(query(collection(db, 'exams'), where('published', '==', true)));
+    EXAMS = qs.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b.startAt) - ms(a.startAt));
+  } catch (e) { $('#list').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; return; }
+  if (USER) {
+    await Promise.all(EXAMS.slice(0, 12).map(async x => {
+      try { const s = await getDoc(doc(db, 'attempts', x.id, 'u', USER.uid)); ATT[x.id] = s.exists() ? s.data() : null; }
+      catch (e) { ATT[x.id] = null; }
+    }));
+  }
+  renderList();
+}
+function examState(x) {
+  const t = now(), a = ATT[x.id];
+  if (t < ms(x.startAt)) return { k: 'up', label: 'Upcoming', cls: 'c-up' };
+  if (t <= ms(x.endAt)) {
+    if (a && a.submitted) return { k: 'subm', label: 'Submitted ✓', cls: 'c-done' };
+    if (a) {
+      const end = Math.min(ms(a.startedAt) + x.duration * 60000, ms(x.endAt));
+      return t < end ? { k: 'resume', label: 'In progress', cls: 'c-live' } : { k: 'subm', label: 'Time over', cls: 'c-done' };
+    }
+    return { k: 'live', label: 'LIVE now', cls: 'c-live' };
+  }
+  if (x.resultsOut) return { k: 'res', label: 'Result out', cls: 'c-done' };
+  return { k: 'closed', label: 'Closed · result soon', cls: '' };
+}
+function renderList() {
+  if (!EXAMS.length) { $('#list').innerHTML = '<div class="muted">No tests yet. Follow us for the next mock.</div>'; return; }
+  $('#list').innerHTML = EXAMS.map(x => {
+    const s = examState(x);
+    let act = '';
+    if (!USER) act = s.k === 'live' || s.k === 'res' ? '<button class="btn block" data-login="1" type="button">Login to continue</button>' : '';
+    else if (s.k === 'live') act = `<button class="btn gold block" data-start="${esc(x.id)}" type="button">▶ Start test</button>`;
+    else if (s.k === 'resume') act = `<button class="btn gold block" data-start="${esc(x.id)}" type="button">↩ Resume test</button>`;
+    else if (s.k === 'subm') act = `<div class="msg info">Result after ${esc(fmtDT(x.endAt))}</div>`;
+    else if (s.k === 'res') act = `<button class="btn block" data-res="${esc(x.id)}" type="button">🏆 ${ATT[x.id] ? 'My result &amp; answer key' : 'Top 10 &amp; answer key'}</button>`;
+    return `<div class="card exam" style="margin:0;box-shadow:none;border:1px solid var(--line)">
+      <span class="chip ${s.cls}">${esc(s.label)}</span>
+      <h3 style="margin-top:8px">${esc(x.title)}</h3>
+      ${x.desc ? `<div class="small muted">${esc(x.desc)}</div>` : ''}
+      <div class="meta">🗓 ${esc(fmtDT(x.startAt))} – ${esc(fmtDT(x.endAt))}<br>📝 ${x.count} questions · ${x.total} marks · ⏱ ${x.duration} min · −${x.neg} per wrong</div>
+      ${act}</div>`;
+  }).join('');
+  document.querySelectorAll('[data-login]').forEach(b => b.onclick = login);
+  document.querySelectorAll('[data-start]').forEach(b => b.onclick = () => startExam(b.dataset.start));
+  document.querySelectorAll('[data-res]').forEach(b => b.onclick = () => resultView(b.dataset.res));
+}
+
+// ---------------------------------------------------------------- exam
+let X = null;   // running exam state
+function lsKey(id) { return 'iq_ans_' + id + '_' + (USER ? USER.uid : ''); }
+function lsGet(id) { try { return JSON.parse(localStorage.getItem(lsKey(id)) || '{}') || {}; } catch (e) { return {}; } }
+function lsSet(id, v) { try { localStorage.setItem(lsKey(id), JSON.stringify(v)); } catch (e) {} }
+
+async function startExam(id) {
+  const x = EXAMS.find(e => e.id === id); if (!x) return;
+  const ref = doc(db, 'attempts', id, 'u', USER.uid);
+  let a = ATT[id];
+  if (!a) {
+    const ok = await confirmBox(`<h3>${esc(x.title)}</h3>
+      <ul class="small" style="padding-left:18px;margin:8px 0">
+        <li>${x.count} questions · ${x.total} marks · <b>${x.duration} minutes</b></li>
+        <li>+${x.mark} for correct, <b>−${x.neg}</b> for wrong, 0 for not answered</li>
+        <li>Only <b>one attempt</b>. Timer starts now and does not stop.</li>
+        <li>The test submits automatically when time ends.</li></ul>`, 'Start now');
+    if (!ok) return;
+    try {
+      await setDoc(ref, { uid: USER.uid, name: PROFILE.name, district: PROFILE.district, startedAt: serverTimestamp(), savedAt: serverTimestamp(), answers: {}, submitted: false });
+    } catch (e) { return toast(errText(e), 'err'); }
+  }
+  const t0 = Date.now();
+  let s; try { s = await getDoc(ref); } catch (e) { return toast(errText(e), 'err'); }
+  if (!s.exists()) return toast('Could not start. Please try again.', 'err');
+  a = ATT[id] = s.data();
+  if (a.savedAt) SKEW = ms(a.savedAt) - Math.round((t0 + Date.now()) / 2);
+  if (a.submitted) { toast('You have already submitted this test.', 'info'); return home(); }
+  let paper;
+  try { const p = await getDoc(doc(db, 'exams', id, 'paper', 'main')); paper = p.exists() ? p.data().questions : null; }
+  catch (e) { return toast(errText(e), 'err'); }
+  if (!paper || !paper.length) return toast('Questions not available yet.', 'err');
+  const answers = Object.assign({}, a.answers || {}, lsGet(id));
+  X = { x, ref, qs: paper, ans: answers, cur: 0, end: Math.min(ms(a.startedAt) + x.duration * 60000, ms(x.endAt)),
+        dirty: Object.keys(lsGet(id)).length > 0, lastSave: Date.now(), timer: null, saving: false, done: false };
+  if (X.end - now() <= 0) return finish(true);
+  document.body.classList.add('inexam');
+  renderExam();
+  X.timer = setInterval(tick, 1000); tick();
+  document.addEventListener('visibilitychange', onHide);
+  window.addEventListener('beforeunload', onLeave);
+}
+function stopExam() {
+  if (!X) return;
+  document.body.classList.remove('inexam');
+  clearInterval(X.timer); document.removeEventListener('visibilitychange', onHide); window.removeEventListener('beforeunload', onLeave);
+  X = null;
+}
+function onHide() { if (document.visibilityState === 'hidden' && X && X.dirty && Date.now() - X.lastSave > 30000) save(); }
+function onLeave(e) { if (X && !X.done) { e.preventDefault(); e.returnValue = ''; } }
+async function save() {
+  if (!X || X.saving || !X.dirty) return;
+  X.saving = true; const snap = Object.assign({}, X.ans);
+  try { await updateDoc(X.ref, { answers: snap, savedAt: serverTimestamp() }); X.dirty = false; X.lastSave = Date.now(); setSaved('Saved ✓'); }
+  catch (e) { setSaved('Not saved (will retry)'); }
+  if (X) X.saving = false;
+}
+function setSaved(t) { const el = $('#sv'); if (el) el.textContent = t; }
+function tick() {
+  if (!X) return;
+  const left = Math.max(0, X.end - now()), m = Math.floor(left / 60000), sec = Math.floor(left / 1000) % 60;
+  const el = $('#tm'); if (el) { el.textContent = `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`; el.classList.toggle('low', left < 5 * 60000); }
+  if (left <= 0) return finish(true);
+  if (X.dirty && Date.now() - X.lastSave > (SITE.autosaveMinutes || 5) * 60000) save();
+}
+function renderExam() {
+  const q = X.qs[X.cur], a = X.ans[q.id], n = X.qs.length, answered = Object.keys(X.ans).length;
+  document.body.scrollTop = 0;
+  $('#app').innerHTML = `
+    <div class="xbar"><div class="in">
+      <div style="flex:1;min-width:0"><b style="font-size:14px">${esc(PROFILE.name)}</b><div class="small" style="opacity:.8">${answered}/${n} answered · <span id="sv">${X.dirty ? 'Saved on this phone' : 'Saved ✓'}</span></div></div>
+      <div class="timer" id="tm">--:--</div>
+      <button class="btn gold sm" id="sub" type="button">Submit</button>
+    </div></div>
+    <div class="strip" id="strip">${X.qs.map((qq, i) => `<button type="button" data-i="${i}" class="${X.ans[qq.id] ? 'a' : ''} ${i === X.cur ? 'cur' : ''}" aria-label="Question ${i + 1}">${i + 1}</button>`).join('')}</div>
+    <div class="wrap"><div class="card">
+      <div class="qhead"><span>Q ${X.cur + 1} / ${n}</span><span class="chip">${esc(q.sec)}${q.topic ? ' · ' + esc(q.topic) : ''}</span></div>
+      <p class="qtext">${esc(q.q)}</p>
+      ${q.o.map((o, i) => { const L = 'ABCD'[i]; return `<button type="button" class="opt ${a === L ? 'sel' : ''}" data-l="${L}"><b>${L}</b><span>${esc(o)}</span></button>`; }).join('')}
+      <div class="nav">
+        <button class="btn ghost" id="pv" type="button" ${X.cur === 0 ? 'disabled' : ''}>← Prev</button>
+        ${a ? '<button class="btn ghost" id="cl" type="button">Clear</button>' : ''}
+        <button class="btn" id="nx" type="button">${X.cur === n - 1 ? 'Finish ✓' : 'Next →'}</button>
+      </div></div></div>`;
+  const s = $('#strip .cur'); if (s) s.scrollIntoView({ inline: 'center', block: 'nearest' });
+  tick();
+  document.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+    X.ans[q.id] = b.dataset.l; X.dirty = true; lsSet(X.x.id, X.ans); renderExam();
+  });
+  if ($('#cl')) $('#cl').onclick = () => { delete X.ans[q.id]; X.dirty = true; lsSet(X.x.id, X.ans); renderExam(); };
+  $('#pv').onclick = () => { X.cur--; renderExam(); };
+  $('#nx').onclick = () => { if (X.cur === n - 1) return askSubmit(); X.cur++; renderExam(); };
+  document.querySelectorAll('#strip button').forEach(b => b.onclick = () => { X.cur = +b.dataset.i; renderExam(); });
+  $('#sub').onclick = askSubmit;
+}
+async function askSubmit() {
+  const n = X.qs.length, done = Object.keys(X.ans).length;
+  const left = X.qs.map((q, i) => X.ans[q.id] ? null : i + 1).filter(Boolean);
+  const ok = await confirmBox(`<h3>Submit test?</h3><p>Answered <b>${done}</b> of ${n}.</p>
+    ${left.length ? `<p class="small muted">Not answered: ${left.slice(0, 40).join(', ')}${left.length > 40 ? ' …' : ''}</p>` : ''}
+    <p class="small">After submit you cannot change answers.</p>`, 'Yes, submit');
+  if (ok && X) finish(false);
+}
+async function finish(auto) {
+  if (!X || X.done) return;
+  X.done = true; clearInterval(X.timer);
+  const id = X.x.id, snap = Object.assign({}, X.ans);
+  $('#app').innerHTML = `<div class="wrap"><div class="card center"><h2>${auto ? '⏰ Time over' : 'Submitting…'}</h2><p class="muted">Please wait, do not close this page.</p></div></div>`;
+  let ok = false, lastErr = null;
+  for (let i = 0; i < 3 && !ok; i++) {
+    try { await updateDoc(X.ref, { answers: snap, submitted: true, submittedAt: serverTimestamp(), savedAt: serverTimestamp() }); ok = true; }
+    catch (e) { lastErr = e; if ((e.code || '').includes('permission')) break; await new Promise(r => setTimeout(r, 1500)); }
+  }
+  const x = X.x; stopExam();
+  if (ok) { try { localStorage.removeItem(lsKey(id)); } catch (e) {} ATT[id] = Object.assign({}, ATT[id], { submitted: true }); }
+  $('#app').innerHTML = `<div class="wrap"><div class="card center" style="max-width:520px;margin:auto">
+    <h2>${ok ? '✅ Test submitted' : (auto ? '⏰ Time over' : '⚠️ Could not submit')}</h2>
+    <p>${ok ? `You answered <b>${Object.keys(snap).length}</b> of ${x.count} questions.` : esc(errText(lastErr)) + '<br>Your last <b>saved</b> answers will be counted.'}</p>
+    <p class="muted">Result, rank and answer key after <b>${esc(fmtDT(x.endAt))}</b>.</p>
+    ${SITE.instagram ? `<p><a href="${esc(SITE.instagram)}" target="_blank" rel="noopener">Follow ${esc(SITE.name)} on Instagram</a> for the result post.</p>` : ''}
+    <button class="btn" id="hm" type="button">← Home</button></div></div>`;
+  $('#hm').onclick = home;
+}
+function confirmBox(html, yes) {
+  return new Promise(res => {
+    const m = document.createElement('div'); m.className = 'modal';
+    m.innerHTML = `<div class="card">${html}<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn ghost" data-v="0" type="button">Cancel</button><button class="btn gold" data-v="1" type="button">${esc(yes)}</button></div></div>`;
+    m.onclick = e => { const b = e.target.closest('[data-v]'); if (b) { m.remove(); res(b.dataset.v === '1'); } };
+    document.body.appendChild(m);
+  });
+}
+
+// ---------------------------------------------------------------- result
+async function resultView(id) {
+  stopExam();
+  const x = EXAMS.find(e => e.id === id);
+  $('#app').innerHTML = `<div class="wrap"><div class="card center muted">Loading result…</div></div>`;
+  let R, M = null, P = null;
+  try {
+    const r = await getDoc(doc(db, 'results', id)); R = r.exists() ? r.data() : null;
+    const m = await getDoc(doc(db, 'myresults', id, 'u', USER.uid)); M = m.exists() ? m.data() : null;
+    const p = await getDoc(doc(db, 'exams', id, 'paper', 'main')); P = p.exists() ? p.data().questions : null;
+  } catch (e) { $('#app').innerHTML = `<div class="wrap"><div class="card"><div class="msg err">${esc(errText(e))}</div><button class="btn" id="hm" type="button">← Home</button></div></div>`; $('#hm').onclick = home; return; }
+  if (!R) { $('#app').innerHTML = `<div class="wrap"><div class="card">Result not published yet.<br><br><button class="btn" id="hm" type="button">← Home</button></div></div>`; $('#hm').onclick = home; return; }
+  const my = M ? M.answers || {} : (ATT[id] && ATT[id].answers) || {};
+  $('#app').innerHTML = `<div class="wrap">
+    <button class="btn ghost sm" id="hm" type="button" style="margin-bottom:10px">← Home</button>
+    <div class="card"><h2>${esc(R.title || (x && x.title) || 'Result')}</h2>
+      ${M ? `<div class="stat">
+        <div><b>${M.score}</b><span>Score / ${R.total}</span></div>
+        <div><b>${M.rank}</b><span>Rank of ${R.n}</span></div>
+        <div><b style="color:var(--ok)">${M.cor}</b><span>Correct</span></div>
+        <div><b style="color:var(--bad)">${M.wrong}</b><span>Wrong</span></div>
+        <div><b>${M.skip}</b><span>Not answered</span></div></div>
+        ${M.secs ? `<table><thead><tr><th>Section</th><th class="n">Score</th><th class="n">Correct</th><th class="n">Wrong</th></tr></thead><tbody>
+          ${Object.keys(M.secs).map(k => `<tr><td>${esc(k)}</td><td class="n"><b>${M.secs[k].score}</b> / ${M.secs[k].total}</td><td class="n">${M.secs[k].c}</td><td class="n">${M.secs[k].w}</td></tr>`).join('')}</tbody></table>` : ''}`
+      : '<div class="msg info">You did not attempt this test. Here are the Top 10 and the answer key.</div>'}
+      <p class="small muted" style="margin-top:10px">Participants: ${R.n} · Highest: ${R.high} · Average: ${R.avg}</p>
+    </div>
+    <div class="card"><h2>🏆 Top 10</h2><table><thead><tr><th>Rank</th><th>Name</th><th>District</th><th class="n">Score</th></tr></thead><tbody>
+      ${(R.top || []).slice(0, 10).map(t => `<tr><td>${t.rank}</td><td><b>${esc(t.name)}</b></td><td>${esc(t.district)}</td><td class="n"><b>${t.score}</b></td></tr>`).join('')}</tbody></table></div>
+    ${P ? `<div class="card"><h2>Answer key${M ? ' &amp; your answers' : ''}</h2>
+      ${P.map((q, i) => { const k = R.key[q.id], u = my[q.id];
+        return `<div class="rv"><div><b>${i + 1}.</b> ${esc(q.q)} <span class="chip">${esc(q.sec)}</span> ${u ? (u === k ? '<span class="chip c-live">✓ Correct</span>' : '<span class="chip c-bad">✗ Wrong</span>') : (M ? '<span class="chip">Not answered</span>' : '')}</div>
+          ${q.o.map((o, j) => { const L = 'ABCD'[j]; return `<div class="o ${L === k ? 'c' : (L === u ? 'w' : '')}">(${L}) ${esc(o)}${L === k ? ' ✓' : ''}${L === u && L !== k ? ' ← your answer' : ''}</div>`; }).join('')}</div>`; }).join('')}</div>` : ''}
+  </div>`;
+  $('#hm').onclick = home;
+  window.scrollTo(0, 0);
+}
+
+// refresh the list every minute so LIVE / Result buttons appear on time
+setInterval(() => { if (!X && $('#list') && EXAMS.length) renderList(); }, 60000);
 </script>
 </body>
 </html>
