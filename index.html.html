@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IQ FOR U – Firebase Practice</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#f3f5fa;margin:0;color:#14213d}
+  .card{max-width:420px;margin:40px auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+  h2{margin:0 0 4px} p{color:#5b6475;margin:0 0 16px}
+  button{width:100%;padding:12px;border:0;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px}
+  .main{background:#1f3a8a;color:#fff} .gold{background:#e0a526;color:#14213d} .ghost{background:#eef1f7;color:#14213d}
+  input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd3e0;border-radius:10px;font-size:16px}
+  .msg{margin-top:12px;padding:10px;border-radius:10px;background:#e8f6ee;color:#14663a;display:none}
+  .err{background:#fdecec;color:#a11}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>IQ FOR U</h2>
+  <p id="who">Firebase practice: login and save your name.</p>
+
+  <button class="main" id="login" type="button">Login with Google</button>
+
+  <div id="box" style="display:none">
+    <input id="nm" placeholder="Type your name" autocomplete="name">
+    <button class="gold" id="save" type="button">Save to Firebase</button>
+    <button class="ghost" id="logout" type="button">Logout</button>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// =====================================================================
+// 👇 STEP 5: Firebase console nunchi copy chesina firebaseConfig ikkada paste cheyyandi
+//    (ee 7 lines delete chesi, mee config paste cheyyandi)
+// =====================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBX066wfnDzNJXTBB2wZWfjJ_cLrg4wijI",
+  authDomain: "iqforu-pactice.firebaseapp.com",
+  projectId: "iqforu-pactice",
+  storageBucket: "iqforu-pactice.firebasestorage.app",
+  messagingSenderId: "782226390380",
+  appId: "1:782226390380:web:4c735a93ddcff530130749"
+};
+// =====================================================================
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = s => document.querySelector(s);
+const show = (t, bad) => { const m = $('#msg'); m.textContent = t; m.className = 'msg' + (bad ? ' err' : ''); m.style.display = 'block'; };
+
+$('#login').onclick = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { show('Login failed: ' + e.code + '. Open this link in Chrome (not inside Instagram).', true); }
+};
+$('#logout').onclick = () => signOut(auth);
+
+$('#save').onclick = async () => {
+  const name = $('#nm').value.trim();
+  if (!name) return show('Type your name first.', true);
+  try {
+    await setDoc(doc(db, 'students', auth.currentUser.uid), {
+      name: name, email: auth.currentUser.email, savedAt: serverTimestamp()
+    });
+    show('✅ Saved! Firebase console → Firestore → students lo chudandi.');
+  } catch (e) { show('Save failed: ' + e.code, true); }
+};
+
+onAuthStateChanged(auth, async user => {
+  $('#login').style.display = user ? 'none' : 'block';
+  $('#box').style.display = user ? 'block' : 'none';
+  $('#msg').style.display = 'none';
+  if (!user) { $('#who').textContent = 'Firebase practice: login and save your name.'; return; }
+  $('#who').textContent = 'Logged in: ' + user.email;
+  try {
+    const snap = await getDoc(doc(db, 'students', user.uid));
+    if (snap.exists()) $('#nm').value = snap.data().name || '';
+  } catch (e) { show('Read failed: ' + e.code + ' (check Firestore Rules, Step 4)', true); }
+});
+</script>
+</body>
+</html>
