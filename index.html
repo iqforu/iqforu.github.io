@@ -512,12 +512,9 @@ function renderHome() {
   if (!$('#hm')) return;
   const L = EXAMS.filter(catOk), live = L.filter(x => ['live', 'resume'].includes(st(x))), up = L.filter(x => st(x) === 'up');
   const hero = live[0] || up[0];
-  const verify = USER && isPwdUser(USER) && !USER.emailVerified;
   $('#hm').innerHTML = `
     ${BLOCKED ? '<div class="banner b">⛔ Your account is blocked. Please contact IQ FOR U.</div>' : ''}
     ${PUB.noticeOn && PUB.notice ? `<div class="banner n">📢 <b>Notice:</b> ${esc(PUB.notice)}</div>` : ''}
-    ${verify ? `<div class="banner v"><b>📧 Please verify your Gmail</b><br>We sent a link to <b>${esc(maskMail(USER.email))}</b>. Tap it once — this helps if you forget your password.
-      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn gh sm" id="vr" type="button">Resend link</button><button class="btn gh sm" id="vd" type="button">I have verified ✓</button><button class="btn gh sm" id="vw" type="button">Wrong Gmail?</button></div></div>` : ''}
     ${hero ? `<div class="livec">${live[0] ? '<span class="chip c-live"><span class="dot"></span>LIVE NOW</span>' : '<span class="chip" style="background:#fff">NEXT TEST</span>'} ${catChip(hero)} ${priceChip(hero)}
         <h3>${esc(hero.title)}</h3><div class="m">${(hero.sections || []).map(esc).join(' · ') || ''}${(hero.sections || []).length ? ' · ' : ''}${hero.count} Q · ${hero.duration} min</div>
         <div class="r"><b style="font-size:13px">${live[0] ? 'Closes in ' + leftTxt(ms(hero.endAt) - now()) : 'Opens ' + esc(fmtDT(hero.startAt))}</b>
@@ -545,11 +542,6 @@ function renderHome() {
   $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon! 🚀', 'info'));
   if ($('#hr')) $('#hr').onclick = () => go('register');
   if ($('#hs')) $('#hs').onclick = () => { const s = st(hero); if (s === 'live' || s === 'resume') { if ((hero.price || 0) > 0 && !UNL[hero.id] && s === 'live') return payInfo(hero.id); go('start/' + hero.id); } else go('tests'); };
-  if (verify) {
-    $('#vr').onclick = async () => { try { await sendEmailVerification(USER); toast('Link sent again. Check Gmail (also Spam).', 'ok'); } catch (e) { toast(errText(e), 'err'); } };
-    $('#vd').onclick = async () => { try { await USER.reload(); USER = auth.currentUser; if (USER.emailVerified) toast('Gmail verified ✓', 'ok'); else toast('Not verified yet. Open the link in your Gmail first.', 'info'); renderHome(); homeStats(); } catch (e) { toast(errText(e), 'err'); } };
-    $('#vw').onclick = () => sheet(`<h3 style="margin:0 0 6px">Typed a wrong Gmail?</h3><p class="small">Please <b>Logout</b> and <b>Register again</b> with your correct Gmail. Your tests will be saved in the new account.</p><button class="btn dk block" type="button" id="wl">Logout</button>`) && ($('#wl').onclick = () => { $('.ov').remove(); signOut(auth); go('register'); });
-  }
 }
 const maskMail = m => { const [a, b] = String(m || '').split('@'); return b ? a.slice(0, 2) + '•••••@' + b : m; };
 async function homeStats() {
@@ -664,7 +656,7 @@ function registerView() {
       try { await setDoc(doc(db, 'users', cr.user.uid), d); PROFILE = d; } catch (e) { PROFILE = null; }
       try { await sendEmailVerification(cr.user); } catch (e) {}
       USER = cr.user; REGISTERING = false; AUTH_READY = true;
-      toast('Registered ✓ Verification link sent to your Gmail.', 'ok');
+      toast('Registered ✓ Welcome to IQ FOR U!', 'ok');
       const n = NEXT; NEXT = null; if (n && PROFILE) location.hash = n; else go(PROFILE ? 'home' : 'complete');
     } catch (e) { REGISTERING = false; $('#rb').disabled = false; $('#rmsg').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; }
   };
@@ -718,6 +710,8 @@ function profile() {
   shell(`<div class="pf"><div class="av">${esc((PROFILE.name || '?')[0].toUpperCase())}</div><div style="font-weight:800;font-size:17px;margin-top:8px">${esc(PROFILE.name)}</div>
       <div class="small" style="color:#BFC3CC">${esc(PROFILE.state)} · +91 ${esc(PROFILE.mobile)}</div><div class="tiny" style="color:#BFC3CC">${esc(USER.email || '')}${pwd ? (USER.emailVerified ? ' · ✓ verified' : ' · not verified') : ''}</div></div>
     <div class="wrapw fade">
+      ${pwd && !USER.emailVerified ? `<div class="banner v"><b>📧 Verify your Gmail (optional)</b><br><span class="small">We sent a link to <b>${esc(maskMail(USER.email))}</b>. Tapping it once helps you reset your password if you forget it. Tests work without it.</span>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn gh sm" id="vr" type="button">Resend link</button><button class="btn gh sm" id="vd" type="button">I have verified ✓</button><button class="btn gh sm" id="vw" type="button">Wrong Gmail?</button></div></div>` : ''}
       <div class="menu">
         <button type="button" data-go="edit">✏️ Edit profile<span class="ar">›</span></button>
         ${pwd ? '<button type="button" data-go="password">🔑 Change password<span class="ar">›</span></button>' : ''}
@@ -737,6 +731,13 @@ function profile() {
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#pp').onclick = () => toast('Paid mocks & purchases – coming soon.', 'info');
+  if ($('#vr')) {
+    $('#vr').onclick = async () => { try { await sendEmailVerification(USER); toast('Link sent again. Check Gmail (also Spam).', 'ok'); } catch (e) { toast(errText(e), 'err'); } };
+    $('#vd').onclick = async () => { try { await USER.reload(); USER = auth.currentUser; if (USER.emailVerified) toast('Gmail verified ✓', 'ok'); else toast('Not verified yet. Open the link in your Gmail first.', 'info'); profile(); } catch (e) { toast(errText(e), 'err'); } };
+    $('#vw').onclick = () => { const o = sheet(`<h3 style="margin:0 0 6px">Typed a wrong Gmail?</h3><p class="small">Please <b>Logout</b> and <b>Register again</b> with your correct Gmail.</p><button class="btn dk block" type="button" id="wl">Logout</button>`); o.querySelector('#wl').onclick = () => { o.remove(); signOut(auth); go('register'); }; };
+  }
+  // quietly refresh verified status (no extra Firebase reads)
+  if (pwd && !USER.emailVerified) USER.reload().then(() => { if (auth.currentUser && auth.currentUser.emailVerified && location.hash === '#/profile') { USER = auth.currentUser; profile(); } }).catch(() => {});
   $('#lo').onclick = async () => { if (await confirmBox('<h3 style="margin:0">Logout?</h3>', 'Logout')) { await signOut(auth); go('home'); } };
 }
 function editProfile() {
