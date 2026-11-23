@@ -233,7 +233,7 @@ async function editMock(id, copy) {
   page(`<div class="card">
     <label class="l" for="ti">Title</label><input class="inp" id="ti" maxlength="90" value="${esc(x ? x.title : 'IQ FOR U Mock – ')}">
     <label class="l" for="de">Short description (optional)</label><input class="inp" id="de" maxlength="160" value="${esc(x ? x.desc || '' : '')}" placeholder="Maths · Reasoning · Computer · previous papers">
-    <label class="l" for="ca">Exam category</label><select class="inp" id="ca">${C.CATS.map(c => `<option ${(x ? x.category || 'Other' : 'State Exams') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+    <label class="l" for="ca">Exam category</label><select class="inp" id="ca">${C.CATS.map(c => `<option ${(x ? x.category || 'Other' : C.CATS[0]) === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
     <div class="g2"><div><label class="l" for="sa">Opens</label><input class="inp" id="sa" type="datetime-local" value="${toLocal(sA)}"></div><div><label class="l" for="ea">Closes</label><input class="inp" id="ea" type="datetime-local" value="${toLocal(eA)}"></div></div>
     <div class="g3"><div><label class="l" for="du">Minutes</label><input class="inp" id="du" type="number" min="5" max="300" value="${x ? x.duration : 60}"></div><div><label class="l" for="mk">+ Mark</label><input class="inp" id="mk" type="number" step="0.25" min="0.25" value="${x ? x.mark : 1}"></div><div><label class="l" for="ng">− Neg</label><input class="inp" id="ng" type="number" step="0.05" min="0" value="${x ? x.neg : 0.25}"></div></div>
     <div class="g2"><div><label class="l" for="ra">Result date &amp; time</label><input class="inp" id="ra" type="datetime-local" value="${toLocal(rA)}" style="background:var(--y2)"></div><div><label class="l" for="pr">Price ₹ (0 = Free)</label><input class="inp" id="pr" type="number" min="0" max="5000" step="1" value="${x ? x.price || 0 : 0}"></div></div>
@@ -251,6 +251,10 @@ async function editMock(id, copy) {
     return { qs, errs };
   };
   $('#qs').oninput = preview; preview();
+  // show every date in Indian format below the box (the box itself follows the computer's language setting)
+  const IN = v => { const d = new Date(v); return isNaN(d) ? '' : '🇮🇳 ' + d.toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }); };
+  ['#sa', '#ea', '#ra'].forEach(id => { const el = $(id), h = document.createElement('div'); h.className = 'tiny'; h.style.cssText = 'margin-top:4px;font-weight:700;color:var(--ink2)';
+    el.after(h); const f = () => { h.textContent = IN(el.value); }; el.addEventListener('input', f); el.addEventListener('change', f); f(); });
   $('#sv').onclick = async () => {
     const { qs, errs } = preview(), m = $('#sm');
     const title = $('#ti').value.trim(), sa = new Date($('#sa').value), ea = new Date($('#ea').value), ra = new Date($('#ra').value);
@@ -437,7 +441,9 @@ async function calculate(x, publish) {
 // ------------------------------------------------------------------ students
 async function students() {
   top('Students', dash);
-  page(`<div class="card"><input class="inp" id="q" placeholder="🔍 Search name / mobile / Gmail" autocomplete="off">
+  page(`<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b style="font-size:16px">📋 All registered students</b><div class="tiny mut" id="cnt">Counting…</div></div>
+      <button class="btn dk" id="all" type="button">Show all students</button></div></div>
+    <div class="card"><input class="inp" id="q" placeholder="🔍 Search name / mobile / Gmail" autocomplete="off">
     <button class="btn dk block" id="go" type="button" style="margin-top:8px">Search</button>
     <div class="tiny mut" style="margin-top:6px">Mobile and Gmail: type the full number / Gmail. Name: type the starting letters (capital letters matter, e.g. “Ram”). The list loads only after you search – this saves the free quota.</div></div><div id="sr"></div>`);
   const run = async () => {
@@ -457,6 +463,44 @@ async function students() {
     $$('[data-u]').forEach(b => b.onclick = () => student(b.dataset.u));
   };
   $('#go').onclick = run; $('#q').onkeydown = e => { if (e.key === 'Enter') run(); };
+  let N = 0;
+  getCountFromServer(collection(db, 'users')).then(c => { N = c.data().count; if ($('#cnt')) $('#cnt').textContent = `${N.toLocaleString('en-IN')} students · opens full list with Excel & Print (uses ${N.toLocaleString('en-IN')} reads of your free 50,000/day)`; }).catch(() => {});
+  $('#all').onclick = allStudents;
+}
+async function allStudents() {
+  top('All students', students); loading('Loading all students…');
+  let L = [];
+  try { L = (await getDocs(collection(db, 'users'))).docs.map(d => ({ uid: d.id, ...d.data() })); }
+  catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  L.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  let F = L, st = 'All';
+  const states = ['All', ...[...new Set(L.map(u => u.state || '—'))].sort()];
+  const dt = u => u.updatedAt ? fmtD(u.updatedAt) : '';
+  const draw = () => {
+    const q = ($('#fq') ? $('#fq').value : '').trim().toLowerCase();
+    F = L.filter(u => (st === 'All' || (u.state || '—') === st) && (!q || [u.name, u.mobile, u.email, u.state].some(v => String(v || '').toLowerCase().includes(q))));
+    $('#tb').innerHTML = F.map((u, i) => `<tr data-u="${esc(u.uid)}" style="cursor:pointer"><td>${i + 1}</td><td><b>${esc(u.name || '')}</b></td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td>${esc(dt(u))}</td></tr>`).join('') || '<tr><td colspan="6" class="mut">No students.</td></tr>';
+    $('#fc').textContent = `${F.length} of ${L.length} students`;
+    $$('[data-u]').forEach(r => r.onclick = () => student(r.dataset.u));
+  };
+  page(`<div class="card"><div class="g2"><input class="inp" id="fq" placeholder="🔍 Filter by any part of name / mobile / Gmail"><select class="inp" id="fs">${states.map(s => `<option>${esc(s)}</option>`).join('')}</select></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px"><b id="fc" class="small" style="flex:1"></b>
+      <button class="btn gh sm" id="xl" type="button">⬇ Excel (CSV)</button><button class="btn dk sm" id="pr" type="button">🖨 Print / PDF</button></div>
+      <div class="tiny mut" style="margin-top:6px">🔒 This list has mobile numbers &amp; Gmails – keep the Excel / PDF private. Tap a student to Reset / Block.</div></div>
+    <div class="tbl"><table><tr><th>#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Updated</th></tr><tbody id="tb"></tbody></table></div>`);
+  $('#fq').oninput = draw; $('#fs').onchange = e => { st = e.target.value; draw(); };
+  draw();
+  $('#xl').onclick = () => csv('IQFORU_students.csv', [['#', 'Name', 'State', 'Mobile', 'Gmail', 'Updated']].concat(F.map((u, i) => [i + 1, u.name || '', u.state || u.district || '', u.mobile || '', u.email || '', dt(u)])));
+  $('#pr').onclick = () => {
+    const P = document.getElementById('print');
+    P.innerHTML = `<div class="ph"><img src="logo.png" alt=""><div><div style="font-weight:900;font-size:18px">IQ FOR U</div><div style="color:#666">Registered students${st !== 'All' ? ' · ' + esc(st) : ''}</div></div><div class="tag">${F.length} STUDENTS</div></div>
+      <table class="qt2" style="margin-top:10px"><tr><th style="width:30px">#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Updated</th></tr>
+      ${F.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.name || '')}</td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td>${esc(dt(u))}</td></tr>`).join('')}</table>
+      <div class="ft"><span>Private – admin only</span><span>Printed ${esc(new Date().toLocaleString('en-IN'))}</span></div>`;
+    window.onafterprint = () => document.body.classList.remove('printing');
+    const img = P.querySelector('img'), go = () => { document.body.classList.add('printing'); setTimeout(() => window.print(), 50); };
+    if (img.complete) go(); else { img.onload = go; img.onerror = go; }
+  };
 }
 async function student(uid) {
   top('Student', students); loading();

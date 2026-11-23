@@ -296,7 +296,8 @@ const NAME = (SITE && SITE.name) || 'IQ FOR U';
 const TAG = 'Mocks for All Competitive Exams';
 const IG = (SITE && SITE.instagram) || '';
 const IG_HANDLE = (IG.match(/instagram\.com\/([^/?#]+)/) || [])[1] || '';
-const CATS = ['SSC', 'Railway', 'TET', 'Banking', 'State Exams', 'Other'];
+const ALLX = 'All Competitive Exams';
+const CATS = [ALLX, 'SSC', 'Railway', 'TET', 'Banking', 'State Exams', 'Other'];
 const STATES = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu','Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'];
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -452,9 +453,9 @@ function st(x) {
   }
   return resOpen(x) ? 'res' : 'closed';
 }
-const catOk = x => CAT === 'All' || (x.category || 'Other') === CAT;
+const catOk = x => CAT === 'All' || (x.category || 'Other') === CAT || x.category === ALLX;
 const priceChip = x => (x.price || 0) > 0 ? `<span class="chip c-paid">₹${esc(x.price)}</span>` : '<span class="chip c-free">FREE</span>';
-const catChip = x => `<span class="chip c-cat">${esc(x.category || 'Other')}</span>`;
+const catChip = x => `<span class="chip c-cat">${esc(x.category === ALLX ? 'All Exams' : (x.category || 'Other'))}</span>`;
 
 function examCard(x, big) {
   const s = st(x), t = now(), paid = (x.price || 0) > 0 && !UNL[x.id];
@@ -493,7 +494,7 @@ function payInfo(id) {
     <button class="btn gh block" style="margin-top:12px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
 }
 function chipsHtml() {
-  return `<div class="chips" id="cats">${['All', ...CATS].map(c => `<button type="button" class="${c === CAT ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
+  return `<div class="chips" id="cats">${['All', ...CATS.filter(c => c !== ALLX)].map(c => `<button type="button" class="${c === CAT ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
 }
 function bindChips(cb) { $$('[data-cat]').forEach(b => b.onclick = () => { CAT = b.dataset.cat; try { localStorage.setItem('iq_cat', CAT); } catch (e) {} cb(); }); }
 const footHtml = () => `<div class="foot"><a href="#/page/contact">Contact</a>·<a href="#/page/terms">Terms</a>·<a href="#/page/refund">Refund</a>·<a href="#/page/privacy">Privacy</a><br>© ${new Date().getFullYear()} ${esc(NAME)} · ${esc(TAG)}</div>`;
