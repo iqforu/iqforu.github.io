@@ -10,7 +10,11 @@
 <meta property="og:image" content="logo.png">
 <meta name="theme-color" content="#111318">
 <link rel="icon" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="IQ FOR U">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -270,6 +274,19 @@ table.mt tr.me td{background:var(--y2);font-weight:800}
 .passc .e{font-size:28px}
 .passc.on{background:linear-gradient(135deg,#FFE51F,#FFF6B3);border:1.5px solid var(--ink)}
 .passc.off{background:#fff;border:1.5px dashed #C9CDD4}
+.bell{position:relative;background:none;border:0;font-size:21px;padding:4px 6px;line-height:1}
+.bell b{position:absolute;top:-2px;right:-3px;background:var(--no);color:#fff;font-size:10.5px;font-weight:900;border-radius:10px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--ink)}
+.nt{display:flex;gap:11px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:11px 12px;margin-bottom:8px;text-decoration:none}
+.nt.un{border:1.5px solid var(--ink);background:var(--y2)}
+.nt .b{flex:1;min-width:0} .nt .tt{font-weight:800;font-size:14.5px} .nt .bd{font-size:13px;color:var(--ink2);margin-top:2px;white-space:pre-wrap}
+.nt .tm{font-size:11.5px;color:var(--mut);margin-top:4px}
+.strip{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--ink);border-radius:13px;padding:9px 11px;margin-top:12px;font-size:13px}
+.strip .x{background:none;border:0;color:var(--mut);font-size:16px;padding:2px 4px}
+.cele{text-align:center} .cele .big{font-size:64px;line-height:1;animation:pop .6s ease both}
+@keyframes pop{0%{transform:scale(.3) rotate(-20deg);opacity:0}70%{transform:scale(1.15)}100%{transform:none;opacity:1}}
+.conf{position:fixed;top:-12px;z-index:90;width:9px;height:14px;border-radius:2px;animation:fall linear forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
+.setb{display:inline-block;background:var(--y);color:var(--ink);font-weight:900;border-radius:6px;padding:0 6px;font-size:11px;margin-left:4px}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:80;max-width:92vw;box-shadow:var(--sh)}
 </style>
 </head>
@@ -291,7 +308,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signO
          createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail,
          sendEmailVerification, updatePassword, EmailAuthProvider, reauthenticateWithCredential }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp }
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, orderBy, limit }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -355,10 +372,33 @@ function cdHtml(left, short) {
   const box = (v, l) => `<div>${pad(v)}<small>${l}</small></div>`;
   return d ? box(d, 'DAYS') + box(h, 'HRS') + box(m, 'MIN') : box(h, 'HRS') + box(m, 'MIN') + box(sec, 'SEC');
 }
+function agoTxt(t) { const m = Math.round((now() - ms(t)) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.floor(m / 60) + ' hr ago' : m < 10080 ? Math.floor(m / 1440) + ' day' + (m >= 2880 ? 's' : '') + ' ago' : fmtD(t); }
+const lsGetS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSetS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+// ================================================================ 📑 Question sets A–D (same questions, different order)
+const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const shuffleR = (a, r) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+// every student always gets the same set for a mock (from their account id)
+const examSet = (x, uid) => (x.sets || 1) > 1 && uid ? hashStr(uid + '|' + x.id) % x.sets : 0;
+const KEEP_OPTS = /\b(all|none|both|neither)\b/i;   // "All of these", "None of the above" … stay in their place
+function setPaper(x, qs, set) {   // Set A = original paper. Sections stay together; answers are always saved with the ORIGINAL letters.
+  if (!set) return qs.map(q => Object.assign({}, q, { om: [0, 1, 2, 3] }));
+  const r = rng(hashStr(x.id + '|set|' + set)), secs = []; qs.forEach(q => { if (!secs.includes(q.sec)) secs.push(q.sec); });
+  return secs.flatMap(sc => shuffleR(qs.filter(q => q.sec === sc), r)).map(q => {
+    let om = [0, 1, 2, 3];
+    if (x.shuffleOpts && !q.o.some(o => KEEP_OPTS.test(o))) om = shuffleR(om, r);
+    return Object.assign({}, q, { o: om.map(i => q.o[i]), om });
+  });
+}
+const showL = (q, canon) => canon && q.om ? 'ABCD'[q.om.indexOf('ABCD'.indexOf(canon))] : canon;   // original letter → letter the student saw
+const setName = (x, uid) => (x.sets || 1) > 1 ? 'Set ' + 'ABCD'[examSet(x, uid)] : '';
 function leftTxt(t) { const m = Math.max(0, Math.round(t / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60; return d ? `${d}d ${h}h` : h ? `${h}h ${mm}m` : `${mm}m`; }
 
 // ================================================================ state
 let USER = null, PROFILE = null, BLOCKED = false, EXAMS = [], ATT = {}, UNL = {}, PUB = {}, MYR = {}, PASS = null;
+let NOTES = [], INSTALL = null, MSG_ON = false;
 let OLDP = {}, CAT = 'All', TTAB = null, NEXT = null, REGISTERING = false, AUTH_READY = false, X = null;
 const PAPER = {};
 try { CAT = localStorage.getItem('iq_cat') || 'All'; } catch (e) {}
@@ -380,8 +420,9 @@ function setNav(k) {
 }
 function topMain() {
   $('#topin').innerHTML = `<img src="logo.png" alt=""><div style="min-width:0"><div class="t1">${esc(NAME)}</div><div class="t2">${USER && PROFILE ? 'Hi, ' + esc(first(PROFILE.name)) + ' 👋' : esc(TAG)}</div></div><div class="sp"></div>
-    ${USER ? '' : '<button class="btn sm" id="tl" type="button" style="box-shadow:none">Login</button>'}`;
+    ${USER ? (PROFILE ? '<button class="bell" id="bel" type="button" aria-label="Notifications">🔔<b id="bellc" class="hide"></b></button>' : '') : '<button class="btn sm" id="tl" type="button" style="box-shadow:none">Login</button>'}`;
   if ($('#tl')) $('#tl').onclick = () => go('login');
+  if ($('#bel')) { $('#bel').onclick = () => go('inbox'); bell(); }
 }
 function topBack(title, back) {
   $('#topin').innerHTML = `<button class="back" id="tb" type="button" aria-label="Back">←</button><div class="ttl">${esc(title)}</div>`;
@@ -411,6 +452,7 @@ async function route() {
     case 'forgot': return forgotView();
     case 'complete': return USER ? completeView() : go('login');
     case 'page': return pageView(a);
+    case 'inbox': return USER ? inboxView() : go('login');
     case 'start': return USER ? instructions(a) : needLogin('#/start/' + a);
     case 'admin': return openAdmin();
     case 'exam': { let r = null; try { r = sessionStorage.getItem('iq_run'); } catch (e) {} return USER && r ? go('start/' + r) : go('home'); }
@@ -518,6 +560,121 @@ function chipsHtml() {
 function bindChips(cb) { $$('[data-cat]').forEach(b => b.onclick = () => { CAT = b.dataset.cat; try { localStorage.setItem('iq_cat', CAT); } catch (e) {} cb(); }); }
 const footHtml = () => `<div class="foot"><a href="#/page/contact">Contact</a>·<a href="#/page/terms">Terms</a>·<a href="#/page/refund">Refund</a>·<a href="#/page/privacy">Privacy</a><br>© ${new Date().getFullYear()} ${esc(NAME)} · ${esc(TAG)}</div>`;
 
+// ================================================================ 🔔 NOTIFICATIONS (bell) + 📲 phone notifications + Install app
+const seenKey = () => 'iq_seen_' + (USER ? USER.uid : '');
+const seenAt = () => +lsGetS(seenKey()) || now() - 7 * 86400000;
+async function loadNotes() {
+  if (!USER || !PROFILE) { NOTES = []; return; }
+  const L = [], t = now();
+  try {
+    (await getDocs(query(collection(db, 'notices'), orderBy('at', 'desc'), limit(30)))).docs.forEach(d => {
+      const n = { id: d.id, ...d.data() };
+      if (ms(n.at) > t) return;                       // scheduled (e.g. "Mock is LIVE now") – not yet
+      if (n.aud === 'pass' && !passActive()) return;  // only for Monthly Pass students
+      L.push(n);
+    });
+  } catch (e) {}
+  try { (await getDocs(query(collection(db, 'inbox', USER.uid, 'm'), orderBy('at', 'desc'), limit(30)))).docs.forEach(d => L.push({ id: 'i_' + d.id, mine: true, ...d.data() })); } catch (e) {}
+  // "Result out" goes only to students who wrote that mock
+  await Promise.all(L.filter(n => n.aud === 'exam' && n.exam).map(async n => {
+    if (!(n.exam in ATT)) { try { const s = await getDoc(doc(db, 'attempts', n.exam, 'u', USER.uid)); ATT[n.exam] = s.exists() ? s.data() : null; } catch (e) { ATT[n.exam] = null; } }
+    n.hide = !ATT[n.exam];
+  }));
+  const joined = ms(PROFILE.createdAt) || PROFILE._new;
+  if (joined) L.push({ id: 'welcome', kind: 'welcome', title: '🎓 Registration successful', body: `Welcome to ${NAME}, ${first(PROFILE.name)}! Write mock tests, get your rank, merit list and response sheet.`, at: joined, link: '#/tests' });
+  if (passActive() && PASS.until != null && ms(PASS.until) - t < 3 * 86400000) L.push({ id: 'passend_' + ms(PASS.until), kind: 'passend', title: '⏳ Your Monthly Pass ends soon', body: `Your pass is valid till ${fmtDT(PASS.until)}.`, at: ms(PASS.until) - 3 * 86400000, link: '#/profile' });
+  NOTES = L.filter(n => !n.hide).sort((a, b) => ms(b.at) - ms(a.at));
+  bell();
+}
+function bell() {
+  const el = $('#bellc'); if (!el) return;
+  const s = seenAt(), n = NOTES.filter(x => ms(x.at) > s).length;
+  el.textContent = n > 9 ? '9+' : n; el.classList.toggle('hide', !n);
+}
+async function inboxView() {
+  topBack('Notifications', 'home');
+  shell(`<div class="wrapw fade" id="ib"><div class="card center mut">Loading…</div></div>`, 'home');
+  await Promise.all([pubReady, loadNotes()]);
+  const seen = seenAt(); lsSetS(seenKey(), String(now())); bell();
+  const draw = () => {
+    if (!$('#ib')) return;
+    $('#ib').innerHTML = `${pushCard()}
+      ${NOTES.map(n => `<a class="nt ${ms(n.at) > seen ? 'un' : ''}" href="${esc(n.link || '#/home')}"><div class="b"><div class="tt">${esc(n.title)}</div>${n.body ? `<div class="bd">${esc(n.body)}</div>` : ''}<div class="tm">${esc(agoTxt(n.at))}${ms(n.at) > seen ? ' · <b style="color:var(--no)">NEW</b>' : ''}</div></div></a>`).join('')
+        || '<div class="empty"><div class="ic">🔔</div><b>No notifications yet</b><br><span class="small">New mocks, results and pass updates will appear here.</span></div>'}`;
+    bindPush(draw);
+  };
+  draw();
+}
+// ---- 📲 phone notifications (Firebase Cloud Messaging). Works after the admin adds the key in Admin → Settings.
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const SWREG = ('serviceWorker' in navigator && location.protocol === 'https:')
+  ? navigator.serviceWorker.register('firebase-messaging-sw.js?c=' + encodeURIComponent(btoa(JSON.stringify({ apiKey: firebaseConfig.apiKey, projectId: firebaseConfig.projectId, messagingSenderId: firebaseConfig.messagingSenderId, appId: firebaseConfig.appId })))).catch(() => null)
+  : Promise.resolve(null);
+const pushPossible = () => !!(PUB.vapidKey && 'Notification' in window && 'serviceWorker' in navigator && USER && PROFILE);
+const pushOn = () => pushPossible() && Notification.permission === 'granted' && !!lsGetS('iq_tok_' + USER.uid);
+async function enablePush(silent) {
+  if (!pushPossible()) return false;
+  try {
+    const m = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+    if (!(await m.isSupported())) { if (!silent) toast('This browser does not support phone notifications. Use Chrome.', 'info'); return false; }
+    if (silent) { if (Notification.permission !== 'granted') return false; }
+    else if ((await Notification.requestPermission()) !== 'granted') { toast('Notifications not allowed.', 'info'); return false; }
+    const reg = await SWREG; if (!reg) return false;
+    const msg = m.getMessaging(app);
+    const t = await m.getToken(msg, { vapidKey: PUB.vapidKey, serviceWorkerRegistration: reg });
+    if (!t) return false;
+    if (t !== lsGetS('iq_tok_' + USER.uid)) { await setDoc(doc(db, 'tokens', USER.uid), { t, at: serverTimestamp(), ua: navigator.userAgent.slice(0, 120) }); lsSetS('iq_tok_' + USER.uid, t); }
+    if (!MSG_ON) { MSG_ON = true; m.onMessage(msg, p => { toast('🔔 ' + ((p.notification && p.notification.title) || 'New notification'), 'info'); loadNotes(); }); }
+    if (!silent) toast('🔔 Phone notifications are ON ✓', 'ok');
+    return true;
+  } catch (e) { if (!silent) toast(errText(e), 'err'); return false; }
+}
+function pushCard() {
+  if (!USER || !PUB.vapidKey) return '';
+  if (isIOS && !isStandalone()) return `<div class="strip">📲<div style="flex:1"><b>iPhone:</b> to get phone notifications, first add this site to your Home Screen (Share ⬆ → Add to Home Screen), then open it from there.</div></div><div style="height:10px"></div>`;
+  if (!('Notification' in window)) return '';
+  if (pushOn()) return `<div class="strip" style="border-color:var(--ok)">✅<div style="flex:1"><b>Phone notifications are ON</b><div class="tiny mut">You will get alerts for new mocks, live tests and results.</div></div></div><div style="height:10px"></div>`;
+  if (Notification.permission === 'denied') return `<div class="strip" style="border-color:var(--no)">🚫<div style="flex:1"><b>Notifications are blocked</b><div class="tiny mut">Tap 🔒 next to the website address → Notifications → Allow, then reload.</div></div></div><div style="height:10px"></div>`;
+  return `<div class="strip">🔔<div style="flex:1"><b>Get phone alerts</b><div class="tiny mut">New mocks, “test is LIVE”, results – even when the app is closed.</div></div><button class="btn dk sm" type="button" data-pushon="1">Turn on</button></div><div style="height:10px"></div>`;
+}
+function bindPush(after) { $$('[data-pushon]').forEach(b => b.onclick = async () => { b.disabled = true; await enablePush(false); b.disabled = false; if (after) after(); }); }
+// ---- 📲 Install app (PWA)
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL = e; if ($('#hm') && EXAMS.length) renderHome(); });
+window.addEventListener('appinstalled', () => { INSTALL = null; toast('📲 IQ FOR U app installed ✓', 'ok'); });
+function installApp() {
+  if (INSTALL) { INSTALL.prompt(); INSTALL.userChoice.finally(() => { INSTALL = null; if ($('#hm')) renderHome(); }); return; }
+  sheet(`<h3 style="margin:0 0 6px">📲 Install IQ FOR U app</h3>${isIOS
+    ? '<ol class="small" style="padding-left:18px;line-height:1.8"><li>Open this site in <b>Safari</b>.</li><li>Tap <b>Share ⬆</b> at the bottom.</li><li>Tap <b>Add to Home Screen</b> → <b>Add</b>.</li></ol>'
+    : '<ol class="small" style="padding-left:18px;line-height:1.8"><li>Open this site in <b>Chrome</b>.</li><li>Tap <b>⋮</b> (top right).</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li></ol>'}
+    <div class="note">The IQ FOR U icon comes on your phone's home screen and opens like an app.</div><button class="btn gh block" style="margin-top:10px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
+}
+// ---- Home strips: install app + phone alerts (each can be closed with ✕)
+function stripsHtml() {
+  let h = '';
+  if (!isStandalone() && (INSTALL || isIOS) && !lsGetS('iq_x_inst')) h += `<div class="strip">📲<div style="flex:1"><b>Install IQ FOR U app</b><div class="tiny mut">Opens like an app from your home screen</div></div><button class="btn dk sm" type="button" id="sin">Install</button><button class="x" type="button" data-x="iq_x_inst" aria-label="Close">✕</button></div>`;
+  if (USER && PROFILE && pushPossible() && Notification.permission === 'default' && !(isIOS && !isStandalone()) && !lsGetS('iq_x_push')) h += `<div class="strip">🔔<div style="flex:1"><b>Get alerts for new mocks &amp; results</b></div><button class="btn dk sm" type="button" data-pushon="1">Turn on</button><button class="x" type="button" data-x="iq_x_push" aria-label="Close">✕</button></div>`;
+  return h;
+}
+function bindStrips() {
+  if ($('#sin')) $('#sin').onclick = installApp;
+  $$('[data-x]').forEach(b => b.onclick = () => { lsSetS(b.dataset.x, '1'); b.closest('.strip').remove(); });
+  bindPush(() => renderHome());
+}
+// ---- 🎉 Congratulations popup (Monthly Pass given / extended)
+function celebrate() {
+  const n = NOTES.find(x => x.kind === 'pass' && !lsGetS('iq_cele_' + x.id) && now() - ms(x.at) < 30 * 86400000);
+  if (!n || !$('#hm') || $('.ov')) return;
+  lsSetS('iq_cele_' + n.id, '1');
+  const cols = ['#FFE51F', '#16A34A', '#7C3AED', '#DC2626', '#FB923C', '#0EA5E9'];
+  for (let i = 0; i < 70; i++) { const c = document.createElement('i'); c.className = 'conf'; c.style.left = Math.random() * 100 + 'vw'; c.style.background = cols[i % cols.length]; c.style.animationDuration = 2 + Math.random() * 2.5 + 's'; c.style.animationDelay = Math.random() * .8 + 's'; document.body.appendChild(c); setTimeout(() => c.remove(), 5500); }
+  const o = sheet(`<div class="cele"><div class="big">🎉</div><h2 style="margin:10px 0 4px">${esc(n.title)}</h2><p style="white-space:pre-wrap">${esc(n.body || '')}</p><button class="btn block" type="button" id="cok">Thank you! 💪</button></div>`, true);
+  o.querySelector('#cok').onclick = () => o.remove();
+}
+// keep the phone-notification address fresh (only if the student already allowed it)
+pubReady.then(() => { setTimeout(() => { if (USER && PROFILE && PUB.vapidKey && 'Notification' in window && Notification.permission === 'granted') enablePush(true); }, 4000); });
+
+
 // ================================================================ HOME
 async function home() {
   topMain();
@@ -525,7 +682,7 @@ async function home() {
   try { await Promise.all([loadExams(), pubReady]); }
   catch (e) { $('#hm').innerHTML = `<div class="msg err">${esc(errText(e))}</div><button class="btn gh" style="margin-top:10px" type="button" onclick="location.reload()">↻ Retry</button>`; return; }
   renderHome();
-  if (USER) homeStats();
+  if (USER) { homeStats(); if (PROFILE) loadNotes().then(celebrate); }
 }
 function renderHome() {
   if (!$('#hm')) return;
@@ -540,6 +697,7 @@ function renderHome() {
         ${live[0] ? `<button class="btn dk sm" type="button" id="hs">${st(hero) === 'resume' ? '↩ Resume' : 'Start Test →'}</button>` : `<button class="btn dk sm" type="button" id="hs">View →</button>`}</div></div>`
       : `<div class="livec"><h3 style="margin-top:0">No live test right now</h3><div class="m">Next mock will be announced on Instagram${IG_HANDLE ? ' @' + esc(IG_HANDLE) : ''}.</div></div>`}
     ${PUB.showRegCount && (PUB.regCount || 0) >= (PUB.regMin ?? 100) ? `<div class="regb">👥 <b>${regLabel(PUB.regCount)}</b> students registered</div>` : ''}
+    ${stripsHtml()}
     ${USER ? '<div class="stats" id="st"><div><b>–</b><small>Tests taken</small></div><div><b>–</b><small>Best score</small></div><div><b>–</b><small>Best rank</small></div></div>'
       : `<div class="newc"><div class="e">🎓</div><div style="flex:1"><b>New here?</b><div class="small mut">Register free to write tests &amp; get your rank</div></div><button class="btn dk sm" id="hr" type="button">Register</button></div>`}
     <div class="sec">Choose exam</div>${chipsHtml()}
@@ -562,6 +720,7 @@ function renderHome() {
   $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon! 🚀', 'info'));
   if ($('#hr')) $('#hr').onclick = () => go('register');
   $('#hfree').onclick = freeTab;
+  bindStrips();
   if ($('#hs')) $('#hs').onclick = () => { const s = st(hero); if (s === 'live' || s === 'resume') { if (locked(hero) && s === 'live') return payInfo(hero.id); go('start/' + hero.id); } else go('tests'); };
 }
 const maskMail = m => { const [a, b] = String(m || '').split('@'); return b ? a.slice(0, 2) + '•••••@' + b : m; };
@@ -678,7 +837,7 @@ function registerView() {
     try {
       const cr = await createUserWithEmailAndPassword(auth, email, p);
       const d = { name, mobile, state, email, updatedAt: serverTimestamp(), createdAt: serverTimestamp() };
-      try { await setDoc(doc(db, 'users', cr.user.uid), d); PROFILE = d; } catch (e) { PROFILE = null; }
+      try { await setDoc(doc(db, 'users', cr.user.uid), d); PROFILE = Object.assign({ _new: Date.now() }, d); } catch (e) { PROFILE = null; }
       try { await sendEmailVerification(cr.user); } catch (e) {}
       USER = cr.user; REGISTERING = false; AUTH_READY = true;
       toast('Registered ✓ Welcome to IQ FOR U!', 'ok');
@@ -748,6 +907,8 @@ function profile() {
         <button type="button" data-go="edit">✏️ Edit profile<span class="ar">›</span></button>
         ${pwd ? '<button type="button" data-go="password">🔑 Change password<span class="ar">›</span></button>' : ''}
         <button type="button" data-go="results">📊 My results<span class="ar">›</span></button>
+        <button type="button" data-go="inbox">🔔 Notifications<span class="ar">›</span></button>
+        ${isStandalone() ? '' : '<button type="button" id="pin">📲 Install IQ FOR U app<span class="ar">›</span></button>'}
         <button type="button" id="pp">🧾 My purchases<span class="ar small">coming soon ›</span></button>
         ${IG ? `<a href="${esc(IG)}" target="_blank" rel="noopener">📷 Follow on Instagram<span class="ar">›</span></a>` : ''}
         <button type="button" data-go="page/contact">💬 Contact us<span class="ar">›</span></button>
@@ -759,11 +920,12 @@ function profile() {
         <button type="button" data-go="page/privacy">🔒 Privacy Policy<span class="ar">›</span></button>
       </div>
       <button class="btn red block" id="lo" type="button">Logout</button>
-      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v3.0 · <a href="#/admin">Admin login</a></div>
+      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v4.0 · <a href="#/admin">Admin login</a></div>
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#pp').onclick = () => toast('Paid mocks & purchases – coming soon.', 'info');
   if ($('#pfree')) $('#pfree').onclick = freeTab;
+  if ($('#pin')) $('#pin').onclick = installApp;
   if ($('#vr')) {
     $('#vr').onclick = async () => { try { await sendEmailVerification(USER); toast('Link sent again. Check Gmail (also Spam).', 'ok'); } catch (e) { toast(errText(e), 'err'); } };
     $('#vd').onclick = async () => { try { await USER.reload(); USER = auth.currentUser; if (USER.emailVerified) toast('Gmail verified ✓', 'ok'); else toast('Not verified yet. Open the link in your Gmail first.', 'info'); profile(); } catch (e) { toast(errText(e), 'err'); } };
@@ -845,7 +1007,7 @@ async function instructions(id) {
   topBack('Instructions', 'tests');
   const secs = x.secs && x.secs.length ? x.secs : (x.sections || []).map(n => ({ name: n, count: null }));
   shell(`<div class="wrapw fade">
-    <div class="card"><div style="font-weight:900;font-size:18px">${esc(x.title)}</div><div class="small mut" style="margin-bottom:8px">${esc(x.category || '')}</div>
+    <div class="card"><div style="font-weight:900;font-size:18px">${esc(x.title)}</div><div class="small mut" style="margin-bottom:8px">${esc(x.category || '')}${setName(x, USER.uid) ? ` · Your question paper: <span class="setb">${setName(x, USER.uid)}</span>` : ''}</div>
       <table class="sum"><tr><th>Section</th><th>Questions</th><th>Marks</th></tr>
       ${secs.map(s2 => `<tr><td>${esc(s2.name)}</td><td>${s2.count ?? '–'}</td><td>${s2.count != null ? r2(s2.count * x.mark) : '–'}</td></tr>`).join('')}
       <tr><td><b>Total · ${x.duration} min</b></td><td><b>${x.count}</b></td><td><b>${x.total}</b></td></tr></table></div>
@@ -891,7 +1053,7 @@ async function startExam(id) {
   if (!paper || !paper.length) { toast('Questions not available yet.', 'err'); return go('tests'); }
   PAPER[id] = paper;
   const L = lsGet(id);
-  runExam({ x, ref, qs: paper, ans: Object.assign({}, a.answers || {}, L.a), marked: new Set(L.m || []), visited: new Set(L.v || []),
+  runExam({ x, ref, qs: setPaper(x, paper, examSet(x, USER.uid)), setN: setName(x, USER.uid), ans: Object.assign({}, a.answers || {}, L.a), marked: new Set(L.m || []), visited: new Set(L.v || []),
     startedAt: ms(a.startedAt), end: Math.min(ms(a.startedAt) + x.duration * 60000, ms(x.endAt)), dirty: Object.keys(L.a || {}).length > 0 });
 }
 function runExam(o) {   // also used by admin preview
@@ -951,16 +1113,16 @@ function renderExam() {
   X.visited.add(q.id); X.psec = null; lsSet();
   const secCount = s => { const L = X.qs.filter(z => z.sec === s); return `${L.filter(z => X.ans[z.id]).length}/${L.length}`; };
   $('#app').innerHTML = `
-    <div class="xbar"><div class="in"><img src="logo.png" alt=""><div class="tt">${esc(X.x.title)}<small>${answered}/${n} answered · <span id="svd">${X.preview ? 'preview – not saved' : (X.dirty ? 'Saved on phone' : 'Saved ✓')}</span></small></div>
+    <div class="xbar"><div class="in"><img src="logo.png" alt=""><div class="tt">${esc(X.x.title)}${X.setN ? `<span class="setb">${X.setN}</span>` : ''}<small>${answered}/${n} answered · <span id="svd">${X.preview ? 'preview – not saved' : (X.dirty ? 'Saved on phone' : 'Saved ✓')}</span></small></div>
       <div class="timer" id="tm">--:--</div><button class="sb" id="xs" type="button">${X.preview ? 'Close' : 'Submit'}</button></div>
       <div class="prog"><i style="width:${Math.round(answered / n * 100)}%"></i></div></div>
     ${X.secs.length > 1 ? `<div class="stabs">${X.secs.map(s => `<button type="button" data-sec="${esc(s)}" class="${s === q.sec ? 'on' : ''}">${esc(s)} ${secCount(s)}</button>`).join('')}</div>` : ''}
     <div class="xmain"><div class="xq">
       <div class="qh"><b>Question ${X.cur + 1} of ${n}</b><span>+${X.x.mark} / −${X.x.neg}${X.preview ? '' : ` · <button class="rep" id="rp" type="button">🚩 Report</button>`}</span></div>
       <p class="qt">${esc(q.q)}</p>
-      <div class="opts2">${q.o.map((o, i) => { const L = 'ABCD'[i]; return `<button type="button" class="op ${a === L ? 'sel' : ''}" data-l="${L}"><i>${L}</i><span>${esc(o)}</span></button>`; }).join('')}</div>
+      <div class="opts2">${q.o.map((o, i) => { const L = 'ABCD'[i], c = 'ABCD'[q.om ? q.om[i] : i]; return `<button type="button" class="op ${a === c ? 'sel' : ''}" data-l="${c}"><i>${L}</i><span>${esc(o)}</span></button>`; }).join('')}</div>
       ${a ? '<button class="clr" id="cl" type="button">Clear response</button>' : ''}
-      ${X.preview && X.key ? `<div class="msg ok">Correct answer: <b>${esc(X.key[q.id] || '?')}</b></div>` : ''}
+      ${X.preview && X.key ? `<div class="msg ok">Correct answer: <b>${esc(showL(q, X.key[q.id]) || '?')}</b></div>` : ''}
     </div><aside class="side" id="side">${palHtml()}</aside></div>
     <div class="ab"><div class="in"><button type="button" id="pv" ${X.cur === 0 ? 'disabled' : ''}>‹ Prev</button><button type="button" class="mkb" id="mk">⚑ Mark &amp; Next</button><button type="button" class="palb" id="pl">⊞ ${n}</button><button type="button" class="nx" id="nx">${X.cur === n - 1 ? 'Save &amp; Finish' : 'Save &amp; Next ›'}</button></div></div>`;
   window.scrollTo(0, 0); tick();
@@ -1111,33 +1273,34 @@ function rTab(x) {
       <div class="tiny mut" style="margin-top:8px">Ranking: higher <b>score</b> first. Same score → higher <b>accuracy</b> first.</div>`;
   } else {
     el.innerHTML = '<div class="card center mut">Loading questions…</div>';
-    getPaper(x.id).then(P => {
+    getPaper(x.id).then(P0 => {
+      const P = setPaper(x, P0, M ? examSet(x, USER.uid) : 0), sn = M ? setName(x, USER.uid) : '';
       const key = R.key || {}, my = (M && M.answers) || {}, can = R.cancelled || [];
       const status = q => can.includes(q.id) ? 'x' : !my[q.id] ? 's' : my[q.id] === key[q.id] ? 'c' : 'w';
       const cnt = { all: P.length, c: 0, w: 0, s: 0, x: 0 }; P.forEach(q => cnt[status(q)]++);
       const F = RS.filt;
-      el.innerHTML = `<div class="chips" style="margin-bottom:10px">${[['all', 'All ' + cnt.all], ['c', '✓ ' + cnt.c], ['w', '✗ ' + cnt.w], ['s', '– ' + cnt.s]].concat(cnt.x ? [['x', 'Cancelled ' + cnt.x]] : []).map(([k, l]) => `<button type="button" data-f="${k}" class="${F === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      el.innerHTML = `${sn ? `<div class="small" style="margin-bottom:8px">Your question paper: <span class="setb">${sn}</span> (questions in your order)</div>` : ''}<div class="chips" style="margin-bottom:10px">${[['all', 'All ' + cnt.all], ['c', '✓ ' + cnt.c], ['w', '✗ ' + cnt.w], ['s', '– ' + cnt.s]].concat(cnt.x ? [['x', 'Cancelled ' + cnt.x]] : []).map(([k, l]) => `<button type="button" data-f="${k}" class="${F === k ? 'on' : ''}">${l}</button>`).join('')}</div>
         ${P.map((q, i) => { const s = status(q); if (F !== 'all' && F !== s) return ''; const k = key[q.id], u = my[q.id];
           const badge = s === 'x' ? '<span class="chip c-cat">Cancelled · bonus</span>' : s === 'c' ? `<span class="chip c-free">Correct +${x.mark}</span>` : s === 'w' ? `<span class="chip c-live">Wrong −${x.neg}</span>` : '<span class="chip">Not answered</span>';
           return `<div class="rv"><div class="qh" style="margin:0"><b>Q${i + 1} · ${esc(q.sec)}</b>${badge}</div><div class="q">${esc(q.q)}</div>
-            ${q.o.map((o, j) => { const L = 'ABCD'[j]; return `<div class="o ${L === k ? 'c' : (L === u ? 'w' : '')}"><b>${L}.</b> ${esc(o)}${L === k ? ' ✓' : ''}${L === u ? ' · your answer' : ''}</div>`; }).join('')}</div>`; }).join('') || '<div class="mut center">Nothing here.</div>'}`;
+            ${q.o.map((o, j) => { const L = 'ABCD'[j], c = 'ABCD'[q.om[j]]; return `<div class="o ${c === k ? 'c' : (c === u ? 'w' : '')}"><b>${L}.</b> ${esc(o)}${c === k ? ' ✓' : ''}${c === u ? ' · your answer' : ''}</div>`; }).join('')}</div>`; }).join('') || '<div class="mut center">Nothing here.</div>'}`;
       $$('[data-f]').forEach(b => b.onclick = () => { RS.filt = b.dataset.f; rTab(x); });
     }).catch(e => { el.innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; });
   }
 }
 async function responseSheet(x) {
-  let P; try { P = await getPaper(x.id); } catch (e) { return toast(errText(e), 'err'); }
+  let P; try { P = setPaper(x, await getPaper(x.id), examSet(x, USER.uid)); } catch (e) { return toast(errText(e), 'err'); }
   const R = RS.R, M = RS.M, key = R.key || {}, my = M.answers || {}, can = R.cancelled || [];
   const att = ATT[x.id] || {};
   $('#print').innerHTML = `<div class="ph"><img src="logo.png" alt=""><div><div style="font-weight:900;font-size:18px">${esc(NAME)}</div><div style="color:#666">${esc(TAG)}</div></div><div class="tag">RESPONSE SHEET</div></div>
     <table class="det" style="margin:8px 0"><tr><td style="color:#666">Name</td><td><b>${esc(PROFILE.name)}</b></td><td style="color:#666">State</td><td><b>${esc(PROFILE.state)}</b></td></tr>
       <tr><td style="color:#666">Exam</td><td><b>${esc(x.title)}</b></td><td style="color:#666">Date</td><td><b>${esc(fmtD(att.startedAt || x.startAt))}</b></td></tr>
-      <tr><td style="color:#666">Category</td><td><b>${esc(x.category || '')}</b></td><td style="color:#666">Time taken</td><td><b>${M.mins != null ? M.mins + ' min' : '–'}</b></td></tr></table>
+      <tr><td style="color:#666">Category</td><td><b>${esc(x.category || '')}${setName(x, USER.uid) ? ' · ' + setName(x, USER.uid) : ''}</b></td><td style="color:#666">Time taken</td><td><b>${M.mins != null ? M.mins + ' min' : '–'}</b></td></tr></table>
     <div class="cards"><div class="k"><b>${M.score}</b>Score / ${R.total}</div><div><b>${rankTxt(M.rank, R)}</b>Rank${showN(R) ? ' / ' + R.n : ''}</div><div><b>${M.acc}%</b>Accuracy</div><div><b>${M.cor} / ${M.wrong} / ${M.skip}</b>Correct / Wrong / Skipped</div></div>
     ${M.secs ? `<table class="qt2" style="margin-bottom:8px"><tr><th>Section</th><th>Correct</th><th>Wrong</th><th>Score</th></tr>${Object.keys(M.secs).map(k => `<tr><td>${esc(k)}</td><td>${M.secs[k].c}</td><td>${M.secs[k].w}</td><td>${M.secs[k].score} / ${M.secs[k].total}</td></tr>`).join('')}</table>` : ''}
     <table class="qt2"><tr><th style="width:28px">Q</th><th>Question</th><th style="width:44px">Yours</th><th style="width:50px">Correct</th><th style="width:34px">✓/✗</th></tr>
     ${P.map((q, i) => { const k = key[q.id], u = my[q.id], c = can.includes(q.id); const mk = c ? '<span>Bonus</span>' : !u ? '–' : u === k ? '<span class="g">✓</span>' : '<span class="r">✗</span>';
-      return `<tr><td>${i + 1}</td><td>${esc(q.q)}<div style="color:#666;margin-top:2px">${q.o.map((o, j) => `(${'ABCD'[j]}) ${esc(o)}`).join(' &nbsp; ')}</div></td><td>${u || '–'}</td><td><b>${k || ''}</b></td><td>${mk}</td></tr>`; }).join('')}</table>
+      return `<tr><td>${i + 1}</td><td>${esc(q.q)}<div style="color:#666;margin-top:2px">${q.o.map((o, j) => `(${'ABCD'[j]}) ${esc(o)}`).join(' &nbsp; ')}</div></td><td>${showL(q, u) || '–'}</td><td><b>${showL(q, k) || ''}</b></td><td>${mk}</td></tr>`; }).join('')}</table>
     <div class="ft"><span>${IG_HANDLE ? '📷 @' + esc(IG_HANDLE) + ' · Instagram' : esc(NAME)}</span><span>Generated ${esc(new Date().toLocaleString('en-IN'))}</span></div>`;
   const img = $('#print img'); const doPrint = () => { document.body.classList.add('printing'); setTimeout(() => { window.print(); }, 50); };
   window.onafterprint = () => document.body.classList.remove('printing');
@@ -1169,8 +1332,8 @@ async function openAdmin() {
   shell('<div class="wrapw"><div class="card center mut">Opening admin…</div></div>', null);
   topBack('Admin', 'home');
   try {
-    const m = await import('./admin.js?v=3');
-    m.openAdmin({ app, auth, db, $, $$, esc, ms, fmtDT, fmtD, r2, toast, sheet, confirmBox, errText, runExam, stopExam, go, CATS, NAME,
+    const m = await import('./admin.js?v=4');
+    m.openAdmin({ app, auth, db, $, $$, esc, ms, fmtDT, fmtD, r2, toast, sheet, confirmBox, errText, runExam, stopExam, go, CATS, NAME, IG_HANDLE, setPaper, examSet,
       getUser: () => USER, setPub: p => { PUB = p; }, getPub: () => PUB });
   } catch (e) { $('#app').innerHTML = `<div class="wrapw"><div class="msg err">Could not open admin: ${esc(e.message || e)}<br>Is <b>admin.js</b> uploaded to GitHub?</div></div>`; }
 }

@@ -4,7 +4,7 @@
 // =====================================================================
 import { GoogleAuthProvider, signInWithPopup, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, writeBatch,
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, writeBatch, addDoc, orderBy, limit,
          serverTimestamp, Timestamp, getCountFromServer, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -66,7 +66,7 @@ function css() {
   .sw{display:flex;align-items:center;gap:10px;font-weight:700;margin-top:12px}
   .sw input{width:22px;height:22px}
   .ast.six{grid-template-columns:repeat(3,1fr)} .ast .up{color:var(--ok)}
-  .at{grid-template-columns:repeat(3,1fr)} @media(min-width:700px){.at{grid-template-columns:repeat(9,1fr)}}
+  .at{grid-template-columns:repeat(3,1fr)} @media(min-width:700px){.at{grid-template-columns:repeat(10,1fr)}}
   .livepill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:#15803D;background:var(--ok2);border-radius:20px;padding:2px 9px}
   .livepill i{width:7px;height:7px;border-radius:50%;background:#16A34A;animation:pl 1.3s infinite}
   .impb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 8px} @media(max-width:520px){.impb{grid-template-columns:1fr 1fr}}
@@ -208,6 +208,7 @@ async function dash() {
       <button class="tl" type="button" data-a="feedback"><span>💬</span>Feedback</button>
       <button class="tl" type="button" data-a="analysis"><span>📊</span>Analysis</button>
       <button class="tl" type="button" data-a="reports"><span>🚩</span>Reports</button>
+      <button class="tl" type="button" data-a="notify"><span>🔔</span>Notify</button>
       <button class="tl" type="button" data-a="notice"><span>📢</span>Notice</button>
       <button class="tl" type="button" data-a="payments"><span>💳</span>Payments<em>SOON</em></button>
       <button class="tl" type="button" data-a="settings"><span>⚙️</span>Settings</button>
@@ -218,7 +219,7 @@ async function dash() {
       <div class="acts"><button class="btn sm" type="button" data-res="${esc(x.id)}">🧮 Calculate &amp; Publish</button><button class="btn gh sm" type="button" data-res="${esc(x.id)}">🏆 Merit list · CSV</button>
         <button class="btn gh sm" type="button" data-edit="${esc(x.id)}">✏️ Edit</button><button class="btn gh sm" type="button" data-tools="${esc(x.id)}">🧰 Tools · Attempts</button></div></div>`).join('') || '<div class="card mut">No mocks yet. Tap <b>＋ New Mock</b>.</div>'}`);
   $$('[data-a]').forEach(b => b.onclick = () => ({ new: () => editMock(null), students, passes: passesView, feedback: () => pick('feedback'), analysis: () => pick('analysis'),
-    reports: () => pick('reports'), notice, payments, settings })[b.dataset.a]());
+    reports: () => pick('reports'), notice, notify: notifyView, payments, settings })[b.dataset.a]());
   $$('[data-res]').forEach(b => b.onclick = () => resultsPage(b.dataset.res));
   $$('[data-edit]').forEach(b => b.onclick = () => editMock(b.dataset.edit));
   $$('[data-tools]').forEach(b => b.onclick = () => tools(b.dataset.tools));
@@ -317,6 +318,9 @@ async function editMock(id, copy) {
     <div class="g3"><div><label class="l" for="du">Minutes</label><input class="inp" id="du" type="number" min="5" max="300" value="${x ? x.duration : 60}"></div><div><label class="l" for="mk">+ Mark</label><input class="inp" id="mk" type="number" step="0.25" min="0.25" value="${x ? x.mark : 1}"></div><div><label class="l" for="ng">− Neg</label><input class="inp" id="ng" type="number" step="0.05" min="0" value="${x ? x.neg : 0.25}"></div></div>
     <label class="l" for="ra">Result date &amp; time</label><input class="inp" id="ra" type="datetime-local" value="${toLocal(rA)}" style="background:var(--y2)">
     <div><label class="l" for="ac">Who can write this mock?</label><select class="inp" id="ac" style="font-weight:700"><option value="free" ${x && needsPass(x) ? '' : 'selected'}>🆓 Free for all</option><option value="pass" ${x && needsPass(x) ? 'selected' : ''}>🎟 Monthly Pass required</option></select></div>
+    <div class="g2"><div><label class="l" for="qset">Question paper sets</label><select class="inp" id="qset"><option value="1">Only 1 set (same order for all)</option><option value="2" ${x && x.sets === 2 ? 'selected' : ''}>2 sets – A, B</option><option value="4" ${x && x.sets === 4 ? 'selected' : ''}>4 sets – A, B, C, D</option></select></div>
+      <div><label class="l">&nbsp;</label><label class="sw" style="margin-top:0"><input type="checkbox" id="qso" ${x && x.shuffleOpts ? 'checked' : ''}> Also mix options (A–D)</label></div></div>
+    <div class="tiny mut" style="margin-top:4px">📑 Sets: every student automatically gets one set – same questions, different order (sections stay together). You keep ONE answer key; results, merit list and response sheets are correct for every set. Options with “All / None / Both …” are never moved.</div>
     <div class="tiny mut" style="margin-top:4px">Students can start any time between Opens and Closes; each gets the full minutes but the test always ends at Closes. <b>Free</b> mocks also show in the students' <b>🆓 Free</b> tab. <b>Pass</b> mocks open only for students with a Monthly Pass (give it in Students → 🎁 Give Pass).</div>
     ${id ? `<label class="l" for="cx">Cancel questions (bonus +mark to everyone) – question numbers</label><input class="inp" id="cx" placeholder="Example: 23, 47" value="${esc(cancelled.map(q => q.replace('q', '')).join(', '))}">` : ''}
     <label class="l">Add questions</label>
@@ -325,6 +329,7 @@ async function editMock(id, copy) {
     <label class="l" for="qs">Questions (Excel format · 8 columns: Section | Topic | Question | A | B | C | D | Answer) – you can also copy from Excel &amp; paste here</label>
     <textarea class="inp tsv" id="qs" spellcheck="false" placeholder="Maths\tRatio\tThe ratio of ...\t10\t20\t30\t40\tB">${esc(tsv)}</textarea><div id="pv"></div>
     <label class="sw"><input type="checkbox" id="pb" ${x && x.published && !copy ? 'checked' : ''}> Published (students can see it)</label>
+    ${x && x.notifiedAt && !copy ? '<div class="tiny mut" style="margin-top:4px">🔔 Students were already told about this mock.</div>' : `<label class="sw"><input type="checkbox" id="ntf" checked> 🔔 Tell students when published (“New mock” now + “LIVE now” at open time)</label>`}
     <button class="btn dk block" id="sv" type="button" style="margin-top:14px">💾 Save Mock</button><div id="sm"></div></div>`);
   const preview = () => {
     const { qs, errs } = toQuestions($('#qs').value), secs = {}, ans = { A: 0, B: 0, C: 0, D: 0 };
@@ -362,10 +367,17 @@ async function editMock(id, copy) {
       const b = writeBatch(db);
       b.set(doc(db, 'exams', eid), { title, desc: $('#de').value.trim(), category: $('#ca').value, startAt: Timestamp.fromDate(sa), endAt: Timestamp.fromDate(ea), resultAt: Timestamp.fromDate(ra),
         duration, mark, neg, price, access, count: qs.length, total: r2(qs.length * mark), sections: secs, secs: secs.map(s => ({ name: s, count: cnt[s] })), cancelled: [...new Set(can)],
-        published: $('#pb').checked, resultsOut: id ? !!x.resultsOut : false, resultsHold: id ? !!x.resultsHold : false, calcAt: id && x.calcAt ? x.calcAt : null, updatedAt: serverTimestamp() });
+        published: $('#pb').checked, resultsOut: id ? !!x.resultsOut : false, resultsHold: id ? !!x.resultsHold : false, calcAt: id && x.calcAt ? x.calcAt : null, updatedAt: serverTimestamp(),
+        sets: +$('#qset').value > 1 ? +$('#qset').value : 1, shuffleOpts: +$('#qset').value > 1 && $('#qso').checked,
+        notifiedAt: id && x.notifiedAt ? x.notifiedAt : null, liveNote: id && x.liveNote ? x.liveNote : null, resultNote: id && x.resultNote ? x.resultNote : null });
       b.set(doc(db, 'exams', eid, 'paper', 'main'), { questions: paper });
       b.set(doc(db, 'keys', eid), { ans: key });
       await b.commit();
+      try {
+        const ex2 = { id: eid, title, startAt: Timestamp.fromDate(sa), count: qs.length, duration, access, liveNote: id && x.liveNote };
+        if ($('#pb').checked && $('#ntf') && $('#ntf').checked) await announceMock(ex2);
+        else if (id && x.liveNote && ms(x.startAt) !== sa.getTime()) await updateDoc(doc(db, 'notices', x.liveNote), { at: Timestamp.fromDate(sa), pushed: false });   // open time changed
+      } catch (e) { toast('Saved, but notification failed: ' + errText(e), 'err'); }
       msg(m, 'Saved ✓' + (id && x.calcAt ? ' Answer key / cancelled questions changed? Go to Results → Re-calculate.' : ''), 'ok');
       await loadEx(); setTimeout(() => { if (id && history.state && history.state.adm === 'edit') history.back(); else replace(() => tools(eid)); }, 700);
     } catch (e) { $('#sv').disabled = false; msg(m, esc(errText(e))); }
@@ -464,7 +476,8 @@ function splitOpts(rest, k, upper, num) {
   const out = []; let cur = rest;
   while (k < 3) {
     const L = num ? String(k + 2) : (upper ? 'ABCD' : 'abcd')[k + 1];
-    const re = num ? new RegExp('\\s\\(' + L + '\\)\\s*') : new RegExp('\\s(?:\\(' + L + '\\)|\\[' + L + '\\]|' + L + '[.)](?=\\s))\\s*');
+    const D = String(k + 2);   // also accept "2) 3) 4)" mixed with letters, and "C)1023" without a space
+    const re = num ? new RegExp('\\s\\(' + L + '\\)\\s*') : new RegExp('\\s(?:\\(' + L + '\\)|\\[' + L + '\\]|' + L + '\\)|' + L + '\\.(?=\\s)|\\(' + D + '\\)|' + D + '\\))\\s*');
     const m = cur.match(re); if (!m) break;
     out.push(cur.slice(0, m.index).trim()); cur = cur.slice(m.index + m[0].length); k++;
   }
@@ -492,7 +505,7 @@ function parseText(text) {
     const om = ln.match(OPT_RE);
     if (om && cur && !keyMode && cur.o.length < 4) {
       const raw = om[1] || om[2] || om[3], num = /[1-4]/.test(raw), idx = num ? +raw - 1 : 'abcd'.indexOf(raw.toLowerCase());
-      if (idx === cur.o.length) { cur.o.push(...splitOpts(ln.slice(om[0].length), idx, raw === raw.toUpperCase() && !num, num)); skip = false; prev = ln; continue; }
+      if (idx === cur.o.length) { cur.up = raw === raw.toUpperCase() && !num; cur.num = num; cur.o.push(...splitOpts(ln.slice(om[0].length), idx, cur.up, num)); skip = false; prev = ln; continue; }
     }
     // answer key section
     if (/^(answer\s*key|answers?|answer\s*sheet|key\s*answers?|solutions?\s*key)\s*[:\-–]?\s*$/i.test(ln)) { keyMode = true; cur = null; continue; }
@@ -522,8 +535,12 @@ function parseText(text) {
     if (skip) continue;
     if (dir && !cur) { dir.text += ' ' + ln; prev = ln; continue; }
     if (!cur) { prev = ln; continue; }
-    if (!cur.o.length) addQ(ln);
-    else if (cur.o.length < 4) { if (!inlineOpts(ln)) cur.o[cur.o.length - 1] += ' ' + ln; }
+    if (!cur.o.length) {
+      const nA = splitOpts(ln, 0, true, false);
+      if (cur.q && nA.length === 4 && nA.every(Boolean)) { cur.up = true; cur.o.push(...nA); }
+      else addQ(ln);
+    }
+    else if (cur.o.length < 4) { const last = cur.o.pop() + ' ' + ln, k = cur.o.length; cur.o.push(...splitOpts(last, k, cur.up !== false, !!cur.num)); }
     else cur.o[3] += ' ' + ln;
     prev = ln;
   }
@@ -666,7 +683,10 @@ async function tools(id) {
     </div>`);
   const A = { pre: () => previewMock(id), edit: () => editMock(id), dup: () => duplicate(x), att: () => attempts(id), res: () => resultsPage(id),
     fb: () => feedbackView(id), rep: () => reportsView(id), ana: () => analysisView(id),
-    pub: async () => { try { await updateDoc(doc(db, 'exams', id), { published: !x.published }); x.published = !x.published; toast(x.published ? 'Published ✓' : 'Hidden ✓', 'ok'); replace(() => tools(id)); } catch (e) { toast(errText(e), 'err'); } },
+    pub: async () => {
+      let tell = false;
+      if (!x.published && !x.notifiedAt) tell = await C.confirmBox('<h3 style="margin:0 0 6px">📢 Publish this mock</h3><p class="small">Also send a 🔔 notification to students (“New mock” now + “LIVE now” at open time)?</p>', 'Publish + Notify', 'Publish only');
+      try { await updateDoc(doc(db, 'exams', id), { published: !x.published }); x.published = !x.published; if (tell) await announceMock(x); toast(x.published ? 'Published ✓' + (tell ? ' · students notified 🔔' : '') : 'Hidden ✓', 'ok'); replace(() => tools(id)); } catch (e) { toast(errText(e), 'err'); } },
     del: async () => {
       if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Delete “${esc(x.title)}”?</h3><p class="small">Questions, answer key and the mock will be deleted. This cannot be undone.</p>`, 'Delete')) return;
       try { await deleteDoc(doc(db, 'exams', id, 'paper', 'main')); await deleteDoc(doc(db, 'keys', id)); await deleteDoc(doc(db, 'exams', id)); toast('Deleted', 'ok'); await loadEx(); replace(dash); } catch (e) { toast(errText(e), 'err'); }
@@ -736,20 +756,22 @@ async function resultsPage(id) {
       <div class="acts" style="grid-template-columns:1fr 1fr">
         <button class="btn" id="cp" type="button">🧮 Calculate &amp; Publish now</button>
         <button class="btn gh" id="co" type="button">🧮 Calculate only (opens at result time)</button>
-        ${R ? `<button class="btn ${x.resultsHold ? 'dk' : 'red'}" id="hd" type="button">${x.resultsHold ? '📢 Un-hide results' : '🙈 Hide results'}</button><button class="btn gh" id="csv" type="button">⬇ Download Excel (CSV)</button>` : ''}
+        ${R ? `<button class="btn ${x.resultsHold ? 'dk' : 'red'}" id="hd" type="button">${x.resultsHold ? '📢 Un-hide results' : '🙈 Hide results'}</button><button class="btn gh" id="csv" type="button">⬇ Download Excel (CSV)</button><button class="btn dk" id="t10" type="button">🏆 Top 10 image</button><button class="btn" id="wa" type="button" style="background:#25D366;color:#fff;border-color:#128C7E">💬 WhatsApp message</button>` : ''}
       </div><div id="rm"></div>
       <div class="tiny mut" style="margin-top:8px">Fixed an answer key or cancelled a question? Just calculate again – ranks update.</div></div>
     ${R ? `<p class="small mut">Calculated ${esc(fmtDT(R.calcAt))} · Participants <b>${R.n}</b> · Highest ${R.high} · Average ${R.avg}</p>
-      <div class="tbl"><table><tr><th>Rank</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th>${(R.sections || []).map(s => `<th class="n">${esc(s)}</th>`).join('')}<th class="n">Score</th><th class="n">Acc.</th><th class="n">✓</th><th class="n">✗</th><th class="n">Min</th></tr>
-      ${(R.all || []).map(t => `<tr><td>${t.rank}</td><td><b>${esc(t.name)}</b>${t.submitted ? '' : ' <span class="chip c-paid">auto</span>'}</td><td>${esc(t.state || '')}</td><td>${esc(t.mobile || '')}</td><td>${esc(t.email || '')}</td>
+      <div class="tbl"><table><tr><th>Rank</th><th>Name</th>${x.sets > 1 ? '<th>Set</th>' : ''}<th>State</th><th>Mobile</th><th>Gmail</th>${(R.sections || []).map(s => `<th class="n">${esc(s)}</th>`).join('')}<th class="n">Score</th><th class="n">Acc.</th><th class="n">✓</th><th class="n">✗</th><th class="n">Min</th></tr>
+      ${(R.all || []).map(t => `<tr><td>${t.rank}</td><td><b>${esc(t.name)}</b>${t.submitted ? '' : ' <span class="chip c-paid">auto</span>'}</td>${x.sets > 1 ? `<td>${esc(t.set || '')}</td>` : ''}<td>${esc(t.state || '')}</td><td>${esc(t.mobile || '')}</td><td>${esc(t.email || '')}</td>
         ${(R.sections || []).map(s => `<td class="n">${t.secs && t.secs[s] ? t.secs[s].score : '–'}</td>`).join('')}<td class="n"><b>${t.score}</b></td><td class="n">${t.acc}%</td><td class="n">${t.cor}</td><td class="n">${t.wrong}</td><td class="n">${t.mins}</td></tr>`).join('')}</table></div>` : '<p class="mut">Not calculated yet.</p>'}`);
   $('#cp').onclick = () => calculate(x, true);
   $('#co').onclick = () => calculate(x, false);
   if ($('#hd')) $('#hd').onclick = async () => { try { const h = !x.resultsHold; await updateDoc(doc(db, 'exams', id), h ? { resultsHold: true, resultsOut: false } : { resultsHold: false }); x.resultsHold = h; if (h) x.resultsOut = false; replace(() => resultsPage(id)); } catch (e) { toast(errText(e), 'err'); } };
+  if ($('#t10')) $('#t10').onclick = () => top10Image(x, R);
+  if ($('#wa')) $('#wa').onclick = () => { const t = waText(x, R); window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank'); };
   if ($('#csv')) $('#csv').onclick = () => {
     const secs = R.sections || [];
-    csv((x.title.replace(/[^\w]+/g, '_') || 'results') + '.csv', [['Rank', 'Name', 'State', 'Mobile', 'Gmail', ...secs, 'Score', 'Accuracy %', 'Correct', 'Wrong', 'Not answered', 'Minutes', 'Submitted']]
-      .concat((R.all || []).map(t => [t.rank, t.name, t.state || '', t.mobile || '', t.email || '', ...secs.map(s => t.secs && t.secs[s] ? t.secs[s].score : ''), t.score, t.acc, t.cor, t.wrong, t.skip, t.mins, t.submitted ? 'Yes' : 'Auto'])));
+    csv((x.title.replace(/[^\w]+/g, '_') || 'results') + '.csv', [['Rank', 'Name', 'Set', 'State', 'Mobile', 'Gmail', ...secs, 'Score', 'Accuracy %', 'Correct', 'Wrong', 'Not answered', 'Minutes', 'Submitted']]
+      .concat((R.all || []).map(t => [t.rank, t.name, t.set || '', t.state || '', t.mobile || '', t.email || '', ...secs.map(s => t.secs && t.secs[s] ? t.secs[s].score : ''), t.score, t.acc, t.cor, t.wrong, t.skip, t.mins, t.submitted ? 'Yes' : 'Auto'])));
   };
 }
 function csv(name, lines) {
@@ -798,9 +820,16 @@ async function calculate(x, publish) {
       merit: rows.slice(0, 50).map(r => ({ r: r.rank, n: r.name, st: r.state, s: r.score, a: r.acc })) });
     await setDoc(doc(db, 'adminresults', x.id), { title: X2.title, total: X2.total, n, high, avg, sections: secs, calcAt: serverTimestamp(),
       qstats: qs.map(q => Object.assign({ id: q.id }, QS[q.id])),
-      all: rows.map(r => ({ rank: r.rank, name: r.name, state: r.state, email: r.email, mobile: r.mobile, score: r.score, acc: r.acc, cor: r.cor, wrong: r.wrong, skip: r.skip, mins: r.mins, submitted: r.submitted,
+      all: rows.map(r => ({ set: (X2.sets || 1) > 1 ? 'ABCD'[C.examSet({ id: x.id, sets: X2.sets }, r.uid)] : '', rank: r.rank, name: r.name, state: r.state, email: r.email, mobile: r.mobile, score: r.score, acc: r.acc, cor: r.cor, wrong: r.wrong, skip: r.skip, mins: r.mins, submitted: r.submitted,
         secs: Object.fromEntries(secs.map(s => [s, { score: r.secs[s].score }])) })) });
     await updateDoc(doc(db, 'exams', x.id), publish ? { calcAt: serverTimestamp(), resultsOut: true, resultsHold: false } : { calcAt: serverTimestamp() });
+    // 🔔 "Result out" – only to students who wrote this mock; at the result time (or now when publishing)
+    try {
+      const when = publish || !X2.resultAt || ms(X2.resultAt) < Date.now() ? Timestamp.now() : X2.resultAt;
+      const nt = { kind: 'result', title: '📊 Result out: ' + X2.title, body: 'Your score, rank, merit list and response sheet are ready. Tap to see.', aud: 'exam', exam: x.id, link: '#/results/' + x.id, at: when, pushed: false };
+      if (X2.resultNote) { const r0 = await getDoc(doc(db, 'notices', X2.resultNote)); if (r0.exists() && r0.data().pushed && ms(r0.data().at) <= Date.now()) {} else await setDoc(doc(db, 'notices', X2.resultNote), nt); }
+      else { const r1 = await addDoc(collection(db, 'notices'), nt); await updateDoc(doc(db, 'exams', x.id), { resultNote: r1.id }); }
+    } catch (e) {}
     msg(m, `Done ✓ ${n} students. Students see the Top 50${showTotal ? '' : ' (total count hidden)'}. ${publish ? 'Results are now visible to students.' : 'Results will open automatically at the result time.'}`, 'ok');
     await loadEx(); setTimeout(() => replace(() => resultsPage(x.id)), 900);
   } catch (e) { $$('#cp,#co').forEach(b => b.disabled = false); msg(m, esc(errText(e))); }
@@ -923,6 +952,7 @@ function givePass(uid, u, cur) {
     ${on && cur.until != null ? `<div class="note">Current pass is valid till <b>${esc(fmtJ(cur.until))}</b>. New days are added after that date.</div>` : ''}
     <div class="tagc one" id="gd" style="margin-top:10px">${[[30, '30 days'], [90, '90 days'], [365, '365 days'], [0, 'No expiry']].map(([d, l], i) => `<button type="button" data-d="${d}" class="${i === 0 ? 'on' : ''}">${l}</button>`).join('')}</div>
     <label class="l" for="gn">Note (optional – only admin sees)</label><input class="inp" id="gn" maxlength="80" placeholder="Special student / paid by UPI on 24 Nov">
+    <label class="l" for="gm2">Message to student (optional – added to the 🎉 congratulations)</label><input class="inp" id="gm2" maxlength="200" placeholder="Keep practising daily!">
     <div class="tiny mut" id="gw" style="margin-top:6px"></div>
     <button class="btn dk block" id="gk" type="button" style="margin-top:12px">🎁 Give Pass</button>`);
   let days = 30;
@@ -935,7 +965,10 @@ function givePass(uid, u, cur) {
     try {
       await setDoc(doc(db, 'passes', uid), { until: days ? Timestamp.fromMillis(base() + days * 86400000) : null, days, note: o.querySelector('#gn').value.trim().slice(0, 80) || (cur && cur.note) || '',
         name: u.name || '', email: u.email || '', mobile: u.mobile || '', since: cur && cur.since ? cur.since : serverTimestamp(), at: serverTimestamp(), by: 'admin' });
-      o.remove(); toast('🎟 Pass given ✓ The student may need to reload the site once.', 'ok'); replace(() => student(uid));
+      const till = days ? fmtJ(base() + days * 86400000) : '';
+      try { await personal(uid, { kind: 'pass', title: on ? `🎟 Your Monthly Pass is extended!` : `🎉 Congratulations ${(u.name || '').split(' ')[0]}!`,
+        body: (on ? 'Your IQ FOR U Monthly Pass is extended' : 'You got the IQ FOR U Monthly Pass') + (till ? ` – valid till ${till}.` : ' – no expiry.') + ' All 🎟 PASS mocks are open for you. All the best! 💪' + (o.querySelector('#gm2').value.trim() ? '\n\n' + o.querySelector('#gm2').value.trim().slice(0, 200) : ''), link: '#/profile' }); } catch (e) {}
+      o.remove(); toast('🎟 Pass given ✓ Congratulations message sent 🎉', 'ok'); replace(() => student(uid));
     } catch (e) { o.querySelector('#gk').disabled = false; toast(errText(e), 'err'); }
   };
 }
@@ -952,6 +985,93 @@ async function passesView() {
       ${P.map(p => `<tr data-u="${esc(p.uid)}" style="cursor:pointer"><td><b>${esc(p.name || '')}</b></td><td>${esc(p.mobile || '')}</td><td>${esc(p.email || '')}</td><td style="white-space:nowrap">${passTxt(p)}</td><td>${esc(p.note || '')}</td></tr>`).join('') || '<tr><td colspan="5" class="mut">No passes given yet.</td></tr>'}</table></div>`);
   $('#ps').onclick = students;
   $$('[data-u]').forEach(r => r.onclick = () => student(r.dataset.u));
+}
+
+// ------------------------------------------------------------------ 🔔 Notifications
+// notices/{id}  → everyone (aud 'all'), Monthly Pass students ('pass') or students who wrote one mock ('exam').
+//                 'at' in the future = shown (and sent to phones) only at that time.
+// inbox/{uid}/m → one student's own messages (pass given …). pushq/{id} → phone alert queue for one student.
+// The Apps Script sender (IQ FOR U Notify) sends phone alerts for both every 5 minutes.
+async function notice2(n) { return addDoc(collection(db, 'notices'), Object.assign({ pushed: false, at: Timestamp.now(), link: '#/home' }, n)); }
+async function personal(uid, m) {
+  const d = Object.assign({ at: Timestamp.now() }, m);
+  await addDoc(collection(db, 'inbox', uid, 'm'), d);
+  try { await addDoc(collection(db, 'pushq'), { to: uid, title: d.title, body: d.body, link: d.link || '#/home', at: d.at }); } catch (e) {}
+}
+async function announceMock(x) {
+  const aud = needsPass(x) ? 'pass' : 'all', start = ms(x.startAt), soon = start > Date.now();
+  await notice2({ kind: 'mock', aud, exam: x.id, link: '#/tests', title: '📢 New mock: ' + x.title,
+    body: `${soon ? 'Opens ' + fmtDT(x.startAt) : 'LIVE now'} · ${x.count} questions · ${x.duration} min · ${needsPass(x) ? '🎟 Monthly Pass' : '🆓 FREE'}` });
+  let live = x.liveNote || null;
+  if (soon) {
+    const nt = { kind: 'live', aud, exam: x.id, link: '#/start/' + x.id, title: '⏰ ' + x.title + ' is LIVE now', body: 'The test is open. Tap to start – all the best! 💪', at: Timestamp.fromMillis(start), pushed: false };
+    if (live) await setDoc(doc(db, 'notices', live), nt); else live = (await addDoc(collection(db, 'notices'), nt)).id;
+  }
+  await updateDoc(doc(db, 'exams', x.id), { notifiedAt: serverTimestamp(), liveNote: live });
+  x.notifiedAt = Date.now(); x.liveNote = live;
+}
+async function notifyView() {
+  mark('notify');
+  top('Send notification', dash); loading();
+  if (!EX.length) { try { await loadEx(); } catch (e) {} }
+  let N = [];
+  try { N = (await getDocs(query(collection(db, 'notices'), orderBy('at', 'desc'), limit(40)))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) {}
+  const audTxt = n => n.aud === 'pass' ? '🎟 Pass students' : n.aud === 'exam' ? '📝 ' + esc((EX.find(e => e.id === n.exam) || {}).title || 'one mock') : '👥 All students';
+  page(`<div class="card"><div style="font-weight:800">🔔 New notification</div>
+      <label class="l" for="nt1">Title</label><input class="inp" id="nt1" maxlength="60" placeholder="📢 Mock 2 this Sunday!">
+      <label class="l" for="nb1">Message</label><textarea class="inp" id="nb1" rows="3" maxlength="300" placeholder="History + Polity · 100 questions · 10 AM. Be ready! 💪"></textarea>
+      <div class="g2"><div><label class="l" for="na1">Send to</label><select class="inp" id="na1"><option value="all">👥 All students</option><option value="pass">🎟 Monthly Pass students</option>${EX.filter(x => Date.now() >= ms(x.startAt)).map(x => `<option value="x:${esc(x.id)}">📝 Wrote: ${esc(x.title)}</option>`).join('')}</select></div>
+        <div><label class="l" for="nl1">When tapped, open</label><select class="inp" id="nl1"><option value="#/home">Home</option><option value="#/tests">Mock Tests</option><option value="#/results">My Results</option><option value="#/profile">Profile</option></select></div></div>
+      <button class="btn dk block" id="ns1" type="button" style="margin-top:12px">🔔 Send now</button><div id="nm1"></div>
+      <div class="tiny mut" style="margin-top:6px">Students see it in the app 🔔 bell. Students who turned on phone alerts also get it on their phone (within ~5 minutes, through the Apps Script sender).</div></div>
+    <div class="sec">Sent &amp; scheduled (${N.length})</div>
+    ${N.map(n => `<div class="card" style="padding:10px 12px"><div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><b>${esc(n.title)}</b><div class="small" style="white-space:pre-wrap">${esc(n.body || '')}</div>
+      <div class="tiny mut" style="margin-top:3px">${audTxt(n)} · ${ms(n.at) > Date.now() ? '⏳ scheduled ' + esc(fmtDT(n.at)) : esc(fmtDT(n.at))} · ${n.pushed ? '📲 sent to phones' : '📲 phone: waiting'}</div></div>
+      <button class="btn red sm" type="button" data-nd="${esc(n.id)}">🗑</button></div></div>`).join('') || '<div class="card mut">Nothing sent yet.</div>'}`);
+  $('#ns1').onclick = async () => {
+    const t = $('#nt1').value.trim(), b = $('#nb1').value.trim(), a = $('#na1').value;
+    if (!t) return msg($('#nm1'), 'Write a title.');
+    if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Send this notification?</h3><p class="small"><b>${esc(t)}</b><br>${esc(b)}</p><p class="small mut">To: ${a === 'all' ? 'All students' : a === 'pass' ? 'Monthly Pass students' : 'students who wrote the mock'}</p>`, '🔔 Send')) return;
+    $('#ns1').disabled = true;
+    try { await notice2(Object.assign({ kind: 'admin', title: t.slice(0, 60), body: b.slice(0, 300), link: $('#nl1').value }, a.startsWith('x:') ? { aud: 'exam', exam: a.slice(2) } : { aud: a }));
+      toast('🔔 Sent ✓', 'ok'); replace(notifyView); } catch (e) { $('#ns1').disabled = false; msg($('#nm1'), esc(errText(e))); }
+  };
+  $$('[data-nd]').forEach(b => b.onclick = async () => { if (!await C.confirmBox('<h3 style="margin:0">Delete this notification?</h3><p class="small">It disappears from the students\' 🔔 bell.</p>', 'Delete')) return;
+    try { await deleteDoc(doc(db, 'notices', b.dataset.nd)); toast('Deleted', 'ok'); replace(notifyView); } catch (e) { toast(errText(e), 'err'); } });
+}
+
+// ------------------------------------------------------------------ 🏆 Top 10 image + WhatsApp message (for groups / Instagram)
+function waText(x, R) {
+  const L = (R.all || []).slice(0, 10), md = ['🥇', '🥈', '🥉'];
+  return `🏆 *${x.title}* – Result\n\n` + L.map((t, i) => `${md[t.rank - 1] || t.rank + '.'} ${t.name}${t.state ? ' (' + t.state + ')' : ''} – ${t.score}/${R.total}`).join('\n') +
+    `\n\nCongratulations to all toppers! 🎉\nCheck your score, rank & response sheet 👉 ${location.origin}\n${C.IG_HANDLE ? '📷 Follow @' + C.IG_HANDLE + ' for the next mock' : ''}`;
+}
+async function top10Image(x, R) {
+  const L = (R.all || []).slice(0, 10); if (!L.length) return toast('No students yet.', 'info');
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const g = c.getContext('2d');
+  g.fillStyle = '#FFE51F'; g.fillRect(0, 0, 1080, 1350);
+  const logo = new Image(); logo.src = 'logo.png'; await new Promise(r => { logo.onload = r; logo.onerror = r; });
+  try { g.drawImage(logo, 60, 50, 150, 150); } catch (e) {}
+  g.fillStyle = '#111318'; g.font = '900 64px Inter, sans-serif'; g.fillText('IQ FOR U', 235, 125); g.font = '700 30px Inter, sans-serif'; g.fillText('Mocks for All Competitive Exams', 237, 172);
+  g.fillRect(60, 240, 960, 1000);
+  g.fillStyle = '#FFE51F'; g.textAlign = 'center'; g.font = '900 54px Inter, sans-serif'; g.fillText('🏆 TOP 10 🏆', 540, 315);
+  g.fillStyle = '#BFC3CC'; g.font = '600 32px Inter, sans-serif'; g.fillText(x.title.length > 46 ? x.title.slice(0, 45) + '…' : x.title, 540, 365);
+  const md = ['🥇', '🥈', '🥉'];
+  L.forEach((t, i) => {
+    const y = 445 + i * 78; g.textAlign = 'left';
+    if (i % 2 === 0) { g.fillStyle = '#1C1F26'; g.fillRect(90, y - 50, 900, 72); }
+    g.fillStyle = t.rank <= 3 ? '#FFE51F' : '#fff'; g.font = '900 38px Inter, sans-serif'; g.fillText(md[t.rank - 1] || '#' + t.rank, 110, y);
+    g.fillStyle = '#fff'; g.font = '800 36px Inter, sans-serif'; const nm = t.name.length > 22 ? t.name.slice(0, 21) + '…' : t.name; g.fillText(nm, 220, y);
+    const w = g.measureText(nm).width; g.fillStyle = '#9CA3AF'; g.font = '600 24px Inter, sans-serif';
+    if (t.state && 220 + w + 16 + g.measureText(t.state).width < 880) g.fillText(t.state, 220 + w + 16, y);
+    g.textAlign = 'right'; g.fillStyle = '#FFE51F'; g.font = '900 38px Inter, sans-serif'; g.fillText(String(t.score), 965, y);
+  });
+  g.textAlign = 'center'; g.fillStyle = '#111318'; g.font = '900 40px Inter, sans-serif'; g.fillText('Congratulations! 🎉  Next mock: ' + location.host, 540, 1295);
+  c.toBlob(async b => {
+    const f = new File([b], 'IQFORU-top10.png', { type: 'image/png' });
+    try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], text: waText(x, R) }); return; } } catch (e) { if (e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'IQFORU-top10.png'; a.click(); toast('Top 10 image downloaded – share it on WhatsApp / Instagram 📸', 'ok');
+  }, 'image/png');
 }
 
 // ------------------------------------------------------------------ feedback
@@ -1067,12 +1187,19 @@ async function settings() {
       <label class="sw"><input type="checkbox" id="ht" ${p.showTotal ? 'checked' : ''}> Show total participants to students</label>
       <div class="tiny mut">OFF (recommended): students see only the Top 50 merit list, their own rank (1–100 as “#56”, above 100 as “100+”) – nobody knows how many wrote. You always see everything here. After changing this, press <b>Calculate</b> again for old mocks.</div>
       <button class="btn dk block" id="hs" type="button" style="margin-top:12px">💾 Save</button><div id="hmm"></div></div>
+    <div class="card"><div style="font-weight:800">📲 Phone notifications (Firebase Cloud Messaging)</div>
+      <label class="l" for="vk">Web Push key (Firebase → ⚙️ Project settings → Cloud Messaging → Web Push certificates → Key pair)</label><input class="inp" id="vk" maxlength="200" value="${esc(p.vapidKey || '')}" placeholder="BExxxxxxxx…" style="font-family:ui-monospace,monospace;font-size:12.5px">
+      <div class="tiny mut" id="vkn" style="margin-top:4px">This key is public (safe). Without it, students still get notifications inside the app 🔔 – phone alerts need this key + the Apps Script sender (see the v4 guide).</div>
+      <button class="btn dk block" id="vks" type="button" style="margin-top:10px">💾 Save key</button><div id="vkm"></div></div>
     <div class="card"><div style="font-weight:800">🔐 Change 8-digit security code</div>
       <label class="l" for="k0">Current code</label><input class="inp code" id="k0" type="password" inputmode="numeric" maxlength="8">
       <label class="l" for="k1">New code</label><input class="inp code" id="k1" type="password" inputmode="numeric" maxlength="8">
       <label class="l" for="k2">Re-enter new code</label><input class="inp code" id="k2" type="password" inputmode="numeric" maxlength="8">
       <button class="btn block" id="ks" type="button" style="margin-top:12px">Change code</button><div id="km"></div></div>`);
   $('#hs').onclick = async () => { try { await savePub({ showRegCount: $('#hr').checked, regMin: Math.max(0, Math.round(+$('#hm').value || 0)), showTotal: $('#ht').checked }); msg($('#hmm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#hmm'), esc(errText(e))); } };
+  $('#vks').onclick = async () => { const v = $('#vk').value.trim(); if (v && !/^[A-Za-z0-9_-]{60,120}$/.test(v)) return msg($('#vkm'), 'This does not look like a Web Push key (long text starting with B…).');
+    try { await savePub({ vapidKey: v }); msg($('#vkm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#vkm'), esc(errText(e))); } };
+  getCountFromServer(collection(db, 'tokens')).then(c => { if ($('#vkn')) $('#vkn').innerHTML += ` <b>${c.data().count}</b> students have turned on phone alerts.`; }).catch(() => {});
   ['#k0', '#k1', '#k2'].forEach(s => $(s).oninput = e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8); });
   $('#ss').onclick = async () => { try { await savePub({ contactEmail: $('#se').value.trim(), contactPhone: $('#sp').value.trim(), contactAddress: $('#sa').value.trim(), policyDate: $('#sd').value.trim() }); msg($('#sm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#sm'), esc(errText(e))); } };
   $('#ks').onclick = async () => {
@@ -1094,5 +1221,5 @@ function payments() {
     <p class="small mut">After Razorpay is connected, every payment will show here: name, mobile, Gmail, mock, amount, Razorpay payment ID, unlock status, today / month totals, “Need check” list with Verify and Manual unlock, and Excel download.</p></div>`);
 }
 
-Object.assign(VIEWS, { dash, pick, edit: editMock, tools, preview: previewMock, attempts, results: resultsPage, students, allStudents, student,
+Object.assign(VIEWS, { notify: notifyView, dash, pick, edit: editMock, tools, preview: previewMock, attempts, results: resultsPage, students, allStudents, student,
   feedbackView, analysisView, reportsView, notice, settings, payments, passes: passesView });
