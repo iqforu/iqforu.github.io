@@ -263,6 +263,13 @@ table.mt tr.me td{background:var(--y2);font-weight:800}
 #print .ft{margin-top:10px;border-top:1px solid #ccc;padding-top:6px;display:flex;justify-content:space-between;color:#666}
 
 .warn-ig{background:#fff3cd;color:#7a4b00;padding:10px 14px;font-size:13.5px;text-align:center}
+.regb{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;font-size:13px;font-weight:700;color:var(--ink2)}
+.regb b{background:var(--ink);color:var(--y);border-radius:20px;padding:3px 10px;font-weight:900}
+.c-pass{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}
+.passc{border-radius:14px;padding:12px 13px;margin-bottom:12px;display:flex;gap:11px;align-items:center}
+.passc .e{font-size:28px}
+.passc.on{background:linear-gradient(135deg,#FFE51F,#FFF6B3);border:1.5px solid var(--ink)}
+.passc.off{background:#fff;border:1.5px dashed #C9CDD4}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:80;max-width:92vw;box-shadow:var(--sh)}
 </style>
 </head>
@@ -351,7 +358,7 @@ function cdHtml(left, short) {
 function leftTxt(t) { const m = Math.max(0, Math.round(t / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60; return d ? `${d}d ${h}h` : h ? `${h}h ${mm}m` : `${mm}m`; }
 
 // ================================================================ state
-let USER = null, PROFILE = null, BLOCKED = false, EXAMS = [], ATT = {}, UNL = {}, PUB = {}, MYR = {};
+let USER = null, PROFILE = null, BLOCKED = false, EXAMS = [], ATT = {}, UNL = {}, PUB = {}, MYR = {}, PASS = null;
 let OLDP = {}, CAT = 'All', TTAB = null, NEXT = null, REGISTERING = false, AUTH_READY = false, X = null;
 const PAPER = {};
 try { CAT = localStorage.getItem('iq_cat') || 'All'; } catch (e) {}
@@ -414,15 +421,19 @@ async function route() {
 // ================================================================ auth state
 onAuthStateChanged(auth, async u => {
   if (REGISTERING) { USER = u; return; }
-  USER = u; PROFILE = null; BLOCKED = false; ATT = {}; UNL = {}; MYR = {};
+  USER = u; PROFILE = null; BLOCKED = false; ATT = {}; UNL = {}; MYR = {}; PASS = null;
   if (u) {
     try { const s = await getDoc(doc(db, 'users', u.uid)); const d = s.exists() ? s.data() : null; OLDP = d || {}; PROFILE = d && d.name && d.mobile && d.state ? d : null; } catch (e) { PROFILE = null; }
     try { const b = await getDoc(doc(db, 'blocked', u.uid)); BLOCKED = b.exists(); } catch (e) {}
+    await loadPass();
   }
   AUTH_READY = true;
   if (u && PROFILE && NEXT) { const n = NEXT; NEXT = null; if (location.hash === n) route(); else location.hash = n; return; }
   route();
 });
+async function loadPass() { PASS = null; if (!USER) return; try { const s = await getDoc(doc(db, 'passes', USER.uid)); PASS = s.exists() ? s.data() : null; } catch (e) { PASS = null; } }
+// 🎟 Monthly Pass: active when it exists and (no expiry or not yet expired)
+const passActive = () => !!(PASS && (PASS.until == null || now() < ms(PASS.until)));
 async function loadPub() { try { const s = await getDoc(doc(db, 'settings', 'public')); PUB = s.exists() ? s.data() : {}; } catch (e) { PUB = {}; } }
 const pubReady = loadPub();
 
@@ -435,7 +446,7 @@ async function loadExams() {
       if (!(x.id in ATT) && now() >= ms(x.startAt)) {
         try { const s = await getDoc(doc(db, 'attempts', x.id, 'u', USER.uid)); ATT[x.id] = s.exists() ? s.data() : null; } catch (e) { ATT[x.id] = null; }
       }
-      if ((x.price || 0) > 0 && !(x.id in UNL)) {
+      if (needsPass(x) && !passActive() && !(x.id in UNL)) {
         try { const s = await getDoc(doc(db, 'unlocks', x.id, 'u', USER.uid)); UNL[x.id] = s.exists(); } catch (e) { UNL[x.id] = false; }
       }
     }));
@@ -454,11 +465,18 @@ function st(x) {
   return resOpen(x) ? 'res' : 'closed';
 }
 const catOk = x => CAT === 'All' || (x.category || 'Other') === CAT || x.category === ALLX;
-const priceChip = x => (x.price || 0) > 0 ? `<span class="chip c-paid">₹${esc(x.price)}</span>` : '<span class="chip c-free">FREE</span>';
+// access: 'free' = Free for all · 'pass' = Monthly Pass required (old mocks with a price also need the pass)
+function needsPass(x) { return x.access === 'pass' || (x.access !== 'free' && (x.price || 0) > 0); }
+const locked = x => needsPass(x) && !passActive() && !UNL[x.id];
+const priceChip = x => needsPass(x) ? '<span class="chip c-pass">🎟 PASS</span>' : '<span class="chip c-free">FREE</span>';
+// Rank display: 1–100 → "#56", above 100 → "100+". Total only when admin switches ON "Show total participants".
+const showN = R => !!(PUB.showTotal && R && R.n != null);
+const rankTxt = (r, R) => r == null ? '–' : (showN(R) || r <= 100) ? '#' + r : '100+';
+function regLabel(n) { n = Math.floor(n || 0); if (n >= 1000) { const k = Math.floor(n / 100) / 10; return (k % 1 ? k.toFixed(1) : String(k)) + 'K+'; } return (n >= 20 ? Math.floor(n / 10) * 10 : n) + '+'; }
 const catChip = x => `<span class="chip c-cat">${esc(x.category === ALLX ? 'All Exams' : (x.category || 'Other'))}</span>`;
 
 function examCard(x, big) {
-  const s = st(x), t = now(), paid = (x.price || 0) > 0 && !UNL[x.id];
+  const s = st(x), t = now(), paid = locked(x);
   const lab = { up: '<span class="chip">UPCOMING</span>', live: '<span class="chip c-live"><span class="dot"></span>LIVE</span>', resume: '<span class="chip c-live"><span class="dot"></span>IN PROGRESS</span>',
     subm: '<span class="chip c-done">SUBMITTED</span>', res: '<span class="chip c-done">RESULT OUT</span>', closed: '<span class="chip">CLOSED</span>' }[s];
   let cd = '', act = '';
@@ -469,8 +487,8 @@ function examCard(x, big) {
       : s === 'live' ? `<button class="btn block" data-start="${esc(x.id)}" type="button">Login to Start →</button>`
       : `<button class="btn gh block" data-login="1" type="button">Login to see result</button>`;
   } else if (BLOCKED && (s === 'live' || s === 'resume')) act = '<div class="msg err" style="margin:0">Your account is blocked. Contact IQ FOR U.</div>';
-  else if (s === 'up') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">🔓 Unlock for ₹${esc(x.price)}</button>` : `<button class="btn gh block" type="button" disabled>🔔 Opens ${esc(fmtDT(x.startAt))}</button>`;
-  else if (s === 'live') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">🔓 Unlock for ₹${esc(x.price)}</button>` : `<button class="btn block" data-start="${esc(x.id)}" type="button">Start Test →</button>`;
+  else if (s === 'up') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">🎟 Monthly Pass required</button>` : `<button class="btn gh block" type="button" disabled>🔔 Opens ${esc(fmtDT(x.startAt))}</button>`;
+  else if (s === 'live') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">🎟 Monthly Pass required</button>` : `<button class="btn block" data-start="${esc(x.id)}" type="button">Start Test →</button>`;
   else if (s === 'resume') act = `<button class="btn block" data-start="${esc(x.id)}" type="button">↩ Resume Test</button>`;
   else if (s === 'subm') act = `<div class="msg info" style="margin:0">✅ Submitted · Result: <b>${esc(resWhen(x))}</b></div>`;
   else if (s === 'res') act = `<button class="btn dk block" data-res="${esc(x.id)}" type="button">📊 ${ATT[x.id] ? 'View my result' : 'Merit list & answer key'}</button>`;
@@ -489,9 +507,10 @@ function bindCards(root) {
 }
 function payInfo(id) {
   const x = EXAMS.find(e => e.id === id);
-  sheet(`<h3 style="margin:0 0 6px">🔓 ${esc(x.title)}</h3><p>This is a paid mock (₹${esc(x.price)}).</p>
-    <div class="note">💳 Online payment is <b>coming soon</b>. Follow ${IG_HANDLE ? '@' + esc(IG_HANDLE) : 'us'} on Instagram for updates.</div>
-    <button class="btn gh block" style="margin-top:12px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
+  sheet(`<h3 style="margin:0 0 6px">🎟 ${esc(x ? x.title : 'Monthly Pass')}</h3><p>This mock is for <b>Monthly Pass</b> students.${PASS && !passActive() ? ' Your pass expired on <b>' + esc(fmtD(PASS.until)) + '</b>.' : ''}</p>
+    <div class="note">💳 Online Monthly Pass is <b>coming soon</b>. Meanwhile write our <b>FREE mocks</b> and follow ${IG_HANDLE ? '@' + esc(IG_HANDLE) : 'us'} on Instagram for updates.</div>
+    <button class="btn block" style="margin-top:12px" type="button" onclick="this.closest('.ov').remove();window.__freeTab&&window.__freeTab()">🆓 See Free Mocks</button>
+    <button class="btn gh block" style="margin-top:8px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
 }
 function chipsHtml() {
   return `<div class="chips" id="cats">${['All', ...CATS.filter(c => c !== ALLX)].map(c => `<button type="button" class="${c === CAT ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
@@ -520,6 +539,7 @@ function renderHome() {
         <div class="r"><b style="font-size:13px">${live[0] ? 'Closes in ' + leftTxt(ms(hero.endAt) - now()) : 'Opens ' + esc(fmtDT(hero.startAt))}</b>
         ${live[0] ? `<button class="btn dk sm" type="button" id="hs">${st(hero) === 'resume' ? '↩ Resume' : 'Start Test →'}</button>` : `<button class="btn dk sm" type="button" id="hs">View →</button>`}</div></div>`
       : `<div class="livec"><h3 style="margin-top:0">No live test right now</h3><div class="m">Next mock will be announced on Instagram${IG_HANDLE ? ' @' + esc(IG_HANDLE) : ''}.</div></div>`}
+    ${PUB.showRegCount && (PUB.regCount || 0) >= (PUB.regMin ?? 100) ? `<div class="regb">👥 <b>${regLabel(PUB.regCount)}</b> students registered</div>` : ''}
     ${USER ? '<div class="stats" id="st"><div><b>–</b><small>Tests taken</small></div><div><b>–</b><small>Best score</small></div><div><b>–</b><small>Best rank</small></div></div>'
       : `<div class="newc"><div class="e">🎓</div><div style="flex:1"><b>New here?</b><div class="small mut">Register free to write tests &amp; get your rank</div></div><button class="btn dk sm" id="hr" type="button">Register</button></div>`}
     <div class="sec">Choose exam</div>${chipsHtml()}
@@ -532,7 +552,7 @@ function renderHome() {
       <button class="tl" type="button" data-soon="Current Affairs"><span>📰</span>Current Affairs<em>SOON</em></button>
       <button class="tl" type="button" data-soon="Study Notes"><span>📒</span>Study Notes<em>SOON</em></button>
       ${IG ? `<a class="tl" href="${esc(IG)}" target="_blank" rel="noopener"><span>📷</span>Instagram</a>` : '<button class="tl" type="button" data-soon="Instagram"><span>📷</span>Instagram</button>'}
-      <button class="tl" type="button" data-go="page/contact"><span>💬</span>Help</button>
+      <button class="tl" type="button" id="hfree"><span>🆓</span>Free Mocks</button>
     </div>
     <div class="sec">Upcoming <button type="button" data-go="tests">See all ›</button></div>
     <div class="ulist">${up.slice(0, 3).map(x => `<div class="it"><div class="e">📅</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(x.title)}</b><div class="tiny mut">${esc(fmtDT(x.startAt))} · ${x.count} Q · ${esc(x.category || 'Other')}</div></div>${priceChip(x)}</div>`).join('') || '<div class="tiny mut">No upcoming tests in this category yet.</div>'}</div>
@@ -541,7 +561,8 @@ function renderHome() {
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon! 🚀', 'info'));
   if ($('#hr')) $('#hr').onclick = () => go('register');
-  if ($('#hs')) $('#hs').onclick = () => { const s = st(hero); if (s === 'live' || s === 'resume') { if ((hero.price || 0) > 0 && !UNL[hero.id] && s === 'live') return payInfo(hero.id); go('start/' + hero.id); } else go('tests'); };
+  $('#hfree').onclick = freeTab;
+  if ($('#hs')) $('#hs').onclick = () => { const s = st(hero); if (s === 'live' || s === 'resume') { if (locked(hero) && s === 'live') return payInfo(hero.id); go('start/' + hero.id); } else go('tests'); };
 }
 const maskMail = m => { const [a, b] = String(m || '').split('@'); return b ? a.slice(0, 2) + '•••••@' + b : m; };
 async function homeStats() {
@@ -552,7 +573,7 @@ async function homeStats() {
     const m = MYR[x.id]; if (!m) return;
     const p = x.total ? m.score / x.total * 100 : 0; if (best === null || p > best) best = p; if (rank === null || m.rank < rank) rank = m.rank;
   }));
-  if ($('#st')) $('#st').innerHTML = `<div><b>${done.length}</b><small>Tests taken</small></div><div><b>${best === null ? '–' : Math.round(best) + '%'}</b><small>Best score</small></div><div><b>${rank === null ? '–' : '#' + rank}</b><small>Best rank</small></div>`;
+  if ($('#st')) $('#st').innerHTML = `<div><b>${done.length}</b><small>Tests taken</small></div><div><b>${best === null ? '–' : Math.round(best) + '%'}</b><small>Best score</small></div><div><b>${rank === null ? '–' : rankTxt(rank)}</b><small>Best rank</small></div>`;
 }
 
 // ================================================================ TESTS
@@ -566,15 +587,19 @@ function renderTests() {
   if (!$('#ts')) return;
   const L = EXAMS.filter(catOk);
   const G = { live: L.filter(x => ['live', 'resume'].includes(st(x))), up: L.filter(x => st(x) === 'up'), done: L.filter(x => ['subm', 'res', 'closed'].includes(st(x))).reverse() };
+  const F0 = L.filter(x => !needsPass(x)), ord = { live: 0, resume: 0, up: 1, subm: 2, res: 2, closed: 2 };
+  G.free = F0.filter(x => ord[st(x)] < 2).concat(F0.filter(x => ord[st(x)] === 2).reverse());
   if (!TTAB) TTAB = G.live.length ? 'live' : G.up.length ? 'up' : 'done';
-  const names = { live: 'Live', up: 'Upcoming', done: 'Completed' };
+  const names = { live: 'Live', up: 'Upcoming', done: 'Completed', free: '🆓 Free' };
   $('#ts').innerHTML = `<div class="tabs">${Object.keys(G).map(k => `<button type="button" data-tt="${k}" class="${k === TTAB ? 'on' : ''}">${names[k]} (${G[k].length})</button>`).join('')}</div>
     ${chipsHtml()}<div style="height:10px"></div>
-    ${G[TTAB].map(x => examCard(x)).join('') || `<div class="empty"><div class="ic">📭</div><b>No ${names[TTAB].toLowerCase()} tests${CAT !== 'All' ? ' in ' + esc(CAT) : ''}</b><br><span class="small">Follow us on Instagram for the next mock.</span></div>`}
+    ${G[TTAB].map(x => examCard(x)).join('') || `<div class="empty"><div class="ic">📭</div><b>No ${TTAB === 'free' ? 'free' : names[TTAB].toLowerCase()} tests${CAT !== 'All' ? ' in ' + esc(CAT) : ''}</b><br><span class="small">Follow us on Instagram for the next mock.</span></div>`}
     ${footHtml()}`;
   $$('[data-tt]').forEach(b => b.onclick = () => { TTAB = b.dataset.tt; renderTests(); });
   bindChips(renderTests); bindCards($('#ts'));
 }
+function freeTab() { TTAB = 'free'; $$('.ov').forEach(o => o.remove()); go('tests'); }
+window.__freeTab = freeTab;
 setInterval(() => {
   $$('[data-to]').forEach(el => { el.innerHTML = cdHtml(+el.dataset.to - now()); });
   if (X && !X.preview) return;
@@ -652,7 +677,7 @@ function registerView() {
     REGISTERING = true;
     try {
       const cr = await createUserWithEmailAndPassword(auth, email, p);
-      const d = { name, mobile, state, email, updatedAt: serverTimestamp() };
+      const d = { name, mobile, state, email, updatedAt: serverTimestamp(), createdAt: serverTimestamp() };
       try { await setDoc(doc(db, 'users', cr.user.uid), d); PROFILE = d; } catch (e) { PROFILE = null; }
       try { await sendEmailVerification(cr.user); } catch (e) {}
       USER = cr.user; REGISTERING = false; AUTH_READY = true;
@@ -692,7 +717,13 @@ function bindProfileForm(after) {
     if (!/^[6-9]\d{9}$/.test(mobile)) return err('Enter a valid 10-digit mobile number.');
     if (!state) return err('Select your state.');
     $('#pb').disabled = true;
-    try { const d = { name, mobile, state, email: (USER.email || '').toLowerCase(), updatedAt: serverTimestamp() }; await setDoc(doc(db, 'users', USER.uid), d); PROFILE = d; toast('Saved ✓', 'ok'); after(); }
+    try {
+      const ref = doc(db, 'users', USER.uid), cur = await getDoc(ref);
+      const d = { name, mobile, state, email: (USER.email || '').toLowerCase(), updatedAt: serverTimestamp() };
+      // registration time: new profile → now; existing profile → keep the same (never changes)
+      if (!cur.exists()) d.createdAt = serverTimestamp(); else if (cur.data().createdAt) d.createdAt = cur.data().createdAt;
+      await setDoc(ref, d); PROFILE = d; toast('Saved ✓', 'ok'); after();
+    }
     catch (e) { $('#pb').disabled = false; err(esc(errText(e))); }
   };
 }
@@ -712,6 +743,7 @@ function profile() {
     <div class="wrapw fade">
       ${pwd && !USER.emailVerified ? `<div class="banner v"><b>📧 Verify your Gmail (optional)</b><br><span class="small">We sent a link to <b>${esc(maskMail(USER.email))}</b>. Tapping it once helps you reset your password if you forget it. Tests work without it.</span>
         <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn gh sm" id="vr" type="button">Resend link</button><button class="btn gh sm" id="vd" type="button">I have verified ✓</button><button class="btn gh sm" id="vw" type="button">Wrong Gmail?</button></div></div>` : ''}
+      ${passCard()}
       <div class="menu">
         <button type="button" data-go="edit">✏️ Edit profile<span class="ar">›</span></button>
         ${pwd ? '<button type="button" data-go="password">🔑 Change password<span class="ar">›</span></button>' : ''}
@@ -727,10 +759,11 @@ function profile() {
         <button type="button" data-go="page/privacy">🔒 Privacy Policy<span class="ar">›</span></button>
       </div>
       <button class="btn red block" id="lo" type="button">Logout</button>
-      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v2.0 · <a href="#/admin">Admin login</a></div>
+      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v3.0 · <a href="#/admin">Admin login</a></div>
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#pp').onclick = () => toast('Paid mocks & purchases – coming soon.', 'info');
+  if ($('#pfree')) $('#pfree').onclick = freeTab;
   if ($('#vr')) {
     $('#vr').onclick = async () => { try { await sendEmailVerification(USER); toast('Link sent again. Check Gmail (also Spam).', 'ok'); } catch (e) { toast(errText(e), 'err'); } };
     $('#vd').onclick = async () => { try { await USER.reload(); USER = auth.currentUser; if (USER.emailVerified) toast('Gmail verified ✓', 'ok'); else toast('Not verified yet. Open the link in your Gmail first.', 'info'); profile(); } catch (e) { toast(errText(e), 'err'); } };
@@ -739,6 +772,10 @@ function profile() {
   // quietly refresh verified status (no extra Firebase reads)
   if (pwd && !USER.emailVerified) USER.reload().then(() => { if (auth.currentUser && auth.currentUser.emailVerified && location.hash === '#/profile') { USER = auth.currentUser; profile(); } }).catch(() => {});
   $('#lo').onclick = async () => { if (await confirmBox('<h3 style="margin:0">Logout?</h3>', 'Logout')) { await signOut(auth); go('home'); } };
+}
+function passCard() {
+  if (passActive()) return `<div class="passc on"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass · Active</b><div class="small">${PASS.until == null ? 'No expiry' : 'Valid till <b>' + esc(fmtD(PASS.until)) + '</b> (' + leftTxt(ms(PASS.until) - now()) + ' left)'}</div><div class="tiny" style="color:var(--ink2)">All 🎟 PASS mocks are open for you.</div></div></div>`;
+  return `<div class="passc off"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass</b>${PASS ? ` <span class="chip c-live">Expired ${esc(fmtD(PASS.until))}</span>` : ''}<div class="small mut">No active pass. Online pass – <b>coming soon</b>. 🆓 Free mocks are open for everyone.</div></div><button class="btn sm" type="button" id="pfree">Free →</button></div>`;
 }
 function editProfile() {
   topBack('Edit profile', 'profile');
@@ -804,7 +841,7 @@ async function instructions(id) {
   if (s === 'resume') return startExam(id);
   if (s !== 'live') { toast(s === 'up' ? 'This test is not open yet.' : 'This test is closed.', 'info'); return go('tests'); }
   if (BLOCKED) { toast('Your account is blocked.', 'err'); return go('home'); }
-  if ((x.price || 0) > 0 && !UNL[id]) return payInfo(id);
+  if (locked(x)) { go('tests'); return payInfo(id); }
   topBack('Instructions', 'tests');
   const secs = x.secs && x.secs.length ? x.secs : (x.sections || []).map(n => ({ name: n, count: null }));
   shell(`<div class="wrapw fade">
@@ -1017,15 +1054,15 @@ function feedback(x) {
 }
 
 // ================================================================ RESULTS
-let RS = { id: null, tab: 'score', R: null, M: null, filt: 'all', more: 100 };
+let RS = { id: null, tab: 'score', R: null, M: null, filt: 'all' };
 async function results(id) {
   topMain(); $('#topin').innerHTML = `<div class="ttl" style="font-size:18px">Results</div>`;
   shell(`<div class="wrapw fade" id="rs"><div class="card center mut">Loading…</div></div>`, 'results');
-  try { if (!EXAMS.length) await loadExams(); } catch (e) { $('#rs').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; return; }
+  try { if (!EXAMS.length) await loadExams(); await pubReady; } catch (e) { $('#rs').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; return; }
   const list = EXAMS.filter(x => now() > ms(x.startAt) && (ATT[x.id] || resOpen(x))).sort((a, b) => ms(b.startAt) - ms(a.startAt));
   if (!list.length) { $('#rs').innerHTML = `<div class="empty"><div class="ic">📊</div><b>No results yet</b><br><span class="small">Write a mock test — your score, rank and merit list will appear here.</span><br><br><button class="btn" type="button" onclick="location.hash='#/tests'">Go to Tests →</button></div>`; return; }
   if (!id || !list.find(x => x.id === id)) id = (list.find(x => ATT[x.id] && resOpen(x)) || list.find(resOpen) || list[0]).id;
-  if (RS.id !== id) RS = { id, tab: 'score', R: null, M: null, filt: 'all', more: 100 };
+  if (RS.id !== id) RS = { id, tab: 'score', R: null, M: null, filt: 'all' };
   const x = EXAMS.find(e => e.id === id);
   const sel = `<select class="inp" id="rsel" style="font-weight:700">${list.map(e => `<option value="${esc(e.id)}" ${e.id === id ? 'selected' : ''}>${esc(e.title)} · ${esc(fmtD(e.startAt))}</option>`).join('')}</select>`;
   const bind = () => { $('#rsel').onchange = e => go('results/' + e.target.value); };
@@ -1051,29 +1088,27 @@ function rTab(x) {
   if (M && M.acc == null) M.acc = M.cor + M.wrong ? Math.round(M.cor / (M.cor + M.wrong) * 1000) / 10 : 0;
   if (!R.merit) R.merit = (R.top || []).map(t => ({ r: t.rank, n: t.name, st: t.state || t.district || '', s: t.score, a: '–' }));
   if (RS.tab === 'score') {
-    if (!M) { el.innerHTML = `<div class="msg info">You did not attempt this test. See the <b>Merit list</b> and <b>Answer review</b> tabs for the answer key.</div><p class="small mut">Participants ${R.n} · Highest ${R.high} · Average ${R.avg}</p>`; return; }
-    const pct = R.total ? Math.max(0, Math.min(1, M.score / R.total)) : 0, C = 2 * Math.PI * 42, perc = R.n > 0 ? r2((R.n - M.rank + 1) / R.n * 100) : 0;
+    const info = `<p class="small mut">${showN(R) ? 'Participants ' + R.n + ' · ' : ''}Highest ${R.high} · Average ${R.avg}</p>`;
+    if (!M) { el.innerHTML = `<div class="msg info">You did not attempt this test. See the <b>Merit list</b> and <b>Answer review</b> tabs for the answer key.</div>${info}`; return; }
+    const pct = R.total ? Math.max(0, Math.min(1, M.score / R.total)) : 0, C = 2 * Math.PI * 42;
     el.innerHTML = `<div class="score"><svg width="128" height="128" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" stroke="#2A2E37" stroke-width="10" fill="none"/><circle cx="50" cy="50" r="42" stroke="#FFE51F" stroke-width="10" fill="none" stroke-dasharray="${r2(C * pct)} ${r2(C)}" stroke-linecap="round" transform="rotate(-90 50 50)"/><text x="50" y="50" text-anchor="middle" fill="#fff" font-size="18" font-weight="900" font-family="Inter,sans-serif">${M.score}</text><text x="50" y="64" text-anchor="middle" fill="#BFC3CC" font-size="8" font-family="Inter,sans-serif">out of ${R.total}</text></svg>
-        <div class="r3"><div><b class="y">#${M.rank}</b>Rank / ${R.n}</div><div><b>${perc}</b>Percentile</div><div><b>${M.acc}%</b>Accuracy</div></div></div>
+        <div class="r3"><div><b class="y">${rankTxt(M.rank, R)}</b>Rank${showN(R) ? ' / ' + R.n : ''}</div><div><b>${M.acc}%</b>Accuracy</div><div><b>${M.mins != null ? M.mins + 'm' : '–'}</b>Time taken</div></div></div>
       <div class="stats"><div><b style="color:var(--ok)">${M.cor}</b><small>Correct</small></div><div><b style="color:var(--no)">${M.wrong}</b><small>Wrong</small></div><div><b>${M.skip}</b><small>Skipped</small></div></div>
       ${M.bonus ? `<div class="msg ok">🎁 Bonus +${M.bonus} for cancelled question(s) included.</div>` : ''}
       ${M.secs && Object.keys(M.secs).length > 1 ? `<div class="sec">Section-wise</div><div class="card">${(R.sections || Object.keys(M.secs)).filter(k => M.secs[k]).map(k => { const o = M.secs[k], w = o.total ? Math.max(0, Math.min(100, o.score / o.total * 100)) : 0; return `<div class="sbar"><div class="t"><b>${esc(k)}</b><span>${o.score} / ${o.total} <span class="mut">· ✓${o.c} ✗${o.w}</span></span></div><div class="tr"><i style="width:${w}%"></i></div></div>`; }).join('')}</div>` : ''}
-      <p class="small mut">Participants ${R.n} · Highest ${R.high} · Average ${R.avg}</p>
+      ${info}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn dk" id="dl" type="button">📄 Response Sheet</button><button class="btn" id="sh" type="button">📸 Share score</button></div>
       <div class="tiny mut center" style="margin-top:6px">Response sheet opens the print window — choose <b>Save as PDF</b>.</div>`;
     $('#dl').onclick = () => responseSheet(x); $('#sh').onclick = () => shareScore(x);
   } else if (RS.tab === 'merit') {
-    const L = R.merit || [];
-    let meIdx = -1; if (M) meIdx = L.findIndex(e => e.r === M.rank && e.n === PROFILE.name);
-    const rows = L.slice(0, RS.more);
-    el.innerHTML = `${M ? `<div class="mine"><div class="rk">#${M.rank}</div><div class="small"><b>Your rank</b> out of ${R.n}<br>Score ${M.score} · Accuracy ${M.acc}%</div></div>` : ''}
-      <div class="sec" style="margin-top:4px">🏆 Merit list <span class="tiny mut">${R.n} students</span></div>
+    const TOP = 50, L = (R.merit || []).slice(0, TOP);   // only the Top 50 are shown
+    const meIdx = M ? L.findIndex(e => e.r === M.rank && e.n === PROFILE.name) : -1;
+    el.innerHTML = `${M ? `<div class="mine"><div class="rk">${rankTxt(M.rank, R)}</div><div class="small"><b>Your rank</b>${showN(R) ? ' out of ' + R.n : ''}${meIdx < 0 ? ' · not in Top ' + TOP + ' yet – keep practising! 💪' : ' · you are in the Top ' + TOP + ' 🎉'}<br>Score ${M.score} · Accuracy ${M.acc}%</div></div>` : ''}
+      <div class="sec" style="margin-top:4px">🏆 Top ${TOP} merit list${showN(R) ? ` <span class="tiny mut">${R.n} students</span>` : ''}</div>
       <table class="mt"><tr><th>Rank</th><th>Name</th><th>State</th><th class="n">Score</th><th class="n">Acc.</th></tr>
-      ${rows.map((e, i) => `<tr class="${i === meIdx ? 'me' : ''}"><td>${e.r <= 3 ? ['🥇', '🥈', '🥉'][e.r - 1] + ' ' : ''}${e.r}</td><td>${esc(e.n)}</td><td>${esc(e.st || '')}</td><td class="n">${e.s}</td><td class="n">${e.a === '–' ? '–' : e.a + '%'}</td></tr>`).join('')}
-      ${meIdx >= RS.more ? `<tr><td colspan="5" class="center mut">• • •</td></tr><tr class="me"><td>${L[meIdx].r}</td><td>${esc(L[meIdx].n)} (You)</td><td>${esc(L[meIdx].st || '')}</td><td class="n">${L[meIdx].s}</td><td class="n">${L[meIdx].a}%</td></tr>` : ''}</table>
-      ${L.length > RS.more ? `<button class="btn gh block" id="mm" type="button" style="margin-top:10px">Show more (${L.length - RS.more} more)</button>` : ''}
+      ${L.map((e, i) => `<tr class="${i === meIdx ? 'me' : ''}"><td>${e.r <= 3 ? ['🥇', '🥈', '🥉'][e.r - 1] + ' ' : ''}${e.r}</td><td>${esc(e.n)}${i === meIdx ? ' (You)' : ''}</td><td>${esc(e.st || '')}</td><td class="n">${e.s}</td><td class="n">${e.a === '–' ? '–' : e.a + '%'}</td></tr>`).join('')}
+      ${M && meIdx < 0 ? `<tr><td colspan="5" class="center mut">• • •</td></tr><tr class="me"><td>${rankTxt(M.rank, R)}</td><td>${esc(PROFILE.name)} (You)</td><td>${esc(PROFILE.state || '')}</td><td class="n">${M.score}</td><td class="n">${M.acc}%</td></tr>` : ''}</table>
       <div class="tiny mut" style="margin-top:8px">Ranking: higher <b>score</b> first. Same score → higher <b>accuracy</b> first.</div>`;
-    if ($('#mm')) $('#mm').onclick = () => { RS.more += 200; rTab(x); };
   } else {
     el.innerHTML = '<div class="card center mut">Loading questions…</div>';
     getPaper(x.id).then(P => {
@@ -1098,7 +1133,7 @@ async function responseSheet(x) {
     <table class="det" style="margin:8px 0"><tr><td style="color:#666">Name</td><td><b>${esc(PROFILE.name)}</b></td><td style="color:#666">State</td><td><b>${esc(PROFILE.state)}</b></td></tr>
       <tr><td style="color:#666">Exam</td><td><b>${esc(x.title)}</b></td><td style="color:#666">Date</td><td><b>${esc(fmtD(att.startedAt || x.startAt))}</b></td></tr>
       <tr><td style="color:#666">Category</td><td><b>${esc(x.category || '')}</b></td><td style="color:#666">Time taken</td><td><b>${M.mins != null ? M.mins + ' min' : '–'}</b></td></tr></table>
-    <div class="cards"><div class="k"><b>${M.score}</b>Score / ${R.total}</div><div><b>#${M.rank}</b>Rank / ${R.n}</div><div><b>${M.acc}%</b>Accuracy</div><div><b>${M.cor} / ${M.wrong} / ${M.skip}</b>Correct / Wrong / Skipped</div></div>
+    <div class="cards"><div class="k"><b>${M.score}</b>Score / ${R.total}</div><div><b>${rankTxt(M.rank, R)}</b>Rank${showN(R) ? ' / ' + R.n : ''}</div><div><b>${M.acc}%</b>Accuracy</div><div><b>${M.cor} / ${M.wrong} / ${M.skip}</b>Correct / Wrong / Skipped</div></div>
     ${M.secs ? `<table class="qt2" style="margin-bottom:8px"><tr><th>Section</th><th>Correct</th><th>Wrong</th><th>Score</th></tr>${Object.keys(M.secs).map(k => `<tr><td>${esc(k)}</td><td>${M.secs[k].c}</td><td>${M.secs[k].w}</td><td>${M.secs[k].score} / ${M.secs[k].total}</td></tr>`).join('')}</table>` : ''}
     <table class="qt2"><tr><th style="width:28px">Q</th><th>Question</th><th style="width:44px">Yours</th><th style="width:50px">Correct</th><th style="width:34px">✓/✗</th></tr>
     ${P.map((q, i) => { const k = key[q.id], u = my[q.id], c = can.includes(q.id); const mk = c ? '<span>Bonus</span>' : !u ? '–' : u === k ? '<span class="g">✓</span>' : '<span class="r">✗</span>';
@@ -1117,14 +1152,14 @@ async function shareScore(x) {
   g.textAlign = 'center'; g.fillStyle = '#FFE51F'; g.font = '900 54px Inter, sans-serif'; g.fillText('MY SCORE', 540, 470);
   g.fillStyle = '#fff'; g.font = '900 170px Inter, sans-serif'; g.fillText(String(M.score), 540, 660);
   g.fillStyle = '#BFC3CC'; g.font = '600 44px Inter, sans-serif'; g.fillText('out of ' + R.total, 540, 725);
-  g.fillStyle = '#FFE51F'; g.font = '900 86px Inter, sans-serif'; g.fillText('Rank #' + M.rank + ' / ' + R.n, 540, 860);
+  g.fillStyle = '#FFE51F'; g.font = '900 86px Inter, sans-serif'; g.fillText('Rank ' + rankTxt(M.rank, R) + (showN(R) ? ' / ' + R.n : ''), 540, 860);
   g.fillStyle = '#fff'; g.font = '700 42px Inter, sans-serif'; g.fillText('Accuracy ' + M.acc + '%', 540, 940);
   g.fillStyle = '#BFC3CC'; g.font = '600 36px Inter, sans-serif'; g.fillText(x.title.length > 44 ? x.title.slice(0, 43) + '…' : x.title, 540, 1020);
   g.fillStyle = '#111318'; g.font = '900 50px Inter, sans-serif'; g.fillText(NAME + ' · ' + TAG, 540, 1170);
   g.font = '700 40px Inter, sans-serif'; g.fillText((IG_HANDLE ? '@' + IG_HANDLE + ' · ' : '') + location.host, 540, 1240);
   c.toBlob(async b => {
     const f = new File([b], 'my-score.png', { type: 'image/png' });
-    try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'My score', text: `I scored ${M.score}/${R.total} (Rank #${M.rank}) in ${x.title} on ${NAME}! ${location.origin + location.pathname}` }); return; } } catch (e) { if (e.name === 'AbortError') return; }
+    try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'My score', text: `I scored ${M.score}/${R.total} (Rank ${rankTxt(M.rank, R)}) in ${x.title} on ${NAME}! ${location.origin + location.pathname}` }); return; } } catch (e) { if (e.name === 'AbortError') return; }
     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'IQFORU-score.png'; a.click(); toast('Score image downloaded. Share it on your Instagram story! 📸', 'ok');
   }, 'image/png');
 }
@@ -1134,7 +1169,7 @@ async function openAdmin() {
   shell('<div class="wrapw"><div class="card center mut">Opening admin…</div></div>', null);
   topBack('Admin', 'home');
   try {
-    const m = await import('./admin.js?v=2');
+    const m = await import('./admin.js?v=3');
     m.openAdmin({ app, auth, db, $, $$, esc, ms, fmtDT, fmtD, r2, toast, sheet, confirmBox, errText, runExam, stopExam, go, CATS, NAME,
       getUser: () => USER, setPub: p => { PUB = p; }, getPub: () => PUB });
   } catch (e) { $('#app').innerHTML = `<div class="wrapw"><div class="msg err">Could not open admin: ${esc(e.message || e)}<br>Is <b>admin.js</b> uploaded to GitHub?</div></div>`; }

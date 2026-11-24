@@ -5,15 +5,19 @@
 import { GoogleAuthProvider, signInWithPopup, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, writeBatch,
-         serverTimestamp, Timestamp, getCountFromServer }
+         serverTimestamp, Timestamp, getCountFromServer, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 let C, db, auth, $, $$, esc, ms, fmtDT, fmtD, r2, toast;
 let EX = [];
 // ---- phone Back button: every admin screen gets its own history step
-let POP = false, REPL = false;
+let POP = false, REPL = false, QE = null;
 const VIEWS = {};
+// ---- live listeners (auto-update screens). Stopped whenever the admin moves to another screen.
+let UNSUB = [];
+function stopLive() { UNSUB.forEach(f => { try { f(); } catch (e) {} }); UNSUB = []; }
 function mark(name, args) {
+  stopLive();
   if (POP) return;
   const st = { adm: name, args: args || [] };
   try { if (REPL || !(history.state && history.state.adm)) history.replaceState(st, '', '#/admin'); else history.pushState(st, '', '#/admin'); } catch (e) {}
@@ -21,7 +25,8 @@ function mark(name, args) {
 }
 const replace = f => { REPL = true; f(); };
 window.addEventListener('popstate', e => {
-  if (!C || !e.state || !e.state.adm || !location.hash.startsWith('#/admin')) return;
+  if (QE) { const q = QE; QE = null; q.close(); return; }   // Back button closes the question editor (changes are kept)
+  if (!C || !e.state || !e.state.adm || !location.hash.startsWith('#/admin')) { stopLive(); return; }
   try { C.stopExam(); } catch (er) {}
   document.querySelectorAll('.ov').forEach(o => o.remove());
   let ok = false; try { ok = !!sessionStorage.getItem(SESS) && !!auth.currentUser; } catch (er) {}
@@ -59,7 +64,27 @@ function css() {
   .bar2{height:10px;border-radius:5px;overflow:hidden;display:flex;background:#EEF0F3;margin-top:5px}
   .bar2 i{display:block;height:100%}
   .sw{display:flex;align-items:center;gap:10px;font-weight:700;margin-top:12px}
-  .sw input{width:22px;height:22px}`;
+  .sw input{width:22px;height:22px}
+  .ast.six{grid-template-columns:repeat(3,1fr)} .ast .up{color:var(--ok)}
+  .at{grid-template-columns:repeat(3,1fr)} @media(min-width:700px){.at{grid-template-columns:repeat(9,1fr)}}
+  .livepill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:#15803D;background:var(--ok2);border-radius:20px;padding:2px 9px}
+  .livepill i{width:7px;height:7px;border-radius:50%;background:#16A34A;animation:pl 1.3s infinite}
+  .impb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 8px} @media(max-width:520px){.impb{grid-template-columns:1fr 1fr}}
+  .qe{align-items:stretch!important;justify-content:stretch!important;background:var(--bg)!important;z-index:70!important;overflow:auto;display:block!important}
+  .qe .hd{position:sticky;top:0;z-index:2;background:var(--ink);color:#fff;padding:9px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .qe .hd b{color:var(--y)}
+  .qe .bd{max-width:900px;margin:auto;padding:10px 12px 80px}
+  .qc{background:#fff;border:1.5px solid var(--line);border-radius:13px;padding:10px;margin-bottom:10px}
+  .qc.bad{border-color:var(--no);background:#FFF5F5}
+  .qc .r1{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .qc .r1 b{font-size:14px;min-width:34px}
+  .qc input,.qc textarea,.qc select{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;font-size:14px;background:#fff;outline:0}
+  .qc textarea{min-height:54px;resize:vertical;font-weight:600}
+  .qc .op4{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+  .qc .op4 label{display:flex;gap:5px;align-items:center;font-weight:800;font-size:13px}
+  .qc .op4 label.ok input{border-color:var(--ok);background:#F0FDF4}
+  .qc .pr{font-size:12px;color:var(--no);font-weight:700;margin-top:5px}
+  @media(max-width:520px){.qc .op4{grid-template-columns:1fr}}`;
   document.head.appendChild(s);
 }
 function top(title, back, right) {
@@ -159,6 +184,10 @@ function stChip(x) {
   if (resOpen(x)) return x.calcAt ? '<span class="chip c-done">RESULT OUT</span>' : '<span class="chip c-live">RESULT TIME – NOT CALCULATED</span>';
   return x.calcAt ? '<span class="chip c-paid">CALCULATED · opens at result time</span>' : '<span class="chip c-paid">CLOSED – calculate result</span>';
 }
+const needsPass = x => x.access === 'pass' || (x.access !== 'free' && (x.price || 0) > 0);
+const accChip = x => needsPass(x) ? '<span class="chip c-pass">🎟 PASS</span>' : '<span class="chip c-free">FREE</span>';
+const dayStart = d => { const t = new Date(d || Date.now()); t.setHours(0, 0, 0, 0); return t; };
+const fmtJ = t => t ? new Date(ms(t)).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '—';
 async function dash() {
   mark('dash');
   top('Admin Panel', null, '<button class="btn gh sm" id="sv" type="button" style="box-shadow:none">Student view</button><button class="btn gh sm" id="lo" type="button" style="box-shadow:none">Logout</button>');
@@ -166,32 +195,58 @@ async function dash() {
   loading('Loading mocks…');
   try { await loadEx(); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
   const live = EX.filter(x => x.published && Date.now() >= ms(x.startAt) && Date.now() <= ms(x.endAt));
-  const latest = EX.find(x => Date.now() >= ms(x.startAt));
-  page(`<div class="ast" id="ast"><div><b>…</b><small>Students</small></div><div><b>${live.length}</b><small>Live mocks</small></div><div><b>…</b><small>Attempts${latest ? ' (latest)' : ''}</small></div></div>
+  const latest = live[0] || EX.find(x => Date.now() >= ms(x.startAt));
+  const box = (id, l) => `<div id="${id}"><b>…</b><small>${l}</small></div>`;
+  page(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b class="small">📈 Registrations</b><span class="livepill"><i></i>auto-updates every minute</span></div>
+    <div class="ast six">${box('k1', 'Students')}${box('k2', 'New today')}${box('k3', 'Last 7 days')}</div>
+    <div class="ast six" style="margin-top:8px"><div><b>${live.length}</b><small>Live mocks</small></div>${box('k4', 'Attempts' + (latest ? ' (latest)' : ''))}${box('k5', 'Attempted %')}</div>
+    ${latest ? `<div class="tiny mut" style="margin-top:4px">Latest mock: <b>${esc(latest.title)}</b> · <button class="link tiny" id="la" type="button">👥 Live attempts ›</button></div>` : ''}
     <div class="at">
       <button class="tl" type="button" data-a="new"><span>＋</span>New Mock</button>
       <button class="tl" type="button" data-a="students"><span>👥</span>Students</button>
+      <button class="tl" type="button" data-a="passes"><span>🎟</span>Passes</button>
       <button class="tl" type="button" data-a="feedback"><span>💬</span>Feedback</button>
       <button class="tl" type="button" data-a="analysis"><span>📊</span>Analysis</button>
       <button class="tl" type="button" data-a="reports"><span>🚩</span>Reports</button>
       <button class="tl" type="button" data-a="notice"><span>📢</span>Notice</button>
-      <button class="tl" type="button" data-a="payments"><span>💳</span>Payments<em>STEP 3</em></button>
+      <button class="tl" type="button" data-a="payments"><span>💳</span>Payments<em>SOON</em></button>
       <button class="tl" type="button" data-a="settings"><span>⚙️</span>Settings</button>
     </div>
     <div class="sec">My mocks (${EX.length})</div>
-    ${EX.map(x => `<div class="xc"><div style="display:flex;gap:5px;flex-wrap:wrap">${stChip(x)}<span class="chip c-cat">${esc(x.category || 'Other')}</span>${(x.price || 0) > 0 ? `<span class="chip c-paid">₹${esc(x.price)}</span>` : '<span class="chip c-free">FREE</span>'}</div>
+    ${EX.map(x => `<div class="xc"><div style="display:flex;gap:5px;flex-wrap:wrap">${stChip(x)}<span class="chip c-cat">${esc(x.category || 'Other')}</span>${accChip(x)}</div>
       <h3>${esc(x.title)}</h3><div class="meta"><span>🗓 ${esc(fmtDT(x.startAt))} → ${esc(fmtDT(x.endAt))}</span><span>${x.count} Q · ${x.duration} min · −${x.neg}</span><span>📅 Result: ${x.resultAt ? esc(fmtDT(x.resultAt)) : 'not set'}</span></div>
       <div class="acts"><button class="btn sm" type="button" data-res="${esc(x.id)}">🧮 Calculate &amp; Publish</button><button class="btn gh sm" type="button" data-res="${esc(x.id)}">🏆 Merit list · CSV</button>
         <button class="btn gh sm" type="button" data-edit="${esc(x.id)}">✏️ Edit</button><button class="btn gh sm" type="button" data-tools="${esc(x.id)}">🧰 Tools · Attempts</button></div></div>`).join('') || '<div class="card mut">No mocks yet. Tap <b>＋ New Mock</b>.</div>'}`);
-  $$('[data-a]').forEach(b => b.onclick = () => ({ new: () => editMock(null), students, feedback: () => pick('feedback'), analysis: () => pick('analysis'),
+  $$('[data-a]').forEach(b => b.onclick = () => ({ new: () => editMock(null), students, passes: passesView, feedback: () => pick('feedback'), analysis: () => pick('analysis'),
     reports: () => pick('reports'), notice, payments, settings })[b.dataset.a]());
   $$('[data-res]').forEach(b => b.onclick = () => resultsPage(b.dataset.res));
   $$('[data-edit]').forEach(b => b.onclick = () => editMock(b.dataset.edit));
   $$('[data-tools]').forEach(b => b.onclick = () => tools(b.dataset.tools));
-  try {
-    const [u, a] = await Promise.all([getCountFromServer(collection(db, 'users')), latest ? getCountFromServer(collection(db, 'attempts', latest.id, 'u')) : null]);
-    if ($('#ast')) { const d = $('#ast').children; d[0].innerHTML = `<b>${u.data().count.toLocaleString('en-IN')}</b><small>Students</small>`; d[2].innerHTML = `<b>${a ? a.data().count : 0}</b><small>Attempts${latest ? ' · ' + esc(latest.title.slice(0, 18)) : ''}</small>`; }
-  } catch (e) {}
+  if ($('#la')) $('#la').onclick = () => attempts(latest.id);
+  const set = (id, v, l) => { const el = $('#' + id); if (el) el.innerHTML = `<b>${v}</b><small>${l}</small>`; };
+  const refresh = async () => {
+    if (!$('#k1')) return;
+    try {
+      const users = collection(db, 'users'), wk = dayStart(); wk.setDate(wk.getDate() - 6);
+      const [u, t, w, a, s] = await Promise.all([getCountFromServer(users),
+        getCountFromServer(query(users, where('createdAt', '>=', Timestamp.fromDate(dayStart())))),
+        getCountFromServer(query(users, where('createdAt', '>=', Timestamp.fromDate(wk)))),
+        latest ? getCountFromServer(collection(db, 'attempts', latest.id, 'u')) : null,
+        latest ? getCountFromServer(query(collection(db, 'attempts', latest.id, 'u'), where('submitted', '==', true))) : null]);
+      const N = u.data().count, A = a ? a.data().count : 0, S = s ? s.data().count : 0;
+      set('k1', N.toLocaleString('en-IN'), 'Students');
+      set('k2', '<span class="up">+' + t.data().count + '</span>', 'New today');
+      set('k3', '<span class="up">+' + w.data().count + '</span>', 'Last 7 days');
+      set('k4', A + (A ? ` <span class="tiny mut">(${S} ✓)</span>` : ''), latest ? 'Started · ' + esc(latest.title.slice(0, 16)) : 'Attempts');
+      set('k5', N ? Math.round(A / N * 100) + '%' : '–', 'of students wrote it');
+      // keep the Home badge count fresh (written only when it changes)
+      const p = C.getPub() || {};
+      if (p.regCount !== N) { try { await savePub({ regCount: N }); } catch (e) {} }
+    } catch (e) {}
+  };
+  refresh();
+  const iv = setInterval(() => { if (!$('#k1')) return stopLive(); refresh(); }, 60000);
+  UNSUB.push(() => clearInterval(iv));
 }
 function pick(kind) {
   mark('pick', [kind]);
@@ -260,10 +315,14 @@ async function editMock(id, copy) {
     <label class="l" for="ca">Exam category</label><select class="inp" id="ca">${C.CATS.map(c => `<option ${(x ? x.category || 'Other' : C.CATS[0]) === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
     <div class="g2"><div><label class="l" for="sa">Opens</label><input class="inp" id="sa" type="datetime-local" value="${toLocal(sA)}"></div><div><label class="l" for="ea">Closes</label><input class="inp" id="ea" type="datetime-local" value="${toLocal(eA)}"></div></div>
     <div class="g3"><div><label class="l" for="du">Minutes</label><input class="inp" id="du" type="number" min="5" max="300" value="${x ? x.duration : 60}"></div><div><label class="l" for="mk">+ Mark</label><input class="inp" id="mk" type="number" step="0.25" min="0.25" value="${x ? x.mark : 1}"></div><div><label class="l" for="ng">− Neg</label><input class="inp" id="ng" type="number" step="0.05" min="0" value="${x ? x.neg : 0.25}"></div></div>
-    <div class="g2"><div><label class="l" for="ra">Result date &amp; time</label><input class="inp" id="ra" type="datetime-local" value="${toLocal(rA)}" style="background:var(--y2)"></div><div><label class="l" for="pr">Price ₹ (0 = Free)</label><input class="inp" id="pr" type="number" min="0" max="5000" step="1" value="${x ? x.price || 0 : 0}"></div></div>
-    <div class="tiny mut" style="margin-top:4px">Students can start any time between Opens and Closes; each gets the full minutes but the test always ends at Closes. Paid price works after Razorpay (Step 3) – keep 0 till then.</div>
+    <label class="l" for="ra">Result date &amp; time</label><input class="inp" id="ra" type="datetime-local" value="${toLocal(rA)}" style="background:var(--y2)">
+    <div><label class="l" for="ac">Who can write this mock?</label><select class="inp" id="ac" style="font-weight:700"><option value="free" ${x && needsPass(x) ? '' : 'selected'}>🆓 Free for all</option><option value="pass" ${x && needsPass(x) ? 'selected' : ''}>🎟 Monthly Pass required</option></select></div>
+    <div class="tiny mut" style="margin-top:4px">Students can start any time between Opens and Closes; each gets the full minutes but the test always ends at Closes. <b>Free</b> mocks also show in the students' <b>🆓 Free</b> tab. <b>Pass</b> mocks open only for students with a Monthly Pass (give it in Students → 🎁 Give Pass).</div>
     ${id ? `<label class="l" for="cx">Cancel questions (bonus +mark to everyone) – question numbers</label><input class="inp" id="cx" placeholder="Example: 23, 47" value="${esc(cancelled.map(q => q.replace('q', '')).join(', '))}">` : ''}
-    <label class="l" for="qs">Questions – copy from Excel &amp; paste (8 columns: Section | Topic | Question | A | B | C | D | Answer)</label>
+    <label class="l">Add questions</label>
+    <div class="impb"><button class="btn gh sm" type="button" id="ipdf">📄 Import PDF</button><button class="btn gh sm" type="button" id="ixl">📊 Import Excel</button><button class="btn gh sm" type="button" id="itx">📋 Paste text</button><button class="btn sm" type="button" id="ied">👁 Preview &amp; edit</button></div>
+    <input type="file" id="fpdf" accept="application/pdf,.pdf" class="hide"><input type="file" id="fxl" accept=".xlsx,.xls,.csv" class="hide">
+    <label class="l" for="qs">Questions (Excel format · 8 columns: Section | Topic | Question | A | B | C | D | Answer) – you can also copy from Excel &amp; paste here</label>
     <textarea class="inp tsv" id="qs" spellcheck="false" placeholder="Maths\tRatio\tThe ratio of ...\t10\t20\t30\t40\tB">${esc(tsv)}</textarea><div id="pv"></div>
     <label class="sw"><input type="checkbox" id="pb" ${x && x.published && !copy ? 'checked' : ''}> Published (students can see it)</label>
     <button class="btn dk block" id="sv" type="button" style="margin-top:14px">💾 Save Mock</button><div id="sm"></div></div>`);
@@ -275,6 +334,7 @@ async function editMock(id, copy) {
     return { qs, errs };
   };
   $('#qs').oninput = preview; preview();
+  importButtons(preview);
   // show every date in Indian format below the box (the box itself follows the computer's language setting)
   const IN = v => { const d = new Date(v); return isNaN(d) ? '' : '🇮🇳 ' + d.toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }); };
   ['#sa', '#ea', '#ra'].forEach(id => { const el = $(id), h = document.createElement('div'); h.className = 'tiny'; h.style.cssText = 'margin-top:4px;font-weight:700;color:var(--ink2)';
@@ -282,7 +342,7 @@ async function editMock(id, copy) {
   $('#sv').onclick = async () => {
     const { qs, errs } = preview(), m = $('#sm');
     const title = $('#ti').value.trim(), sa = new Date($('#sa').value), ea = new Date($('#ea').value), ra = new Date($('#ra').value);
-    const duration = parseInt($('#du').value, 10), mark = Number($('#mk').value), neg = Number($('#ng').value), price = Math.max(0, Math.round(Number($('#pr').value) || 0));
+    const duration = parseInt($('#du').value, 10), mark = Number($('#mk').value), neg = Number($('#ng').value), access = $('#ac').value === 'pass' ? 'pass' : 'free', price = 0;
     if (!title) return msg(m, 'Enter a title.');
     if (isNaN(sa) || isNaN(ea) || ea <= sa) return msg(m, 'Closes must be after Opens.');
     if (isNaN(ra)) return msg(m, 'Set the result date & time.');
@@ -290,7 +350,6 @@ async function editMock(id, copy) {
     if (!(duration >= 5)) return msg(m, 'Minutes must be at least 5.');
     if (!(mark > 0) || neg < 0) return msg(m, 'Check + Mark and − Neg.');
     if (!qs.length || errs.length) return msg(m, 'Fix the questions first (see the red box).');
-    if (price > 0 && !confirm('Price is more than 0. Online payment comes in Step 3 – until then students cannot unlock this mock (you can unlock manually). Continue?')) return;
     if (id && Date.now() >= ms(x.startAt) && !confirm('This mock has already started. Changing questions now can confuse students. Save anyway?')) return;
     const eid = id || 'mock-' + sa.toISOString().slice(0, 10) + '-' + Math.random().toString(36).slice(2, 6);
     const secs = [], cnt = {}; qs.forEach(q => { if (!secs.includes(q.sec)) secs.push(q.sec); cnt[q.sec] = (cnt[q.sec] || 0) + 1; });
@@ -302,7 +361,7 @@ async function editMock(id, copy) {
     try {
       const b = writeBatch(db);
       b.set(doc(db, 'exams', eid), { title, desc: $('#de').value.trim(), category: $('#ca').value, startAt: Timestamp.fromDate(sa), endAt: Timestamp.fromDate(ea), resultAt: Timestamp.fromDate(ra),
-        duration, mark, neg, price, count: qs.length, total: r2(qs.length * mark), sections: secs, secs: secs.map(s => ({ name: s, count: cnt[s] })), cancelled: [...new Set(can)],
+        duration, mark, neg, price, access, count: qs.length, total: r2(qs.length * mark), sections: secs, secs: secs.map(s => ({ name: s, count: cnt[s] })), cancelled: [...new Set(can)],
         published: $('#pb').checked, resultsOut: id ? !!x.resultsOut : false, resultsHold: id ? !!x.resultsHold : false, calcAt: id && x.calcAt ? x.calcAt : null, updatedAt: serverTimestamp() });
       b.set(doc(db, 'exams', eid, 'paper', 'main'), { questions: paper });
       b.set(doc(db, 'keys', eid), { ans: key });
@@ -311,6 +370,279 @@ async function editMock(id, copy) {
       await loadEx(); setTimeout(() => { if (id && history.state && history.state.adm === 'edit') history.back(); else replace(() => tools(eid)); }, 700);
     } catch (e) { $('#sv').disabled = false; msg(m, esc(errText(e))); }
   };
+}
+
+// ------------------------------------------------------------------ 📄 PDF · 📊 Excel · 📋 Paste import + 👁 editable preview
+// One question = { sec, topic, q, o: [A, B, C, D], ans: 'A'..'D' or '' }
+// readers are loaded only when you press Import (cdnjs first, jsDelivr as a backup)
+const LIBS = {
+  xlsx: [['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'], 'XLSX'],
+  pdf: [['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'], 'pdfjsLib']
+};
+const LOADED = {};
+function loadLib([urls, name]) {
+  if (window[name]) return Promise.resolve(window[name]);
+  const one = url => new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = url; s.async = true;
+    s.onload = () => { if (window[name]) { LOADED[name] = url; res(window[name]); } else rej(new Error('x')); };
+    s.onerror = () => { s.remove(); rej(new Error('x')); };
+    document.head.appendChild(s);
+  });
+  return urls.reduce((p, u) => p.catch(() => one(u)), Promise.reject(new Error('start')))
+    .catch(() => { throw new Error('Could not load the reader. Check your internet and try again.'); });
+}
+const normA = v => String(v ?? '').replace(/\s+/g, ' ').trim();
+// answer cell → 'A'..'D' (accepts: b, (B), 2, Option B, Ans: c, or the option text itself)
+function ansOf(v, opts) {
+  const t = normA(v); if (!t) return '';
+  let m = t.match(/^(?:ans(?:wer)?\s*[:.\-–]?\s*)?(?:option\s*)?\(?([a-dA-D1-4])\)?\.?$/i);
+  if (m) return /[1-4]/.test(m[1]) ? 'ABCD'[+m[1] - 1] : m[1].toUpperCase();
+  const low = t.toLowerCase().replace(/^(?:ans(?:wer)?\s*[:.\-–]?\s*)/, '');
+  const i = (opts || []).findIndex(o => normA(o).toLowerCase() === low);
+  return i >= 0 && i < 4 ? 'ABCD'[i] : '';
+}
+function problems(q) {
+  const p = [];
+  if (!normA(q.q)) p.push('Question is empty');
+  if (q.extra) p.push(`Found ${q.extra} options – only 4 kept, please check`);
+  const e = [0, 1, 2, 3].filter(i => !normA(q.o[i])).map(i => 'ABCD'[i]);
+  if (e.length) p.push('Option ' + e.join(', ') + ' empty');
+  if (!/^[A-D]$/.test(q.ans || '')) p.push('Answer missing');
+  return p;
+}
+const fix4 = o => { o = (o || []).map(normA); while (o.length < 4) o.push(''); return o.slice(0, 4); };
+
+// ---- Excel rows (first sheet) → questions. Works with or without a header row.
+function fromRows(rows) {
+  rows = rows.map(r => (r || []).map(v => normA(v))).filter(r => r.some(Boolean));
+  if (!rows.length) return [];
+  const h = rows[0].map(v => v.toLowerCase());
+  const find = (...res) => h.findIndex(c => res.some(re => re.test(c)));
+  let C2;
+  const qi = find(/question|^ques|^q\.?$/);
+  if (qi >= 0) {
+    C2 = { sec: find(/section|subject/), topic: find(/topic|chapter/), q: qi,
+      a: find(/^\(?a\)?$/, /option\s*\(?a\)?$/, /opt\.?\s*\(?a\)?$/, /option\s*1$/, /^\(?1\)?$/),
+      b: find(/^\(?b\)?$/, /option\s*\(?b\)?$/, /opt\.?\s*\(?b\)?$/, /option\s*2$/, /^\(?2\)?$/),
+      c: find(/^\(?c\)?$/, /option\s*\(?c\)?$/, /opt\.?\s*\(?c\)?$/, /option\s*3$/, /^\(?3\)?$/),
+      d: find(/^\(?d\)?$/, /option\s*\(?d\)?$/, /opt\.?\s*\(?d\)?$/, /option\s*4$/, /^\(?4\)?$/),
+      ans: find(/answer|^ans|correct|^key/) };
+    if (C2.a < 0) { C2.a = qi + 1; C2.b = qi + 2; C2.c = qi + 3; C2.d = qi + 4; }
+    rows = rows.slice(1);
+  } else {
+    if (rows.every(r => /^\d+\.?$/.test(r[0] || ''))) rows = rows.map(r => r.slice(1));   // first column is just S.No
+    const n = Math.max(...rows.map(r => r.length));
+    C2 = n >= 8 ? { sec: 0, topic: 1, q: 2, a: 3, b: 4, c: 5, d: 6, ans: 7 } : n === 7 ? { sec: 0, topic: -1, q: 1, a: 2, b: 3, c: 4, d: 5, ans: 6 } : { sec: -1, topic: -1, q: 0, a: 1, b: 2, c: 3, d: 4, ans: 5 };
+  }
+  const g = (r, i) => i >= 0 ? (r[i] || '') : '';
+  return rows.map(r => { const o = fix4([g(r, C2.a), g(r, C2.b), g(r, C2.c), g(r, C2.d)]);
+    return { sec: g(r, C2.sec) || 'General', topic: g(r, C2.topic), q: g(r, C2.q), o, ans: ansOf(g(r, C2.ans), o) }; })
+    .filter(q => q.q || q.o.some(Boolean));
+}
+// the TSV box (Excel paste) → questions, keeping rows that still have problems so they can be fixed
+function tsvModel(text) {
+  return parseTSV(text).filter((r, i) => !(i === 0 && /section/i.test(r[0] || '') && /answer/i.test(r[r.length - 1] || '')))
+    .map(r => { const c = r.map(v => String(v ?? '').trim()), o = fix4(c.slice(3, 7)); return { sec: c[0] || 'General', topic: c[1] || '', q: c[2] || '', o, ans: ansOf(c[7], o) }; });
+}
+const modelTSV = L => toTSV(L.map((q, i) => ({ id: 'm' + i, sec: q.sec || 'General', topic: q.topic || '', q: q.q, o: fix4(q.o) })), Object.fromEntries(L.map((q, i) => ['m' + i, q.ans || ''])));
+
+// ---- text copied from a PDF / Word → questions
+const SUBJ = /\b(general\s*knowledge|general\s*awareness|general\s*studies|general\s*science|g\.?\s?k|g\.?\s?s|static\s*gk|reasoning|mental\s*ability|logical|maths?|mathematics|quantitative|aptitude|arithmetic|numerical|computer|current\s*affairs|english|science|history|geography|polity|economy)\b/i;
+function cleanSec(t) {
+  t = t.replace(/^\s*(section|part|subject|sec\.?)\s*[-–:.]?\s*(?:\(?([A-Z0-9]{1,2}|[IVX]{1,4})\)?(?=[\s:\-–.)]|$))?\s*[-–:.)]?\s*/i, '').replace(/[\s:\-–.]+$/, '').trim();
+  if (t && t === t.toUpperCase()) t = t.split(/\s+/).map(w => w.length <= 3 && !/^(AND|OF|THE)$/.test(w) ? w : w[0] + w.slice(1).toLowerCase()).join(' ').replace(/\b(And|Of|The)\b/g, m => m.toLowerCase());
+  return t.slice(0, 40) || 'General';
+}
+const Q_RE1 = /^(?:Q(?:uestion)?\s*\.?\s*(?:No\.?\s*)?)(\d{1,3})\s*[.):\]\-–]?\s*(.*)$/i;
+const Q_RE2 = /^(\d{1,3})\s*(?:[.):\]]\s+|[.):\]](?=\D)|[.):\]]$)(.*)$/;
+const OPT_RE = /^(?:\(([a-dA-D1-4])\)|\[([a-dA-D])\]|([a-dA-D])[.)](?=\s|$))\s*/;
+const ANS_RE = /^(?:ans(?:wer)?|correct\s*(?:answer|option)|right\s*answer)\s*(?:is)?\s*[:.\-–=)]*\s*(.*)$/i;
+const KEYPAIR = /(\d{1,3})\s*[.\-:)=]?\s*\(?([a-dA-D])\)?(?![a-zA-Z])/g;
+const JUNK = /^(page\s*\d+(\s*of\s*\d+)?|\d{1,4}|[-–_=*•.]{3,})$|www\.|https?:\/\/|t\.me\/|telegram|whatsapp|join\s+us|download\s+(the\s+)?app|youtube/i;
+// split "(a) 10 (b) 20 (c) 30 (d) 40" that are on one line
+function splitOpts(rest, k, upper, num) {
+  const out = []; let cur = rest;
+  while (k < 3) {
+    const L = num ? String(k + 2) : (upper ? 'ABCD' : 'abcd')[k + 1];
+    const re = num ? new RegExp('\\s\\(' + L + '\\)\\s*') : new RegExp('\\s(?:\\(' + L + '\\)|\\[' + L + '\\]|' + L + '[.)](?=\\s))\\s*');
+    const m = cur.match(re); if (!m) break;
+    out.push(cur.slice(0, m.index).trim()); cur = cur.slice(m.index + m[0].length); k++;
+  }
+  out.push(cur.trim()); return out;
+}
+function parseText(text) {
+  const lines = String(text || '').replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').split('\n').map(l => l.replace(/\s+/g, ' ').trim());
+  const Qs = [], key = []; let cur = null, sec = 'General', keyMode = false, skip = false, dir = null, prev = '';
+  const startQ = (n, t) => { cur = { n, sec, topic: '', q: '', o: [], ans: '', ansText: '' }; Qs.push(cur); skip = false;
+    if (dir && dir.to && (n < dir.from || n > dir.to)) dir = null;
+    if (dir) cur.q = dir.text + '\n'; if (dir && (!dir.to || n >= dir.to)) dir = null; addQ(t); };
+  const addQ = t => { if (!t) return; inlineOpts(t) || (cur.q += (cur.q && !cur.q.endsWith('\n') ? (/^(\(?[ivx]+[.)]|statement|assertion|reason|conclusion|\d+[.)])/i.test(t) || /[:?]$/.test(prev) ? '\n' : ' ') : '') + t); };
+  // question text that also contains the options: "What is 2+2? (a) 3 (b) 4 (c) 5 (d) 6"
+  const inlineOpts = t => {
+    const m = t.match(/(?:^|\s)(?:\((a|A|1)\)|(a|A)\))\s+/); if (!m) return false;
+    const L = m[1] || m[2], num = L === '1', up = L === 'A';
+    const nx = num ? /\s\(2\)\s*/ : up ? /\s(?:\(B\)|B\))\s*/ : /\s(?:\(b\)|b\))\s*/;
+    const rest = t.slice(m.index + m[0].length); if (!nx.test(rest)) return false;
+    const before = t.slice(0, m.index).trim(); if (before) cur.q += (cur.q && !cur.q.endsWith('\n') ? ' ' : '') + before;
+    cur.o.push(...splitOpts(rest, 0, up, num)); return true;
+  };
+  for (const ln of lines) {
+    if (!ln || JUNK.test(ln)) continue;
+    // option line
+    const om = ln.match(OPT_RE);
+    if (om && cur && !keyMode && cur.o.length < 4) {
+      const raw = om[1] || om[2] || om[3], num = /[1-4]/.test(raw), idx = num ? +raw - 1 : 'abcd'.indexOf(raw.toLowerCase());
+      if (idx === cur.o.length) { cur.o.push(...splitOpts(ln.slice(om[0].length), idx, raw === raw.toUpperCase() && !num, num)); skip = false; prev = ln; continue; }
+    }
+    // answer key section
+    if (/^(answer\s*key|answers?|answer\s*sheet|key\s*answers?|solutions?\s*key)\s*[:\-–]?\s*$/i.test(ln)) { keyMode = true; cur = null; continue; }
+    const lnK = ln.replace(/^(answer\s*key|answers?|key)\s*[:\-–]\s*/i, ''), pairs = [...lnK.matchAll(KEYPAIR)];
+    if (pairs.length && (keyMode || (pairs.length >= 3 && lnK.replace(KEYPAIR, '').replace(/[\s,;|.\-]/g, '').length <= 3))) {
+      keyMode = true; pairs.forEach(p => key.push([+p[1], p[2].toUpperCase()])); continue;
+    }
+    if (keyMode && !Q_RE1.test(ln)) continue;
+    // answer line
+    const am = ln.match(ANS_RE);
+    if (am && cur) { const a = ansOf(am[1].replace(/^\(?([a-dA-D1-4])\)?(?=[\s.,)]|$).*/, '$1'), cur.o); if (a) cur.ans = a; else cur.ansText = am[1]; skip = true; prev = ln; continue; }
+    // explanation → ignore till next question
+    if (/^(explanation|solution|sol\.|sol:|exp\.|exp:|hint)\b/i.test(ln)) { skip = true; continue; }
+    // directions for a group of questions
+    const dm = ln.match(/^directions?\b.*?(?:(\d{1,3})\s*(?:-|–|to)\s*(\d{1,3}))?/i);
+    if (dm && /^directions?\s*[(:\-–.]/i.test(ln)) { const r = ln.match(/(\d{1,3})\s*(?:-|–|to)\s*(\d{1,3})/); dir = { text: ln, from: r ? +r[1] : 0, to: r ? +r[2] : 0 }; cur = null; skip = false; prev = ln; continue; }
+    // numbered line: question, or "1) 2) 3) 4)" options
+    const qm = ln.match(Q_RE1) || ln.match(Q_RE2);
+    if (qm) {
+      const n = +qm[1];
+      if (cur && !Q_RE1.test(ln) && cur.o.length < 4 && cur.q && n === cur.o.length + 1 && (cur.o.length > 0 || n !== cur.n + 1)) { cur.o.push(qm[2].trim()); prev = ln; continue; }
+      keyMode = false; startQ(n, qm[2].trim()); prev = ln; continue;
+    }
+    // section heading
+    const short = ln.length <= 45 && !/[?]/.test(ln) && ln.split(' ').length <= 6;
+    if (short && (/^(section|part|subject)\b/i.test(ln) || (SUBJ.test(ln) && (!cur || cur.o.length >= 4)))) { sec = cleanSec(ln); cur = null; dir = null; skip = false; prev = ln; continue; }
+    if (skip) continue;
+    if (dir && !cur) { dir.text += ' ' + ln; prev = ln; continue; }
+    if (!cur) { prev = ln; continue; }
+    if (!cur.o.length) addQ(ln);
+    else if (cur.o.length < 4) { if (!inlineOpts(ln)) cur.o[cur.o.length - 1] += ' ' + ln; }
+    else cur.o[3] += ' ' + ln;
+    prev = ln;
+  }
+  // answer key at the end: by question number (or by order if numbers repeat in every section)
+  if (key.length) {
+    const nums = Qs.map(q => q.n), unique = new Set(nums).size === nums.length;
+    if (unique) { const K = new Map(key); Qs.forEach(q => { if (!q.ans && K.has(q.n)) q.ans = K.get(q.n); }); }
+    else if (key.length === Qs.length) Qs.forEach((q, i) => { if (!q.ans) q.ans = key[i][1]; });
+  }
+  return Qs.map(q => { const extra = q.o.length > 4 ? q.o.length : 0, o = fix4(q.o); return { sec: q.sec, topic: '', q: q.q.trim(), o, ans: q.ans || ansOf(q.ansText, o), extra }; });
+}
+
+// ---- PDF → text (text PDFs only; scanned/photo PDFs have no text). Handles 2-column pages.
+async function pdfText(file) {
+  const lib = await loadLib(LIBS.pdf); if (!lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc = (LOADED.pdfjsLib || LIBS.pdf[0][0]).replace(/pdf\.min\.js$/, 'pdf.worker.min.js');
+  const pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const out = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const pg = await pdf.getPage(p), W = pg.getViewport({ scale: 1 }).width, tc = await pg.getTextContent();
+    const items = tc.items.filter(it => it.str && it.str.trim()).map(it => ({ x: it.transform[4], y: it.transform[5], h: it.height || Math.abs(it.transform[3]) || 10, w: it.width || 0, s: it.str }));
+    const group = B => { const rows = []; B.forEach(it => { let r = rows.find(r => Math.abs(r.y - it.y) < Math.max(2, it.h * 0.45)); if (!r) rows.push(r = { y: it.y, it: [] }); r.it.push(it); }); return rows; };
+    // two-column page? → many rows have a left part and a separate right part, and questions start in the right half too
+    const mid = W / 2, all = group(items), isQ = t => /^\s*(?:Q(?:uestion)?\s*\.?\s*)?\d{1,3}\s*[.):]/i.test(t);
+    const split = all.filter(r => r.it.some(i => i.x >= mid - 2) && r.it.some(i => i.x < mid - 2 && i.x + i.w < mid + 5)).length;
+    const twoCol = items.filter(i => i.x >= mid - 2 && isQ(i.s)).length >= 2 && split >= Math.max(3, all.length * 0.3);
+    const blocks = twoCol ? [items.filter(i => i.x < mid - 2), items.filter(i => i.x >= mid - 2)] : [items];
+    blocks.forEach(B => {
+      const rows = group(B);
+      rows.sort((a, b) => b.y - a.y).forEach(r => { r.it.sort((a, b) => a.x - b.x); let s = '', end = null;
+        r.it.forEach(t => { if (end != null && t.x - end > 1 && !/\s$/.test(s) && !/^\s/.test(t.s)) s += ' '; s += t.s; end = t.x + t.w; }); out.push(s); });
+    });
+    out.push('');
+  }
+  return out.join('\n');
+}
+async function excelRows(file) {
+  const X = await loadLib(LIBS.xlsx), wb = X.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
+  return X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' });
+}
+
+// ---- Add or Replace when questions already exist
+function addOrReplace(n, have) {
+  if (!have) return Promise.resolve('replace');
+  return new Promise(res => {
+    const o = C.sheet(`<h3 style="margin:0 0 6px">${n} questions found</h3><p class="small">The mock already has <b>${have}</b> questions. What do you want?</p>
+      <div style="display:grid;gap:8px"><button class="btn dk" data-m="add" type="button">➕ Add at the end (total ${have + n})</button><button class="btn red" data-m="replace" type="button">♻ Replace all with the new ${n}</button><button class="btn gh" data-m="" type="button">Cancel</button></div>`, true);
+    o.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (b) { o.remove(); res(b.dataset.m || null); } else if (e.target === o) res(null); });
+  });
+}
+function importButtons(preview) {
+  const box = $('#qs');
+  const take = async (list, from) => {
+    if (!list.length) { C.sheet(`<h3 style="margin:0 0 6px">No questions found</h3><p class="small">Could not find questions in this ${from}.</p><div class="note">Works best when questions look like <b>1. Question…</b> with options <b>(a) (b) (c) (d)</b> or <b>A. B. C. D.</b>, and answers as <b>Ans: b</b> or an answer key like <b>1-b, 2-c</b>.${from === 'PDF' ? ' Scanned (photo) PDFs have no text – they cannot be read.' : ''}</div><button class="btn gh block" style="margin-top:10px" type="button" onclick="this.closest('.ov').remove()">OK</button>`); return; }
+    const old = tsvModel(box.value), mode = await addOrReplace(list.length, old.length); if (!mode) return;
+    const L = mode === 'add' ? old.concat(list) : list;
+    const bad = list.filter(q => problems(q).length).length;
+    toast(`✓ ${list.length} questions read from ${from}${bad ? ` · ${bad} need checking (red)` : ''}`, bad ? 'info' : 'ok');
+    editor(L, preview);
+  };
+  const busy = (b, on) => { b.disabled = on; b.dataset.t = b.dataset.t || b.innerHTML; b.innerHTML = on ? '⏳ Reading…' : b.dataset.t; };
+  $('#ipdf').onclick = () => $('#fpdf').click();
+  $('#ixl').onclick = () => $('#fxl').click();
+  $('#fpdf').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const b = $('#ipdf'); busy(b, true);
+    try { const t = await pdfText(f); if (t.replace(/\s/g, '').length < 30) { busy(b, false); return C.sheet('<h3 style="margin:0 0 6px">This PDF has no text</h3><p class="small">It looks like a scanned / photo PDF. Only PDFs where you can select and copy text can be imported. Type the questions in Excel instead.</p><button class="btn gh block" type="button" onclick="this.closest(\'.ov\').remove()">OK</button>'); }
+      busy(b, false); await take(parseText(t), 'PDF'); } catch (er) { busy(b, false); toast(er.message || String(er), 'err'); } };
+  $('#fxl').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const b = $('#ixl'); busy(b, true);
+    try { const rows = await excelRows(f); busy(b, false); await take(fromRows(rows), 'Excel'); } catch (er) { busy(b, false); toast(er.message || String(er), 'err'); } };
+  $('#itx').onclick = () => {
+    const o = C.sheet(`<h3 style="margin:0 0 4px">📋 Paste questions</h3><div class="small mut">Copy questions from a PDF or Word file and paste below. Options (a)(b)(c)(d), answers like “Ans: b” and an answer key at the end (1-b, 2-c…) are detected automatically.</div>
+      <textarea class="inp" id="ptx" rows="10" style="margin-top:8px;font-size:13px" placeholder="1. Who is known as the Father of the Indian Constitution?\n(a) Mahatma Gandhi (b) B. R. Ambedkar\n(c) Jawaharlal Nehru (d) Rajendra Prasad\nAns: b"></textarea>
+      <button class="btn dk block" id="pgo" type="button" style="margin-top:10px">🔍 Find questions</button>`);
+    o.querySelector('#pgo').onclick = async () => { const t = o.querySelector('#ptx').value; o.remove(); await take(parseText(t), 'pasted text'); };
+  };
+  $('#ied').onclick = () => { const L = tsvModel(box.value); if (!L.length) return toast('No questions yet. Import a PDF / Excel or paste first.', 'info'); editor(L, preview); };
+}
+
+// ---- 👁 editable preview (rows with problems are red). Apply → goes into the questions box.
+function editor(list, preview) {
+  const L = list.map(q => ({ sec: q.sec || 'General', topic: q.topic || '', q: q.q || '', o: fix4(q.o), ans: q.ans || '', extra: q.extra || 0 }));
+  let only = false;
+  const o = document.createElement('div'); o.className = 'ov qe'; document.body.appendChild(o);
+  try { history.pushState({ adm: 'qe' }, '', '#/admin'); } catch (e) {}
+  const apply = () => { $('#qs').value = modelTSV(L.filter(q => q.q || q.o.some(Boolean))); preview(); };
+  QE = { close: () => { apply(); o.remove(); toast('Questions updated in the mock ✓ (not saved yet – press 💾 Save Mock)', 'ok'); } };
+  const card = (q, i) => { const pr = problems(q);
+    return `<div class="qc ${pr.length ? 'bad' : ''}" data-i="${i}"><div class="r1"><b>#${i + 1}</b><input data-f="sec" value="${esc(q.sec)}" placeholder="Section" style="max-width:220px"><span style="flex:1"></span><button class="btn red sm" type="button" data-del="${i}">🗑</button></div>
+      <textarea data-f="q" placeholder="Question">${esc(q.q)}</textarea>
+      <div class="op4">${q.o.map((v, j) => `<label class="${q.ans === 'ABCD'[j] ? 'ok' : ''}">${'ABCD'[j]}<input data-f="o${j}" value="${esc(v)}" placeholder="Option ${'ABCD'[j]}"></label>`).join('')}</div>
+      <div class="r1" style="margin:6px 0 0"><span class="small" style="font-weight:800">Answer</span><select data-f="ans" style="max-width:90px">${['', 'A', 'B', 'C', 'D'].map(a => `<option ${q.ans === a ? 'selected' : ''} value="${a}">${a || '–'}</option>`).join('')}</select></div>
+      <div class="pr">${pr.map(esc).join(' · ')}</div></div>`; };
+  const head = () => { const bad = L.filter(q => problems(q).length).length, secs = {}; L.forEach(q => secs[q.sec] = (secs[q.sec] || 0) + 1);
+    return `<span><b>${L.length}</b> questions · ${bad ? `<b style="color:#FCA5A5">${bad} need fixing</b>` : '✓ all OK'}<br><span class="tiny" style="color:#BFC3CC">${Object.keys(secs).map(k => esc(k) + ' ' + secs[k]).join(' · ')}</span></span>`; };
+  const draw = () => {
+    o.innerHTML = `<div class="hd"><div id="qh" style="flex:1;min-width:150px">${head()}</div>
+        <label class="small" style="display:flex;gap:5px;align-items:center;color:#fff"><input type="checkbox" id="qo" ${only ? 'checked' : ''}> Only problems</label>
+        <button class="btn gh sm" id="qsct" type="button">Set section…</button><button class="btn sm" id="qok" type="button">✓ Done</button></div>
+      <div class="bd"><div class="tiny mut" style="margin-bottom:8px">Fix the red ones, delete junk rows, set sections, then press <b>✓ Done</b>. Total questions, minutes and marks are set on the mock form.</div>
+        ${L.map((q, i) => only && !problems(q).length ? '' : card(q, i)).join('') || '<div class="card center mut">Nothing to show.</div>'}</div>`;
+    o.querySelector('#qo').onchange = e => { only = e.target.checked; draw(); };
+    o.querySelector('#qok').onclick = () => history.back();
+    o.querySelector('#qsct').onclick = () => {
+      const s2 = C.sheet(`<h3 style="margin:0 0 6px">Set section for a range</h3><div class="g3"><div><label class="l">From #</label><input class="inp" id="sf" type="number" min="1" value="1"></div><div><label class="l">To #</label><input class="inp" id="st2" type="number" min="1" value="${L.length}"></div><div><label class="l">Section</label><input class="inp" id="sn" placeholder="Reasoning"></div></div><button class="btn dk block" id="sok" type="button" style="margin-top:10px">Apply</button>`, true);
+      s2.querySelector('#sok').onclick = () => { const a = Math.max(1, +s2.querySelector('#sf').value || 1), b = Math.min(L.length, +s2.querySelector('#st2').value || L.length), n = s2.querySelector('#sn').value.trim().slice(0, 40);
+        if (!n) return; for (let i = a - 1; i < b; i++) L[i].sec = n; s2.remove(); draw(); };
+    };
+    o.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { L.splice(+b.dataset.del, 1); draw(); });
+    o.querySelectorAll('.qc').forEach(el => {
+      const i = +el.dataset.i, q = L[i];
+      el.querySelectorAll('[data-f]').forEach(inp => inp[inp.tagName === 'SELECT' ? 'onchange' : 'oninput'] = () => {
+        const f = inp.dataset.f, v = inp.value;
+        if (f === 'sec') q.sec = v.trim().slice(0, 40) || 'General'; else if (f === 'q') q.q = v; else if (f === 'ans') q.ans = v; else q.o[+f.slice(1)] = v;
+        if (f === 'ans' || f.startsWith('o')) q.extra = 0;
+        const pr = problems(q); el.classList.toggle('bad', !!pr.length); el.querySelector('.pr').textContent = pr.join(' · ');
+        el.querySelectorAll('.op4 label').forEach((lb, j) => lb.classList.toggle('ok', q.ans === 'ABCD'[j]));
+        o.querySelector('#qh').innerHTML = head();
+      });
+    });
+  };
+  draw(); o.scrollTop = 0;
 }
 
 // ------------------------------------------------------------------ tools page (one mock)
@@ -363,23 +695,28 @@ async function duplicate(x) {
 // ------------------------------------------------------------------ attempts
 async function attempts(id) {
   mark('attempts', [id]);
-  const x = EX.find(e => e.id === id);
-  top('Attempts', () => tools(id)); loading();
+  if (!EX.length) { try { await loadEx(); } catch (e) {} }
+  const x = EX.find(e => e.id === id); if (!x) return dash();
+  top('Attempts', () => tools(id));
+  page(`<div class="ast" id="aS"><div><b>…</b><small>Started</small></div><div><b>…</b><small>Submitted</small></div><div><b>…</b><small>Writing / not submitted</small></div></div>
+    <p class="small mut">${esc(x.title)} · <span class="livepill"><i></i>LIVE – updates automatically</span><br><b>Reset</b> deletes a student's attempt so they can write again (use only for genuine problems like power cut / net issue).</p>
+    <div class="tbl"><table><thead><tr><th>#</th><th>Name</th><th>State</th><th>Started</th><th>Status</th><th class="n">Answered</th><th></th></tr></thead><tbody id="aT"><tr><td colspan="7" class="mut">Loading…</td></tr></tbody></table></div>`);
   let A = [];
-  try { const s = await getDocs(collection(db, 'attempts', id, 'u')); A = s.docs.map(d => ({ uid: d.id, ...d.data() })); }
-  catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
-  A.sort((a, b) => ms(a.startedAt) - ms(b.startedAt));
-  const sub = A.filter(a => a.submitted).length;
-  page(`<div class="ast"><div><b>${A.length}</b><small>Started</small></div><div><b>${sub}</b><small>Submitted</small></div><div><b>${A.length - sub}</b><small>Writing / not submitted</small></div></div>
-    <p class="small mut">${esc(x.title)} · <b>Reset</b> deletes a student's attempt so they can write again (use only for genuine problems like power cut / net issue). <button class="link small" id="rf" type="button">↻ Refresh</button></p>
-    <div class="tbl"><table><tr><th>#</th><th>Name</th><th>State</th><th>Started</th><th>Status</th><th class="n">Answered</th><th></th></tr>
-    ${A.map((a, i) => `<tr><td>${i + 1}</td><td><b>${esc(a.name)}</b></td><td>${esc(a.state || '')}</td><td>${esc(fmtDT(a.startedAt))}</td><td>${a.submitted ? '<span class="chip c-free">Submitted</span>' : '<span class="chip c-paid">Not submitted</span>'}</td><td class="n">${Object.keys(a.answers || {}).length}</td><td><button class="btn red sm" type="button" data-r="${esc(a.uid)}">Reset</button></td></tr>`).join('') || '<tr><td colspan="7" class="mut">No attempts yet.</td></tr>'}</table></div>`);
-  $('#rf').onclick = () => replace(() => attempts(id));
-  $$('[data-r]').forEach(b => b.onclick = async () => {
-    const a = A.find(z => z.uid === b.dataset.r);
-    if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Reset ${esc(a.name)}?</h3><p class="small">Their answers for this mock will be deleted and they can start again.</p>`, 'Reset')) return;
-    try { await resetAttempt(id, a.uid); toast('Reset ✓', 'ok'); replace(() => attempts(id)); } catch (e) { toast(errText(e), 'err'); }
-  });
+  const draw = () => {
+    if (!$('#aT')) return stopLive();
+    A.sort((a, b) => ms(b.startedAt) - ms(a.startedAt));
+    const sub = A.filter(a => a.submitted).length;
+    $('#aS').innerHTML = `<div><b>${A.length}</b><small>Started</small></div><div><b>${sub}</b><small>Submitted</small></div><div><b>${A.length - sub}</b><small>Writing / not submitted</small></div>`;
+    $('#aT').innerHTML = A.map((a, i) => `<tr><td>${A.length - i}</td><td><b>${esc(a.name)}</b></td><td>${esc(a.state || '')}</td><td>${a.startedAt ? esc(fmtDT(a.startedAt)) : '…'}</td><td>${a.submitted ? '<span class="chip c-free">Submitted</span>' : '<span class="chip c-paid">Writing / not submitted</span>'}</td><td class="n">${Object.keys(a.answers || {}).length}</td><td><button class="btn red sm" type="button" data-r="${esc(a.uid)}">Reset</button></td></tr>`).join('') || '<tr><td colspan="7" class="mut">No attempts yet. New attempts appear here automatically.</td></tr>';
+    $$('[data-r]').forEach(b => b.onclick = async () => {
+      const a = A.find(z => z.uid === b.dataset.r); if (!a) return;
+      if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Reset ${esc(a.name)}?</h3><p class="small">Their answers for this mock will be deleted and they can start again.</p>`, 'Reset')) return;
+      try { await resetAttempt(id, a.uid); toast('Reset ✓', 'ok'); } catch (e) { toast(errText(e), 'err'); }
+    });
+  };
+  const un = onSnapshot(collection(db, 'attempts', id, 'u'), sn => { A = sn.docs.map(d => ({ uid: d.id, ...d.data() })); draw(); },
+    e => { if ($('#aT')) $('#aT').innerHTML = `<tr><td colspan="7"><div class="msg err">${esc(errText(e))}</div></td></tr>`; });
+  UNSUB.push(un);
 }
 async function resetAttempt(id, uid) {
   await deleteDoc(doc(db, 'attempts', id, 'u', uid));
@@ -448,21 +785,23 @@ async function calculate(x, publish) {
     }).sort((a, b) => b.score - a.score || b.acc - a.acc);
     rows.forEach((r, i) => r.rank = i > 0 && r.score === rows[i - 1].score && r.acc === rows[i - 1].acc ? rows[i - 1].rank : i + 1);
     const n = rows.length, high = n ? rows[0].score : 0, avg = n ? r2(rows.reduce((s, r) => s + r.score, 0) / n) : 0;
+    // students see only the Top 50 + their own rank. Total count & ranks above 100 stay hidden unless "Show total participants" is ON.
+    const showTotal = !!(await readPub()).showTotal, nPub = showTotal ? { n } : {};
     for (let i = 0; i < rows.length; i += 400) {
       const b = writeBatch(db);
       rows.slice(i, i + 400).forEach(r => b.set(doc(db, 'myresults', x.id, 'u', r.uid),
-        { rank: r.rank, n, score: r.score, cor: r.cor, wrong: r.wrong, skip: r.skip, bonus: r.bonus, acc: r.acc, secs: r.secs, answers: r.answers, mins: r.mins }));
+        { rank: showTotal ? r.rank : Math.min(r.rank, 101), ...nPub, score: r.score, cor: r.cor, wrong: r.wrong, skip: r.skip, bonus: r.bonus, acc: r.acc, secs: r.secs, answers: r.answers, mins: r.mins }));
       await b.commit();
       msg(m, `Calculating… ${Math.min(i + 400, rows.length)} / ${rows.length} students saved`, 'info');
     }
-    await setDoc(doc(db, 'results', x.id), { title: X2.title, total: X2.total, n, high, avg, sections: secs, key, cancelled: can, calcAt: serverTimestamp(),
-      merit: rows.slice(0, 6000).map(r => ({ r: r.rank, n: r.name, st: r.state, s: r.score, a: r.acc })) });
+    await setDoc(doc(db, 'results', x.id), { title: X2.title, total: X2.total, ...nPub, high, avg, sections: secs, key, cancelled: can, calcAt: serverTimestamp(),
+      merit: rows.slice(0, 50).map(r => ({ r: r.rank, n: r.name, st: r.state, s: r.score, a: r.acc })) });
     await setDoc(doc(db, 'adminresults', x.id), { title: X2.title, total: X2.total, n, high, avg, sections: secs, calcAt: serverTimestamp(),
       qstats: qs.map(q => Object.assign({ id: q.id }, QS[q.id])),
       all: rows.map(r => ({ rank: r.rank, name: r.name, state: r.state, email: r.email, mobile: r.mobile, score: r.score, acc: r.acc, cor: r.cor, wrong: r.wrong, skip: r.skip, mins: r.mins, submitted: r.submitted,
         secs: Object.fromEntries(secs.map(s => [s, { score: r.secs[s].score }])) })) });
     await updateDoc(doc(db, 'exams', x.id), publish ? { calcAt: serverTimestamp(), resultsOut: true, resultsHold: false } : { calcAt: serverTimestamp() });
-    msg(m, `Done ✓ ${n} students. ${publish ? 'Results are now visible to students.' : 'Results will open automatically at the result time.'}`, 'ok');
+    msg(m, `Done ✓ ${n} students. Students see the Top 50${showTotal ? '' : ' (total count hidden)'}. ${publish ? 'Results are now visible to students.' : 'Results will open automatically at the result time.'}`, 'ok');
     await loadEx(); setTimeout(() => replace(() => resultsPage(x.id)), 900);
   } catch (e) { $$('#cp,#co').forEach(b => b.disabled = false); msg(m, esc(errText(e))); }
 }
@@ -489,7 +828,7 @@ async function students() {
         for (const f of forms) (await getDocs(query(col, where('name', '>=', f), where('name', '<=', f + '')))).docs.forEach(d => { if (!seen[d.id]) { seen[d.id] = 1; docs.push(d); } });
       }
     } catch (e) { out.innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; return; }
-    out.innerHTML = docs.length ? docs.slice(0, 50).map(d => { const u = d.data(); return `<button class="xc" type="button" data-u="${esc(d.id)}" style="width:100%;text-align:left;display:flex;gap:10px;align-items:center"><div style="width:36px;height:36px;border-radius:50%;background:var(--y);border:1.5px solid var(--ink);display:grid;place-items:center;font-weight:900;flex:none">${esc((u.name || '?')[0].toUpperCase())}</div><div style="min-width:0"><b>${esc(u.name)}</b><div class="tiny mut">${esc(u.state)} · ${esc(u.mobile)} · ${esc(u.email)}</div></div></button>`; }).join('') : '<div class="card mut center">No student found.</div>';
+    out.innerHTML = docs.length ? docs.slice(0, 50).map(d => { const u = d.data(); return `<button class="xc" type="button" data-u="${esc(d.id)}" style="width:100%;text-align:left;display:flex;gap:10px;align-items:center"><div style="width:36px;height:36px;border-radius:50%;background:var(--y);border:1.5px solid var(--ink);display:grid;place-items:center;font-weight:900;flex:none">${esc((u.name || '?')[0].toUpperCase())}</div><div style="min-width:0"><b>${esc(u.name)}</b><div class="tiny mut">${esc(u.state)} · ${esc(u.mobile)} · ${esc(u.email)}<br>Joined ${esc(fmtJ(u.createdAt))}</div></div></button>`; }).join('') : '<div class="card mut center">No student found.</div>';
     $$('[data-u]').forEach(b => b.onclick = () => student(b.dataset.u));
   };
   $('#go').onclick = run; $('#q').onkeydown = e => { if (e.key === 'Enter') run(); };
@@ -503,30 +842,38 @@ async function allStudents() {
   let L = [];
   try { L = (await getDocs(collection(db, 'users'))).docs.map(d => ({ uid: d.id, ...d.data() })); }
   catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
-  L.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-  let F = L, st = 'All';
+  let F = L, st = 'All', per = 'all', sort = 'new';
   const states = ['All', ...[...new Set(L.map(u => u.state || '—'))].sort()];
-  const dt = u => u.updatedAt ? fmtD(u.updatedAt) : '';
+  const jt = u => u.createdAt ? fmtJ(u.createdAt) : '—';
+  const t0 = dayStart().getTime(), w0 = t0 - 6 * 86400000;
+  const nT = L.filter(u => ms(u.createdAt) >= t0).length, nW = L.filter(u => ms(u.createdAt) >= w0).length;
   const draw = () => {
     const q = ($('#fq') ? $('#fq').value : '').trim().toLowerCase();
-    F = L.filter(u => (st === 'All' || (u.state || '—') === st) && (!q || [u.name, u.mobile, u.email, u.state].some(v => String(v || '').toLowerCase().includes(q))));
-    $('#tb').innerHTML = F.map((u, i) => `<tr data-u="${esc(u.uid)}" style="cursor:pointer"><td>${i + 1}</td><td><b>${esc(u.name || '')}</b></td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td>${esc(dt(u))}</td></tr>`).join('') || '<tr><td colspan="6" class="mut">No students.</td></tr>';
+    F = L.filter(u => (st === 'All' || (u.state || '—') === st) && (per === 'all' || ms(u.createdAt) >= (per === 'today' ? t0 : w0))
+      && (!q || [u.name, u.mobile, u.email, u.state].some(v => String(v || '').toLowerCase().includes(q))));
+    // newest first (students who joined before the joined-time update have no time → at the end)
+    F.sort(sort === 'name' ? (a, b) => String(a.name || '').localeCompare(String(b.name || '')) : (a, b) => ms(b.createdAt) - ms(a.createdAt) || ms(b.updatedAt) - ms(a.updatedAt));
+    $('#tb').innerHTML = F.map((u, i) => `<tr data-u="${esc(u.uid)}" style="cursor:pointer"><td>${i + 1}</td><td><b>${esc(u.name || '')}</b></td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td style="white-space:nowrap">${esc(jt(u))}</td></tr>`).join('') || '<tr><td colspan="6" class="mut">No students.</td></tr>';
     $('#fc').textContent = `${F.length} of ${L.length} students`;
     $$('[data-u]').forEach(r => r.onclick = () => student(r.dataset.u));
   };
-  page(`<div class="card"><div class="g2"><input class="inp" id="fq" placeholder="🔍 Filter by any part of name / mobile / Gmail"><select class="inp" id="fs">${states.map(s => `<option>${esc(s)}</option>`).join('')}</select></div>
+  page(`<div class="ast"><div><b>${L.length.toLocaleString('en-IN')}</b><small>Total</small></div><div><b class="up">+${nT}</b><small>Joined today</small></div><div><b class="up">+${nW}</b><small>Last 7 days</small></div></div>
+    <div class="card" style="margin-top:10px"><input class="inp" id="fq" placeholder="🔍 Filter by any part of name / mobile / Gmail">
+      <div class="g3" style="margin-top:8px"><select class="inp" id="fs">${states.map(s => `<option>${esc(s)}</option>`).join('')}</select>
+        <select class="inp" id="fp"><option value="all">Joined: any time</option><option value="today">Joined today</option><option value="week">Last 7 days</option></select>
+        <select class="inp" id="fo"><option value="new">Newest first</option><option value="name">Name A–Z</option></select></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px"><b id="fc" class="small" style="flex:1"></b>
       <button class="btn gh sm" id="xl" type="button">⬇ Excel (CSV)</button><button class="btn dk sm" id="pr" type="button">🖨 Print / PDF</button></div>
-      <div class="tiny mut" style="margin-top:6px">🔒 This list has mobile numbers &amp; Gmails – keep the Excel / PDF private. Tap a student to Reset / Block.</div></div>
-    <div class="tbl"><table><tr><th>#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Updated</th></tr><tbody id="tb"></tbody></table></div>`);
-  $('#fq').oninput = draw; $('#fs').onchange = e => { st = e.target.value; draw(); };
+      <div class="tiny mut" style="margin-top:6px">🔒 This list has mobile numbers &amp; Gmails – keep the Excel / PDF private. Tap a student to Give Pass / Reset / Block. “—” = joined before join-time was recorded.</div></div>
+    <div class="tbl"><table><tr><th>#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Joined</th></tr><tbody id="tb"></tbody></table></div>`);
+  $('#fq').oninput = draw; $('#fs').onchange = e => { st = e.target.value; draw(); }; $('#fp').onchange = e => { per = e.target.value; draw(); }; $('#fo').onchange = e => { sort = e.target.value; draw(); };
   draw();
-  $('#xl').onclick = () => csv('IQFORU_students.csv', [['#', 'Name', 'State', 'Mobile', 'Gmail', 'Updated']].concat(F.map((u, i) => [i + 1, u.name || '', u.state || u.district || '', u.mobile || '', u.email || '', dt(u)])));
+  $('#xl').onclick = () => csv('IQFORU_students.csv', [['#', 'Name', 'State', 'Mobile', 'Gmail', 'Joined', 'Updated']].concat(F.map((u, i) => [i + 1, u.name || '', u.state || u.district || '', u.mobile || '', u.email || '', jt(u), u.updatedAt ? fmtJ(u.updatedAt) : ''])));
   $('#pr').onclick = () => {
     const P = document.getElementById('print');
-    P.innerHTML = `<div class="ph"><img src="logo.png" alt=""><div><div style="font-weight:900;font-size:18px">IQ FOR U</div><div style="color:#666">Registered students${st !== 'All' ? ' · ' + esc(st) : ''}</div></div><div class="tag">${F.length} STUDENTS</div></div>
-      <table class="qt2" style="margin-top:10px"><tr><th style="width:30px">#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Updated</th></tr>
-      ${F.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.name || '')}</td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td>${esc(dt(u))}</td></tr>`).join('')}</table>
+    P.innerHTML = `<div class="ph"><img src="logo.png" alt=""><div><div style="font-weight:900;font-size:18px">IQ FOR U</div><div style="color:#666">Registered students${st !== 'All' ? ' · ' + esc(st) : ''}${per !== 'all' ? ' · ' + (per === 'today' ? 'joined today' : 'last 7 days') : ''}</div></div><div class="tag">${F.length} STUDENTS</div></div>
+      <table class="qt2" style="margin-top:10px"><tr><th style="width:30px">#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Joined</th></tr>
+      ${F.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.name || '')}</td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td>${esc(jt(u))}</td></tr>`).join('')}</table>
       <div class="ft"><span>Private – admin only</span><span>Printed ${esc(new Date().toLocaleString('en-IN'))}</span></div>`;
     window.onafterprint = () => document.body.classList.remove('printing');
     const img = P.querySelector('img'), go = () => { document.body.classList.add('printing'); setTimeout(() => window.print(), 50); };
@@ -537,10 +884,11 @@ async function student(uid) {
   mark('student', [uid]);
   top('Student', students); loading();
   if (!EX.length) { try { await loadEx(); } catch (e) {} }
-  let u, blocked = false; const rows = [];
+  let u, blocked = false, pass = null; const rows = [];
   try {
     const s = await getDoc(doc(db, 'users', uid)); u = s.exists() ? s.data() : {};
     blocked = (await getDoc(doc(db, 'blocked', uid))).exists();
+    const ps = await getDoc(doc(db, 'passes', uid)); pass = ps.exists() ? ps.data() : null;
     await Promise.all(EX.filter(x => Date.now() >= ms(x.startAt)).map(async x => {
       const a = await getDoc(doc(db, 'attempts', x.id, 'u', uid)); if (!a.exists()) return;
       const r = await getDoc(doc(db, 'myresults', x.id, 'u', uid));
@@ -549,16 +897,61 @@ async function student(uid) {
   } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
   rows.sort((p, q) => ms(q.x.startAt) - ms(p.x.startAt));
   page(`<div class="card"><div style="display:flex;gap:10px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:var(--y);border:1.5px solid var(--ink);display:grid;place-items:center;font-weight:900;font-size:18px">${esc((u.name || '?')[0].toUpperCase())}</div>
-      <div><b style="font-size:16px">${esc(u.name)}</b><div class="tiny mut">${esc(u.state)}${u.updatedAt ? ' · updated ' + esc(fmtD(u.updatedAt)) : ''}</div></div>${blocked ? '<span class="chip c-live" style="margin-left:auto">BLOCKED</span>' : '<span class="chip c-free" style="margin-left:auto">Active</span>'}</div>
+      <div><b style="font-size:16px">${esc(u.name)}</b><div class="tiny mut">${esc(u.state)} · joined ${esc(fmtJ(u.createdAt))}${u.updatedAt ? ' · updated ' + esc(fmtD(u.updatedAt)) : ''}</div></div>${blocked ? '<span class="chip c-live" style="margin-left:auto">BLOCKED</span>' : '<span class="chip c-free" style="margin-left:auto">Active</span>'}</div>
       <div class="small" style="margin-top:10px;line-height:1.7">📱 ${esc(u.mobile || '')}<br>✉ ${esc(u.email || '')}</div></div>
+    <div class="card" style="${passOn(pass) ? 'border:1.5px solid var(--ink);background:var(--y2)' : ''}"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>🎟 Monthly Pass</b><div class="small">${passTxt(pass)}</div>${pass && pass.note ? `<div class="tiny mut">Note: ${esc(pass.note)}</div>` : ''}</div>
+      <button class="btn dk sm" id="gp" type="button">🎁 ${passOn(pass) ? 'Extend pass' : 'Give Pass'}</button>${pass ? '<button class="btn red sm" id="rp" type="button">Remove pass</button>' : ''}</div></div>
     <div class="tbl"><table><tr><th>Mock</th><th>Status</th><th class="n">Score</th><th class="n">Rank</th><th></th></tr>
       ${rows.map(o => `<tr><td>${esc(o.x.title)}</td><td>${o.a.submitted ? 'Submitted' : 'Not submitted'}</td><td class="n">${o.r ? o.r.score : '–'}</td><td class="n">${o.r ? '#' + o.r.rank : '–'}</td><td><button class="btn red sm" type="button" data-rs="${esc(o.x.id)}">Reset</button></td></tr>`).join('') || '<tr><td colspan="5" class="mut">No attempts.</td></tr>'}</table></div>
     <button class="btn ${blocked ? 'dk' : 'red'} block" id="bl" type="button" style="margin-top:12px">${blocked ? '✅ Unblock student' : '⛔ Block student'}</button>`);
   $$('[data-rs]').forEach(b => b.onclick = async () => { if (!await C.confirmBox('<h3 style="margin:0">Reset this attempt?</h3><p class="small">The student can write this mock again.</p>', 'Reset')) return; try { await resetAttempt(b.dataset.rs, uid); toast('Reset ✓', 'ok'); replace(() => student(uid)); } catch (e) { toast(errText(e), 'err'); } });
+  $('#gp').onclick = () => givePass(uid, u, pass);
+  if ($('#rp')) $('#rp').onclick = async () => { if (!await C.confirmBox(`<h3 style="margin:0">Remove ${esc(u.name)}'s pass?</h3><p class="small">🎟 Pass mocks will be locked for this student again.</p>`, 'Remove')) return;
+    try { await deleteDoc(doc(db, 'passes', uid)); toast('Pass removed', 'ok'); replace(() => student(uid)); } catch (e) { toast(errText(e), 'err'); } };
   $('#bl').onclick = async () => {
     try { if (blocked) await deleteDoc(doc(db, 'blocked', uid)); else { if (!await C.confirmBox(`<h3 style="margin:0">Block ${esc(u.name)}?</h3><p class="small">They cannot start any new test.</p>`, 'Block')) return; await setDoc(doc(db, 'blocked', uid), { at: serverTimestamp(), name: u.name || '' }); }
       toast(blocked ? 'Unblocked ✓' : 'Blocked ✓', 'ok'); replace(() => student(uid)); } catch (e) { toast(errText(e), 'err'); }
   };
+}
+
+// ------------------------------------------------------------------ 🎟 Monthly Pass (admin gives; Razorpay later)
+const passOn = p => !!(p && (p.until == null || Date.now() < ms(p.until)));
+const passTxt = p => !p ? 'No pass' : p.until == null ? '<b style="color:var(--ok)">Active · no expiry</b>' : passOn(p) ? `<b style="color:var(--ok)">Active</b> till <b>${esc(fmtJ(p.until))}</b>` : `<b style="color:var(--no)">Expired</b> on ${esc(fmtJ(p.until))}`;
+function givePass(uid, u, cur) {
+  const on = passOn(cur);
+  const o = C.sheet(`<h3 style="margin:0 0 4px">🎁 ${on ? 'Extend' : 'Give'} Monthly Pass</h3><div class="small mut">${esc(u.name || '')} · ${esc(u.email || '')}</div>
+    ${on && cur.until != null ? `<div class="note">Current pass is valid till <b>${esc(fmtJ(cur.until))}</b>. New days are added after that date.</div>` : ''}
+    <div class="tagc one" id="gd" style="margin-top:10px">${[[30, '30 days'], [90, '90 days'], [365, '365 days'], [0, 'No expiry']].map(([d, l], i) => `<button type="button" data-d="${d}" class="${i === 0 ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <label class="l" for="gn">Note (optional – only admin sees)</label><input class="inp" id="gn" maxlength="80" placeholder="Special student / paid by UPI on 24 Nov">
+    <div class="tiny mut" id="gw" style="margin-top:6px"></div>
+    <button class="btn dk block" id="gk" type="button" style="margin-top:12px">🎁 Give Pass</button>`);
+  let days = 30;
+  const base = () => on && cur.until != null ? ms(cur.until) : Date.now();
+  const show = () => { o.querySelector('#gw').innerHTML = days ? `Valid till <b>${esc(fmtJ(base() + days * 86400000))}</b>` : 'Valid <b>forever</b> (until you remove it).'; };
+  o.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { days = +b.dataset.d; o.querySelectorAll('[data-d]').forEach(z => z.classList.toggle('on', z === b)); show(); });
+  show();
+  o.querySelector('#gk').onclick = async () => {
+    o.querySelector('#gk').disabled = true;
+    try {
+      await setDoc(doc(db, 'passes', uid), { until: days ? Timestamp.fromMillis(base() + days * 86400000) : null, days, note: o.querySelector('#gn').value.trim().slice(0, 80) || (cur && cur.note) || '',
+        name: u.name || '', email: u.email || '', mobile: u.mobile || '', since: cur && cur.since ? cur.since : serverTimestamp(), at: serverTimestamp(), by: 'admin' });
+      o.remove(); toast('🎟 Pass given ✓ The student may need to reload the site once.', 'ok'); replace(() => student(uid));
+    } catch (e) { o.querySelector('#gk').disabled = false; toast(errText(e), 'err'); }
+  };
+}
+async function passesView() {
+  mark('passes');
+  top('Monthly Pass students', dash); loading();
+  let P = [];
+  try { P = (await getDocs(collection(db, 'passes'))).docs.map(d => ({ uid: d.id, ...d.data() })); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  P.sort((a, b) => (passOn(b) - passOn(a)) || (b.until == null) - (a.until == null) || ms(a.until) - ms(b.until));
+  const act = P.filter(passOn).length, soon = P.filter(p => passOn(p) && p.until != null && ms(p.until) - Date.now() < 7 * 86400000).length;
+  page(`<div class="ast"><div><b>${act}</b><small>Active passes</small></div><div><b style="color:var(--or)">${soon}</b><small>Expire in 7 days</small></div><div><b>${P.length - act}</b><small>Expired</small></div></div>
+    <div class="card small" style="margin-top:10px">To give a pass: <b>Students</b> → search the student → <b>🎁 Give Pass</b>. Online pass payment (Razorpay) comes later. <button class="btn dk sm" id="ps" type="button" style="margin-left:6px">👥 Students</button></div>
+    <div class="tbl"><table><tr><th>Name</th><th>Mobile</th><th>Gmail</th><th>Status</th><th>Note</th></tr>
+      ${P.map(p => `<tr data-u="${esc(p.uid)}" style="cursor:pointer"><td><b>${esc(p.name || '')}</b></td><td>${esc(p.mobile || '')}</td><td>${esc(p.email || '')}</td><td style="white-space:nowrap">${passTxt(p)}</td><td>${esc(p.note || '')}</td></tr>`).join('') || '<tr><td colspan="5" class="mut">No passes given yet.</td></tr>'}</table></div>`);
+  $('#ps').onclick = students;
+  $$('[data-u]').forEach(r => r.onclick = () => student(r.dataset.u));
 }
 
 // ------------------------------------------------------------------ feedback
@@ -645,6 +1038,7 @@ async function reportsView(id) {
 }
 
 // ------------------------------------------------------------------ notice + settings + payments
+function regLabel(n) { n = Math.floor(n || 0); if (n >= 1000) { const k = Math.floor(n / 100) / 10; return (k % 1 ? k.toFixed(1) : String(k)) + 'K+'; } return (n >= 20 ? Math.floor(n / 10) * 10 : n) + '+'; }
 async function readPub() { try { const s = await getDoc(doc(db, 'settings', 'public')); return s.exists() ? s.data() : {}; } catch (e) { return {}; } }
 async function savePub(patch) { const p = Object.assign(await readPub(), patch, { updatedAt: serverTimestamp() }); await setDoc(doc(db, 'settings', 'public'), p); C.setPub(p); }
 async function notice() {
@@ -666,11 +1060,19 @@ async function settings() {
       <label class="l" for="sa">Address (city, state)</label><input class="inp" id="sa" maxlength="160" value="${esc(p.contactAddress || '')}" placeholder="City, District, State, PIN">
       <label class="l" for="sd">Policy “Last updated” date</label><input class="inp" id="sd" maxlength="40" value="${esc(p.policyDate || '')}" placeholder="e.g. 25 Nov 2026">
       <button class="btn dk block" id="ss" type="button" style="margin-top:12px">💾 Save contact details</button><div id="sm"></div></div>
+    <div class="card"><div style="font-weight:800">🏠 Home badge &amp; 🏆 results</div>
+      <label class="sw"><input type="checkbox" id="hr" ${p.showRegCount ? 'checked' : ''}> Show “👥 students registered” badge on Home</label>
+      <label class="l" for="hm">Show the badge only when students are at least</label><input class="inp" id="hm" type="number" min="0" max="1000000" value="${p.regMin ?? 100}">
+      <div class="tiny mut" id="hn" style="margin-top:4px">Now: ${p.regCount != null ? `<b>${p.regCount}</b> students → badge shows “${regLabel(p.regCount)} students registered”` : 'open the Dashboard once to count'} (real count, rounded down – never a fake number).</div>
+      <label class="sw"><input type="checkbox" id="ht" ${p.showTotal ? 'checked' : ''}> Show total participants to students</label>
+      <div class="tiny mut">OFF (recommended): students see only the Top 50 merit list, their own rank (1–100 as “#56”, above 100 as “100+”) – nobody knows how many wrote. You always see everything here. After changing this, press <b>Calculate</b> again for old mocks.</div>
+      <button class="btn dk block" id="hs" type="button" style="margin-top:12px">💾 Save</button><div id="hmm"></div></div>
     <div class="card"><div style="font-weight:800">🔐 Change 8-digit security code</div>
       <label class="l" for="k0">Current code</label><input class="inp code" id="k0" type="password" inputmode="numeric" maxlength="8">
       <label class="l" for="k1">New code</label><input class="inp code" id="k1" type="password" inputmode="numeric" maxlength="8">
       <label class="l" for="k2">Re-enter new code</label><input class="inp code" id="k2" type="password" inputmode="numeric" maxlength="8">
       <button class="btn block" id="ks" type="button" style="margin-top:12px">Change code</button><div id="km"></div></div>`);
+  $('#hs').onclick = async () => { try { await savePub({ showRegCount: $('#hr').checked, regMin: Math.max(0, Math.round(+$('#hm').value || 0)), showTotal: $('#ht').checked }); msg($('#hmm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#hmm'), esc(errText(e))); } };
   ['#k0', '#k1', '#k2'].forEach(s => $(s).oninput = e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8); });
   $('#ss').onclick = async () => { try { await savePub({ contactEmail: $('#se').value.trim(), contactPhone: $('#sp').value.trim(), contactAddress: $('#sa').value.trim(), policyDate: $('#sd').value.trim() }); msg($('#sm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#sm'), esc(errText(e))); } };
   $('#ks').onclick = async () => {
@@ -688,9 +1090,9 @@ async function settings() {
 function payments() {
   mark('payments');
   top('Payments', dash);
-  page(`<div class="card center"><div style="font-size:40px">💳</div><div style="font-weight:900;font-size:18px">Payments – coming in Step 3</div>
+  page(`<div class="card center"><div style="font-size:40px">💳</div><div style="font-weight:900;font-size:18px">Payments – coming soon</div>
     <p class="small mut">After Razorpay is connected, every payment will show here: name, mobile, Gmail, mock, amount, Razorpay payment ID, unlock status, today / month totals, “Need check” list with Verify and Manual unlock, and Excel download.</p></div>`);
 }
 
 Object.assign(VIEWS, { dash, pick, edit: editMock, tools, preview: previewMock, attempts, results: resultsPage, students, allStudents, student,
-  feedbackView, analysisView, reportsView, notice, settings, payments });
+  feedbackView, analysisView, reportsView, notice, settings, payments, passes: passesView });
