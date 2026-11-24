@@ -10,6 +10,25 @@ import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, 
 
 let C, db, auth, $, $$, esc, ms, fmtDT, fmtD, r2, toast;
 let EX = [];
+// ---- phone Back button: every admin screen gets its own history step
+let POP = false, REPL = false;
+const VIEWS = {};
+function mark(name, args) {
+  if (POP) return;
+  const st = { adm: name, args: args || [] };
+  try { if (REPL || !(history.state && history.state.adm)) history.replaceState(st, '', '#/admin'); else history.pushState(st, '', '#/admin'); } catch (e) {}
+  REPL = false;
+}
+const replace = f => { REPL = true; f(); };
+window.addEventListener('popstate', e => {
+  if (!C || !e.state || !e.state.adm || !location.hash.startsWith('#/admin')) return;
+  try { C.stopExam(); } catch (er) {}
+  document.querySelectorAll('.ov').forEach(o => o.remove());
+  let ok = false; try { ok = !!sessionStorage.getItem(SESS) && !!auth.currentUser; } catch (er) {}
+  if (!ok) return gate();
+  const f = VIEWS[e.state.adm]; if (!f) return;
+  POP = true; try { f(...(e.state.args || [])); } finally { POP = false; }
+});
 const LOCK = 'iq_adm_lock', SESS = 'iq_adm_ok';
 
 export function openAdmin(ctx) {
@@ -47,7 +66,7 @@ function top(title, back, right) {
   $('#top').classList.remove('hide'); $('#bn').classList.add('hide'); document.body.classList.remove('inexam'); document.body.classList.add('adm');
   $('#topin').innerHTML = `${back ? '<button class="back" id="ab" type="button" aria-label="Back">←</button>' : '<img src="logo.png" alt="">'}
     <div style="min-width:0"><div class="${back ? 'ttl' : 't1'}">${esc(title)}</div>${back ? '' : '<div class="t2">IQ FOR U · Admin</div>'}</div><div class="sp"></div>${right || ''}`;
-  if (back) $('#ab').onclick = back;
+  if (back) $('#ab').onclick = () => history.back();
 }
 function page(html) { $('#app').innerHTML = `<div class="aw fade">${html}</div>`; window.scrollTo(0, 0); }
 const loading = t => page(`<div class="card center mut">${esc(t || 'Loading…')}</div>`);
@@ -141,6 +160,7 @@ function stChip(x) {
   return x.calcAt ? '<span class="chip c-paid">CALCULATED · opens at result time</span>' : '<span class="chip c-paid">CLOSED – calculate result</span>';
 }
 async function dash() {
+  mark('dash');
   top('Admin Panel', null, '<button class="btn gh sm" id="sv" type="button" style="box-shadow:none">Student view</button><button class="btn gh sm" id="lo" type="button" style="box-shadow:none">Logout</button>');
   $('#sv').onclick = () => C.go('home'); $('#lo').onclick = logout;
   loading('Loading mocks…');
@@ -163,8 +183,8 @@ async function dash() {
       <h3>${esc(x.title)}</h3><div class="meta"><span>🗓 ${esc(fmtDT(x.startAt))} → ${esc(fmtDT(x.endAt))}</span><span>${x.count} Q · ${x.duration} min · −${x.neg}</span><span>📅 Result: ${x.resultAt ? esc(fmtDT(x.resultAt)) : 'not set'}</span></div>
       <div class="acts"><button class="btn sm" type="button" data-res="${esc(x.id)}">🧮 Calculate &amp; Publish</button><button class="btn gh sm" type="button" data-res="${esc(x.id)}">🏆 Merit list · CSV</button>
         <button class="btn gh sm" type="button" data-edit="${esc(x.id)}">✏️ Edit</button><button class="btn gh sm" type="button" data-tools="${esc(x.id)}">🧰 Tools · Attempts</button></div></div>`).join('') || '<div class="card mut">No mocks yet. Tap <b>＋ New Mock</b>.</div>'}`);
-  $$('[data-a]').forEach(b => b.onclick = () => ({ new: () => editMock(null), students, feedback: () => pick('Feedback', feedbackView), analysis: () => pick('Question analysis', analysisView),
-    reports: () => pick('Reported questions', reportsView), notice, payments, settings })[b.dataset.a]());
+  $$('[data-a]').forEach(b => b.onclick = () => ({ new: () => editMock(null), students, feedback: () => pick('feedback'), analysis: () => pick('analysis'),
+    reports: () => pick('reports'), notice, payments, settings })[b.dataset.a]());
   $$('[data-res]').forEach(b => b.onclick = () => resultsPage(b.dataset.res));
   $$('[data-edit]').forEach(b => b.onclick = () => editMock(b.dataset.edit));
   $$('[data-tools]').forEach(b => b.onclick = () => tools(b.dataset.tools));
@@ -173,10 +193,13 @@ async function dash() {
     if ($('#ast')) { const d = $('#ast').children; d[0].innerHTML = `<b>${u.data().count.toLocaleString('en-IN')}</b><small>Students</small>`; d[2].innerHTML = `<b>${a ? a.data().count : 0}</b><small>Attempts${latest ? ' · ' + esc(latest.title.slice(0, 18)) : ''}</small>`; }
   } catch (e) {}
 }
-function pick(title, fn) {
+function pick(kind) {
+  mark('pick', [kind]);
+  const title = { feedback: 'Feedback', analysis: 'Question analysis', reports: 'Reported questions' }[kind];
+  const fn = { feedback: feedbackView, analysis: analysisView, reports: reportsView }[kind];
   top(title, dash);
   page(`<div class="small mut" style="margin-bottom:8px">Choose a mock:</div>${EX.map(x => `<button class="xc" type="button" data-p="${esc(x.id)}" style="width:100%;text-align:left">${stChip(x)}<h3>${esc(x.title)}</h3><div class="meta">${esc(fmtD(x.startAt))} · ${x.count} Q</div></button>`).join('') || '<div class="card mut">No mocks yet.</div>'}`);
-  $$('[data-p]').forEach(b => b.onclick = () => fn(b.dataset.p, () => pick(title, fn)));
+  $$('[data-p]').forEach(b => b.onclick = () => fn(b.dataset.p));
 }
 
 // ------------------------------------------------------------------ Excel paste parser
@@ -217,6 +240,7 @@ const toLocal = t => { const d = new Date(ms(t)); d.setMinutes(d.getMinutes() - 
 
 // ------------------------------------------------------------------ create / edit mock
 async function editMock(id, copy) {
+  mark('edit', [id, copy || null]);
   const x = id ? EX.find(e => e.id === id) : (copy || null);
   top(id ? 'Edit Mock' : 'New Mock', id ? () => tools(id) : dash);
   loading();
@@ -284,13 +308,14 @@ async function editMock(id, copy) {
       b.set(doc(db, 'keys', eid), { ans: key });
       await b.commit();
       msg(m, 'Saved ✓' + (id && x.calcAt ? ' Answer key / cancelled questions changed? Go to Results → Re-calculate.' : ''), 'ok');
-      await loadEx(); setTimeout(() => tools(eid), 700);
+      await loadEx(); setTimeout(() => { if (id && history.state && history.state.adm === 'edit') history.back(); else replace(() => tools(eid)); }, 700);
     } catch (e) { $('#sv').disabled = false; msg(m, esc(errText(e))); }
   };
 }
 
 // ------------------------------------------------------------------ tools page (one mock)
 async function tools(id) {
+  mark('tools', [id]);
   if (!EX.length) { try { await loadEx(); } catch (e) {} }
   const x = EX.find(e => e.id === id); if (!x) return dash();
   top(x.title, dash);
@@ -307,22 +332,24 @@ async function tools(id) {
       <button type="button" data-t="pub">${x.published ? '🙈 Unpublish (hide from students)' : '📢 Publish (show to students)'}<span class="ar">›</span></button>
       <button type="button" data-t="del" style="color:var(--no)">🗑 Delete mock<span class="ar">›</span></button>
     </div>`);
-  const back = () => tools(id);
-  const A = { pre: () => previewMock(x), edit: () => editMock(id), dup: () => duplicate(x), att: () => attempts(id), res: () => resultsPage(id),
-    fb: () => feedbackView(id, back), rep: () => reportsView(id, back), ana: () => analysisView(id, back),
-    pub: async () => { try { await updateDoc(doc(db, 'exams', id), { published: !x.published }); x.published = !x.published; toast(x.published ? 'Published ✓' : 'Hidden ✓', 'ok'); tools(id); } catch (e) { toast(errText(e), 'err'); } },
+  const A = { pre: () => previewMock(id), edit: () => editMock(id), dup: () => duplicate(x), att: () => attempts(id), res: () => resultsPage(id),
+    fb: () => feedbackView(id), rep: () => reportsView(id), ana: () => analysisView(id),
+    pub: async () => { try { await updateDoc(doc(db, 'exams', id), { published: !x.published }); x.published = !x.published; toast(x.published ? 'Published ✓' : 'Hidden ✓', 'ok'); replace(() => tools(id)); } catch (e) { toast(errText(e), 'err'); } },
     del: async () => {
       if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Delete “${esc(x.title)}”?</h3><p class="small">Questions, answer key and the mock will be deleted. This cannot be undone.</p>`, 'Delete')) return;
-      try { await deleteDoc(doc(db, 'exams', id, 'paper', 'main')); await deleteDoc(doc(db, 'keys', id)); await deleteDoc(doc(db, 'exams', id)); toast('Deleted', 'ok'); await loadEx(); dash(); } catch (e) { toast(errText(e), 'err'); }
+      try { await deleteDoc(doc(db, 'exams', id, 'paper', 'main')); await deleteDoc(doc(db, 'keys', id)); await deleteDoc(doc(db, 'exams', id)); toast('Deleted', 'ok'); await loadEx(); replace(dash); } catch (e) { toast(errText(e), 'err'); }
     } };
   $$('[data-t]').forEach(b => b.onclick = A[b.dataset.t]);
 }
-async function previewMock(x) {
+async function previewMock(id) {
+  mark('preview', [id]);
+  if (!EX.length) { try { await loadEx(); } catch (e) {} }
+  const x = EX.find(e => e.id === id); if (!x) return;
   try {
     const [p, k] = await Promise.all([getDoc(doc(db, 'exams', x.id, 'paper', 'main')), getDoc(doc(db, 'keys', x.id))]);
     const qs = p.exists() ? p.data().questions : [];
     if (!qs.length) return toast('No questions.', 'err');
-    C.runExam({ x, qs, ans: {}, marked: new Set(), visited: new Set(), preview: true, key: k.exists() ? k.data().ans : {}, startedAt: Date.now(), end: Date.now() + 3600000, back: () => tools(x.id) });
+    C.runExam({ x, qs, ans: {}, marked: new Set(), visited: new Set(), preview: true, key: k.exists() ? k.data().ans : {}, startedAt: Date.now(), end: Date.now() + 3600000, back: () => history.back() });
   } catch (e) { toast(errText(e), 'err'); }
 }
 async function duplicate(x) {
@@ -335,6 +362,7 @@ async function duplicate(x) {
 
 // ------------------------------------------------------------------ attempts
 async function attempts(id) {
+  mark('attempts', [id]);
   const x = EX.find(e => e.id === id);
   top('Attempts', () => tools(id)); loading();
   let A = [];
@@ -346,11 +374,11 @@ async function attempts(id) {
     <p class="small mut">${esc(x.title)} · <b>Reset</b> deletes a student's attempt so they can write again (use only for genuine problems like power cut / net issue). <button class="link small" id="rf" type="button">↻ Refresh</button></p>
     <div class="tbl"><table><tr><th>#</th><th>Name</th><th>State</th><th>Started</th><th>Status</th><th class="n">Answered</th><th></th></tr>
     ${A.map((a, i) => `<tr><td>${i + 1}</td><td><b>${esc(a.name)}</b></td><td>${esc(a.state || '')}</td><td>${esc(fmtDT(a.startedAt))}</td><td>${a.submitted ? '<span class="chip c-free">Submitted</span>' : '<span class="chip c-paid">Not submitted</span>'}</td><td class="n">${Object.keys(a.answers || {}).length}</td><td><button class="btn red sm" type="button" data-r="${esc(a.uid)}">Reset</button></td></tr>`).join('') || '<tr><td colspan="7" class="mut">No attempts yet.</td></tr>'}</table></div>`);
-  $('#rf').onclick = () => attempts(id);
+  $('#rf').onclick = () => replace(() => attempts(id));
   $$('[data-r]').forEach(b => b.onclick = async () => {
     const a = A.find(z => z.uid === b.dataset.r);
     if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Reset ${esc(a.name)}?</h3><p class="small">Their answers for this mock will be deleted and they can start again.</p>`, 'Reset')) return;
-    try { await resetAttempt(id, a.uid); toast('Reset ✓', 'ok'); attempts(id); } catch (e) { toast(errText(e), 'err'); }
+    try { await resetAttempt(id, a.uid); toast('Reset ✓', 'ok'); replace(() => attempts(id)); } catch (e) { toast(errText(e), 'err'); }
   });
 }
 async function resetAttempt(id, uid) {
@@ -360,6 +388,7 @@ async function resetAttempt(id, uid) {
 
 // ------------------------------------------------------------------ results: calculate & publish
 async function resultsPage(id) {
+  mark('results', [id]);
   if (!EX.length) { try { await loadEx(); } catch (e) {} }
   const x = EX.find(e => e.id === id);
   top('Results · ' + x.title, dash); loading();
@@ -379,7 +408,7 @@ async function resultsPage(id) {
         ${(R.sections || []).map(s => `<td class="n">${t.secs && t.secs[s] ? t.secs[s].score : '–'}</td>`).join('')}<td class="n"><b>${t.score}</b></td><td class="n">${t.acc}%</td><td class="n">${t.cor}</td><td class="n">${t.wrong}</td><td class="n">${t.mins}</td></tr>`).join('')}</table></div>` : '<p class="mut">Not calculated yet.</p>'}`);
   $('#cp').onclick = () => calculate(x, true);
   $('#co').onclick = () => calculate(x, false);
-  if ($('#hd')) $('#hd').onclick = async () => { try { const h = !x.resultsHold; await updateDoc(doc(db, 'exams', id), h ? { resultsHold: true, resultsOut: false } : { resultsHold: false }); x.resultsHold = h; if (h) x.resultsOut = false; resultsPage(id); } catch (e) { toast(errText(e), 'err'); } };
+  if ($('#hd')) $('#hd').onclick = async () => { try { const h = !x.resultsHold; await updateDoc(doc(db, 'exams', id), h ? { resultsHold: true, resultsOut: false } : { resultsHold: false }); x.resultsHold = h; if (h) x.resultsOut = false; replace(() => resultsPage(id)); } catch (e) { toast(errText(e), 'err'); } };
   if ($('#csv')) $('#csv').onclick = () => {
     const secs = R.sections || [];
     csv((x.title.replace(/[^\w]+/g, '_') || 'results') + '.csv', [['Rank', 'Name', 'State', 'Mobile', 'Gmail', ...secs, 'Score', 'Accuracy %', 'Correct', 'Wrong', 'Not answered', 'Minutes', 'Submitted']]
@@ -434,12 +463,13 @@ async function calculate(x, publish) {
         secs: Object.fromEntries(secs.map(s => [s, { score: r.secs[s].score }])) })) });
     await updateDoc(doc(db, 'exams', x.id), publish ? { calcAt: serverTimestamp(), resultsOut: true, resultsHold: false } : { calcAt: serverTimestamp() });
     msg(m, `Done ✓ ${n} students. ${publish ? 'Results are now visible to students.' : 'Results will open automatically at the result time.'}`, 'ok');
-    await loadEx(); setTimeout(() => resultsPage(x.id), 900);
+    await loadEx(); setTimeout(() => replace(() => resultsPage(x.id)), 900);
   } catch (e) { $$('#cp,#co').forEach(b => b.disabled = false); msg(m, esc(errText(e))); }
 }
 
 // ------------------------------------------------------------------ students
 async function students() {
+  mark('students');
   top('Students', dash);
   page(`<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b style="font-size:16px">📋 All registered students</b><div class="tiny mut" id="cnt">Counting…</div></div>
       <button class="btn dk" id="all" type="button">Show all students</button></div></div>
@@ -468,6 +498,7 @@ async function students() {
   $('#all').onclick = allStudents;
 }
 async function allStudents() {
+  mark('allStudents');
   top('All students', students); loading('Loading all students…');
   let L = [];
   try { L = (await getDocs(collection(db, 'users'))).docs.map(d => ({ uid: d.id, ...d.data() })); }
@@ -503,6 +534,7 @@ async function allStudents() {
   };
 }
 async function student(uid) {
+  mark('student', [uid]);
   top('Student', students); loading();
   if (!EX.length) { try { await loadEx(); } catch (e) {} }
   let u, blocked = false; const rows = [];
@@ -522,17 +554,18 @@ async function student(uid) {
     <div class="tbl"><table><tr><th>Mock</th><th>Status</th><th class="n">Score</th><th class="n">Rank</th><th></th></tr>
       ${rows.map(o => `<tr><td>${esc(o.x.title)}</td><td>${o.a.submitted ? 'Submitted' : 'Not submitted'}</td><td class="n">${o.r ? o.r.score : '–'}</td><td class="n">${o.r ? '#' + o.r.rank : '–'}</td><td><button class="btn red sm" type="button" data-rs="${esc(o.x.id)}">Reset</button></td></tr>`).join('') || '<tr><td colspan="5" class="mut">No attempts.</td></tr>'}</table></div>
     <button class="btn ${blocked ? 'dk' : 'red'} block" id="bl" type="button" style="margin-top:12px">${blocked ? '✅ Unblock student' : '⛔ Block student'}</button>`);
-  $$('[data-rs]').forEach(b => b.onclick = async () => { if (!await C.confirmBox('<h3 style="margin:0">Reset this attempt?</h3><p class="small">The student can write this mock again.</p>', 'Reset')) return; try { await resetAttempt(b.dataset.rs, uid); toast('Reset ✓', 'ok'); student(uid); } catch (e) { toast(errText(e), 'err'); } });
+  $$('[data-rs]').forEach(b => b.onclick = async () => { if (!await C.confirmBox('<h3 style="margin:0">Reset this attempt?</h3><p class="small">The student can write this mock again.</p>', 'Reset')) return; try { await resetAttempt(b.dataset.rs, uid); toast('Reset ✓', 'ok'); replace(() => student(uid)); } catch (e) { toast(errText(e), 'err'); } });
   $('#bl').onclick = async () => {
     try { if (blocked) await deleteDoc(doc(db, 'blocked', uid)); else { if (!await C.confirmBox(`<h3 style="margin:0">Block ${esc(u.name)}?</h3><p class="small">They cannot start any new test.</p>`, 'Block')) return; await setDoc(doc(db, 'blocked', uid), { at: serverTimestamp(), name: u.name || '' }); }
-      toast(blocked ? 'Unblocked ✓' : 'Blocked ✓', 'ok'); student(uid); } catch (e) { toast(errText(e), 'err'); }
+      toast(blocked ? 'Unblocked ✓' : 'Blocked ✓', 'ok'); replace(() => student(uid)); } catch (e) { toast(errText(e), 'err'); }
   };
 }
 
 // ------------------------------------------------------------------ feedback
-async function feedbackView(id, back) {
+async function feedbackView(id) {
+  mark('feedbackView', [id]);
   const x = EX.find(e => e.id === id);
-  top('Feedback · ' + x.title, back || dash); loading();
+  top('Feedback · ' + x.title, true); loading();
   let F = [];
   try { F = (await getDocs(collection(db, 'feedback', id, 'u'))).docs.map(d => d.data()); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
   if (!F.length) { page('<div class="card center mut">No feedback yet.</div>'); return; }
@@ -552,9 +585,10 @@ async function feedbackView(id, back) {
 }
 
 // ------------------------------------------------------------------ question analysis
-async function analysisView(id, back) {
+async function analysisView(id) {
+  mark('analysisView', [id]);
   const x = EX.find(e => e.id === id);
-  top('Analysis · ' + x.title, back || dash); loading();
+  top('Analysis · ' + x.title, true); loading();
   let R, P;
   try { const [r, p] = await Promise.all([getDoc(doc(db, 'adminresults', id)), getDoc(doc(db, 'exams', id, 'paper', 'main'))]); R = r.exists() ? r.data() : null; P = p.exists() ? p.data().questions : []; }
   catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
@@ -582,9 +616,10 @@ async function analysisView(id, back) {
 }
 
 // ------------------------------------------------------------------ reported questions
-async function reportsView(id, back) {
+async function reportsView(id) {
+  mark('reportsView', [id]);
   const x = EX.find(e => e.id === id);
-  top('Reports · ' + x.title, back || dash); loading();
+  top('Reports · ' + x.title, true); loading();
   let RP = [], P = [], K = {};
   try {
     const [r, p, k] = await Promise.all([getDocs(collection(db, 'reports', id, 'r')), getDoc(doc(db, 'exams', id, 'paper', 'main')), getDoc(doc(db, 'keys', id))]);
@@ -604,15 +639,16 @@ async function reportsView(id, back) {
           <button class="btn gh sm" type="button" data-can="${qid}">${can.includes(qid) ? '↩ Un-cancel question' : '🎁 Cancel Q (+' + x.mark + ' all)'}</button>
           <button class="btn red sm" type="button" data-dr="${qid}">🗑 Clear reports</button></div></div>`; }).join('') || '<div class="card center mut">No reports. 👍</div>'}`);
   $('#rc').onclick = () => resultsPage(id);
-  $$('[data-fix]').forEach(b => b.onclick = async () => { const q = b.dataset.fix, v = document.querySelector(`[data-k="${q}"]`).value; try { K[q] = v; await setDoc(doc(db, 'keys', id), { ans: K }); toast('Answer key saved ✓ Now re-calculate.', 'ok'); reportsView(id, back); } catch (e) { toast(errText(e), 'err'); } });
-  $$('[data-can]').forEach(b => b.onclick = async () => { const q = b.dataset.can, c = new Set(x.cancelled || []); c.has(q) ? c.delete(q) : c.add(q); try { await updateDoc(doc(db, 'exams', id), { cancelled: [...c] }); x.cancelled = [...c]; toast('Saved ✓ Now re-calculate.', 'ok'); reportsView(id, back); } catch (e) { toast(errText(e), 'err'); } });
-  $$('[data-dr]').forEach(b => b.onclick = async () => { try { for (const r of G[b.dataset.dr]) await deleteDoc(doc(db, 'reports', id, 'r', r._id)); toast('Cleared', 'ok'); reportsView(id, back); } catch (e) { toast(errText(e), 'err'); } });
+  $$('[data-fix]').forEach(b => b.onclick = async () => { const q = b.dataset.fix, v = document.querySelector(`[data-k="${q}"]`).value; try { K[q] = v; await setDoc(doc(db, 'keys', id), { ans: K }); toast('Answer key saved ✓ Now re-calculate.', 'ok'); replace(() => reportsView(id)); } catch (e) { toast(errText(e), 'err'); } });
+  $$('[data-can]').forEach(b => b.onclick = async () => { const q = b.dataset.can, c = new Set(x.cancelled || []); c.has(q) ? c.delete(q) : c.add(q); try { await updateDoc(doc(db, 'exams', id), { cancelled: [...c] }); x.cancelled = [...c]; toast('Saved ✓ Now re-calculate.', 'ok'); replace(() => reportsView(id)); } catch (e) { toast(errText(e), 'err'); } });
+  $$('[data-dr]').forEach(b => b.onclick = async () => { try { for (const r of G[b.dataset.dr]) await deleteDoc(doc(db, 'reports', id, 'r', r._id)); toast('Cleared', 'ok'); replace(() => reportsView(id)); } catch (e) { toast(errText(e), 'err'); } });
 }
 
 // ------------------------------------------------------------------ notice + settings + payments
 async function readPub() { try { const s = await getDoc(doc(db, 'settings', 'public')); return s.exists() ? s.data() : {}; } catch (e) { return {}; } }
 async function savePub(patch) { const p = Object.assign(await readPub(), patch, { updatedAt: serverTimestamp() }); await setDoc(doc(db, 'settings', 'public'), p); C.setPub(p); }
 async function notice() {
+  mark('notice');
   top('Home announcement', dash); loading();
   const p = await readPub();
   page(`<div class="card"><label class="l" for="nt">Announcement text (shows on top of the student Home)</label><textarea class="inp" id="nt" rows="3" maxlength="200" placeholder="Mock 2 this Sunday 10 AM – free for all! 🔥">${esc(p.notice || '')}</textarea>
@@ -621,6 +657,7 @@ async function notice() {
   $('#ns').onclick = async () => { try { await savePub({ notice: $('#nt').value.trim().slice(0, 200), noticeOn: $('#no').checked }); msg($('#nm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#nm'), esc(errText(e))); } };
 }
 async function settings() {
+  mark('settings');
   top('Settings', dash); loading();
   const p = await readPub();
   page(`<div class="card"><div style="font-weight:800">📞 Contact details (shown on Contact, Refund &amp; Privacy pages – Razorpay checks these)</div>
@@ -649,7 +686,11 @@ async function settings() {
   };
 }
 function payments() {
+  mark('payments');
   top('Payments', dash);
   page(`<div class="card center"><div style="font-size:40px">💳</div><div style="font-weight:900;font-size:18px">Payments – coming in Step 3</div>
     <p class="small mut">After Razorpay is connected, every payment will show here: name, mobile, Gmail, mock, amount, Razorpay payment ID, unlock status, today / month totals, “Need check” list with Verify and Manual unlock, and Excel download.</p></div>`);
 }
+
+Object.assign(VIEWS, { dash, pick, edit: editMock, tools, preview: previewMock, attempts, results: resultsPage, students, allStudents, student,
+  feedbackView, analysisView, reportsView, notice, settings, payments });
