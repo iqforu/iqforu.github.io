@@ -288,6 +288,41 @@ table.mt tr.me td{background:var(--y2);font-weight:800}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
 .setb{display:inline-block;background:var(--y);color:var(--ink);font-weight:900;border-radius:6px;padding:0 6px;font-size:11px;margin-left:4px}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:80;max-width:92vw;box-shadow:var(--sh)}
+/* ---- v5 practice library */
+.mtabs{display:flex;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.mtabs button{flex:1;border:0;background:none;padding:11px 4px;font-weight:800;font-size:14px;color:var(--mut);border-bottom:3px solid transparent}
+.mtabs button.on{color:var(--ink);border-color:var(--y);background:#FFFDF0}
+.grp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gc{position:relative;text-align:left;border-radius:14px;padding:12px 11px 26px;border:1.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);font:inherit;color:var(--ink)}
+.gc span{font-size:26px;display:block}.gc b{font-size:15px;display:block;margin-top:4px}.gc small{font-size:11px;color:var(--ink2);display:block;line-height:1.35;margin-top:2px}
+.gc i{position:absolute;left:11px;bottom:7px;font-style:normal;font-size:11px;font-weight:800}
+.g1{background:#FFF6B3}.g2{background:#DCFCE7}.g3{background:#E0E7FF}.g4{background:#FFE4E6}
+.subj{display:flex;width:100%;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px;margin-bottom:8px;font:inherit;color:inherit}
+.subj .ic{width:40px;height:40px;flex:none;border-radius:11px;background:var(--y2);display:grid;place-items:center;font-size:20px}
+.subj .rt{text-align:right;font-size:12px;color:var(--mut);font-weight:700}
+.prog2{height:6px;border-radius:6px;background:#EEF0F3;overflow:hidden;margin-top:5px;max-width:200px}.prog2 i{display:block;height:100%;background:var(--ok);border-radius:6px}
+.mk{display:flex;width:100%;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:7px;font:inherit;color:inherit}
+.mk .n{width:36px;height:36px;flex:none;border-radius:10px;display:grid;place-items:center;font-weight:900;background:#F1F2F4}
+.mk.done .n{background:var(--ok);color:#fff}.mk.lock{opacity:.6}.mk .r{font-size:12.5px;font-weight:800}
+.cont{display:flex;align-items:center;gap:10px;background:var(--ink);color:#fff;border-radius:14px;padding:11px 12px;font:inherit;border:0;font-size:13.5px;line-height:1.35}
+.cont b{color:var(--y)}
+.pres{background:var(--y);border:1.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);border-radius:16px;padding:14px;text-align:center}
+.pres .big{font-size:40px;font-weight:900;line-height:1.1}.pres .big small{font-size:19px}
+.pbtn{display:flex;gap:7px;margin-top:10px}.pbtn .btn{flex:1;padding:10px 4px;font-size:13px}
+.rvq{position:relative;background:#fff;border:1px solid var(--line);border-left:4px solid var(--nv);border-radius:12px;padding:10px 11px;margin-bottom:9px;font-size:14px;line-height:1.45}
+.rvq.ok{border-left-color:var(--ok)}.rvq.no{border-left-color:var(--no)}
+.rvo div{display:flex;gap:8px;align-items:center;padding:5px 7px;border-radius:8px;margin-top:4px;font-size:13.5px}
+.rvo i{font-style:normal;width:22px;height:22px;flex:none;border-radius:50%;border:1.5px solid var(--nv);display:grid;place-items:center;font-size:11px;font-weight:800}
+.rvo .k{background:var(--ok2);font-weight:700}.rvo .k i{background:var(--ok);border-color:var(--ok);color:#fff}
+.rvo .x{background:var(--no2)}.rvo .x i{background:var(--no);border-color:var(--no);color:#fff}
+.exp{background:var(--y2);border-radius:9px;padding:7px 9px;margin-top:7px;font-size:13px}
+.jrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+/* 🔒 copy block + watermark */
+body.inexam #app,.nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.xq,.nocopy{position:relative}
+.wm{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;display:flex;flex-wrap:wrap;align-content:flex-start;gap:46px 30px;padding:20px 0;transform:rotate(-24deg) scale(1.3);opacity:.075;font-weight:900;font-size:15px;color:var(--ink)}
+.wm span{white-space:nowrap}
+@media print{body.inexam *{display:none!important}}
 </style>
 </head>
 <body>
@@ -321,7 +356,7 @@ const TAG = 'Mocks for All Competitive Exams';
 const IG = (SITE && SITE.instagram) || '';
 const IG_HANDLE = (IG.match(/instagram\.com\/([^/?#]+)/) || [])[1] || '';
 const ALLX = 'All Competitive Exams';
-const CATS = [ALLX, 'SSC', 'Railway', 'TET', 'Banking', 'State Exams', 'Other'];
+const CATS = [ALLX, 'State Exams', 'SSC', 'Railway', 'TET', 'UPSC', 'Other'];
 const STATES = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu','Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'];
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -401,7 +436,7 @@ let USER = null, PROFILE = null, BLOCKED = false, EXAMS = [], ATT = {}, UNL = {}
 let NOTES = [], INSTALL = null, MSG_ON = false;
 let OLDP = {}, CAT = 'All', TTAB = null, NEXT = null, REGISTERING = false, AUTH_READY = false, X = null;
 const PAPER = {};
-try { CAT = localStorage.getItem('iq_cat') || 'All'; } catch (e) {}
+try { CAT = localStorage.getItem('iq_cat') || 'All'; if (CAT === 'Banking') CAT = 'All'; } catch (e) {}
 
 if (/Instagram|FBAN|FBAV|FB_IAB/i.test(navigator.userAgent)) window.__inApp = true;
 
@@ -438,11 +473,16 @@ function shell(html, nav) {
 async function route() {
   if (!AUTH_READY) return;
   if (X && X.preview) stopExam();
-  const h = (location.hash || '#/home').replace(/^#\/?/, ''), [v, a] = h.split('/');
+  const h = (location.hash || '#/home').replace(/^#\/?/, ''), [v, a, b] = h.split('/');
   if (USER && !PROFILE && !['complete', 'page', 'admin'].includes(v)) return go('complete');
   switch (v) {
     case '': case 'home': return home();
     case 'tests': return tests();
+    case 'practice': return practice(a, b);
+    case 'pstart': return USER ? pInstr(a) : needLogin('#/pstart/' + a);
+    case 'presult': return USER ? pResult(a, b) : needLogin('#/presult/' + a);
+    case 'ptop': return USER ? pTop(a) : needLogin('#/ptop/' + a);
+    case 'presults': return USER ? results(null, 'practice') : needLogin('#/presults');
     case 'results': return USER ? results(a) : needLogin('#/results');
     case 'profile': return USER ? profile() : go('login');
     case 'edit': return USER ? editProfile() : go('login');
@@ -455,7 +495,9 @@ async function route() {
     case 'inbox': return USER ? inboxView() : go('login');
     case 'start': return USER ? instructions(a) : needLogin('#/start/' + a);
     case 'admin': return openAdmin();
-    case 'exam': { let r = null; try { r = sessionStorage.getItem('iq_run'); } catch (e) {} return USER && r ? go('start/' + r) : go('home'); }
+    case 'exam': { let r = null; try { r = sessionStorage.getItem('iq_run'); } catch (e) {}
+      if (USER && r && r.startsWith('p:')) { const [, pid, rr] = r.split(':'); return pStart(pid, rr === 'r'); }
+      return USER && r ? go('start/' + r) : go('home'); }
     default: return home();
   }
 }
@@ -555,7 +597,7 @@ function payInfo(id) {
     <button class="btn gh block" style="margin-top:8px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
 }
 function chipsHtml() {
-  return `<div class="chips" id="cats">${['All', ...CATS.filter(c => c !== ALLX)].map(c => `<button type="button" class="${c === CAT ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
+  return `<div class="chips" id="cats">${['All', ...CATS.filter(c => c !== ALLX)].map(c => `<button type="button" class="${c === CAT ? 'on' : ''}" data-cat="${esc(c)}">${esc(c === 'Other' ? 'Others' : c)}</button>`).join('')}</div>`;
 }
 function bindChips(cb) { $$('[data-cat]').forEach(b => b.onclick = () => { CAT = b.dataset.cat; try { localStorage.setItem('iq_cat', CAT); } catch (e) {} cb(); }); }
 const footHtml = () => `<div class="foot"><a href="#/page/contact">Contact</a>·<a href="#/page/terms">Terms</a>·<a href="#/page/refund">Refund</a>·<a href="#/page/privacy">Privacy</a><br>© ${new Date().getFullYear()} ${esc(NAME)} · ${esc(TAG)}</div>`;
@@ -675,6 +717,269 @@ function celebrate() {
 pubReady.then(() => { setTimeout(() => { if (USER && PROFILE && PUB.vapidKey && 'Notification' in window && Notification.permission === 'granted') enablePush(true); }, 4000); });
 
 
+// ================================================================ 📚 PRACTICE LIBRARY (v5)
+// settings/pindex.list = published practice mocks [{id,g,s,no,ch,c,d,m,n,a,t}]  (one read for the whole library)
+// pexams/{id}/paper/main = questions · pexams/{id}/akey/main = answers (+ explanations), readable after the first attempt
+// pattempts/{id}/u/{uid} = first attempt (Top 10) · ptries/{id}/u/{uid} = re-attempt · pstats/{uid}.m = my progress
+const PG = { gs: { n: 'General Studies', e: '📚', c: 'g1' }, sci: { n: 'General Science', e: '🔬', c: 'g2' }, apt: { n: 'Aptitude', e: '🧮', c: 'g3' }, ca: { n: 'Current Affairs', e: '📰', c: 'g4' } };
+const DEF_SUBJ = { gs: ['History', 'Geography', 'Polity', 'Economics', 'Art & Culture', 'EVS'], sci: ['Physics', 'Chemistry', 'Biology'], apt: ['Maths', 'Reasoning', 'Computer'] };
+const SUBJ_IC = { History: '🏛', Geography: '🌍', Polity: '⚖️', Economics: '💰', 'Art & Culture': '🎨', EVS: '🌱', Physics: '⚛️', Chemistry: '🧪', Biology: '🧬', Maths: '🧮', Reasoning: '🧩', Computer: '💻' };
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const subjList = g => g === 'ca' ? [] : ((PUB.psubj && PUB.psubj[g] && PUB.psubj[g].length) ? PUB.psubj[g] : DEF_SUBJ[g] || []);
+const caYears = () => (PUB.cayears && PUB.cayears.length ? PUB.cayears : [2026]).map(Number).sort((a, b) => b - a);
+const subjName = (g, s) => g === 'ca' ? (MONTHS[+s.split('-')[1] - 1] || s) + ' ' + s.split('-')[0] : s;
+const subjIc = (g, s) => g === 'ca' ? '📰' : SUBJ_IC[s] || PG[g].e;
+let PIDX = null, PSTATS = null, PCHIP = null;
+async function loadPIdx(force) {
+  if (PIDX && !force) return PIDX;
+  try { const s = await getDoc(doc(db, 'settings', 'pindex')); PIDX = s.exists() ? (s.data().list || []) : []; } catch (e) { PIDX = []; }
+  return PIDX;
+}
+async function loadPStats() {
+  if (!USER) return (PSTATS = {});
+  if (PSTATS) return PSTATS;
+  try { const s = await getDoc(doc(db, 'pstats', USER.uid)); PSTATS = s.exists() ? (s.data().m || {}) : {}; } catch (e) { PSTATS = {}; }
+  return PSTATS;
+}
+const pOpen = e => e.a === 'free' || passActive();
+const pPct = r => r && r.t ? Math.max(0, Math.round(r.s / r.t * 100)) : 0;
+function pTabs(on) {
+  return `<div class="mtabs"><button type="button" data-mt="tests" class="${on === 'live' ? 'on' : ''}">🔴 Live Mocks</button><button type="button" data-mt="practice" class="${on === 'practice' ? 'on' : ''}">📚 Practice Library</button></div>`;
+}
+const bindPTabs = () => $$('[data-mt]').forEach(b => b.onclick = () => go(b.dataset.mt));
+function pShell(title, back, inner) {
+  if (back) topBack(title, back); else { topMain(); $('#topin').innerHTML = `<div class="ttl" style="font-size:18px">${esc(title)}</div>`; }
+  shell(`<div class="wrapw fade" id="pp">${inner}</div>`, 'tests');
+}
+async function practice(g, s) {
+  if (g && s) return practiceSubject(g, decodeURIComponent(s));
+  if (g && PG[g]) return practiceGroup(g);
+  pShell('Mock Tests', null, pTabs('practice') + '<div class="card center mut">Loading…</div>');
+  await Promise.all([loadPIdx(), loadPStats(), pubReady]);
+  if (!$('#pp')) return;
+  const n = g => PIDX.filter(e => e.g === g).length;
+  const recent = Object.entries(PSTATS).sort((a, b) => b[1].at - a[1].at).slice(0, 3);
+  $('#pp').innerHTML = pTabs('practice') + `<div class="grp">${Object.keys(PG).map(k => `<button type="button" class="gc ${PG[k].c}" data-g="${k}"><span>${PG[k].e}</span><b>${PG[k].n}</b><small>${k === 'ca' ? caYears()[0] + ' · month-wise' : subjList(k).join(' · ')}</small><i>${n(k)} mocks</i></button>`).join('')}</div>
+    <div class="cont" style="margin-top:12px"><span>🎟</span><div style="flex:1">${passActive() ? '<b>Monthly Pass active</b> – all practice mocks are open for you ✓' : 'Every subject: <b>Mock 1 FREE</b>.<br>Monthly Pass → <b>all practice mocks</b> + Live mocks'}</div></div>
+    ${recent.length ? `<div class="sec">Recently practised</div>${recent.map(([id, r]) => { const e = PIDX.find(z => z.id === id); return e ? `<button type="button" class="subj" data-open="${esc(id)}"><div class="ic">${subjIc(e.g, e.s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(e.g, e.s))} · Mock ${e.no}</b><div class="tiny mut">${r.s}/${r.t} · ${pPct(r)}% · ${esc(agoTxt(r.at))}</div></div><div class="rt">Review ›</div></button>` : ''; }).join('')}` : ''}
+    ${footHtml()}`;
+  bindPTabs();
+  $$('[data-g]').forEach(b => b.onclick = () => go('practice/' + b.dataset.g));
+  $$('[data-open]').forEach(b => b.onclick = () => go('presult/' + b.dataset.open));
+}
+async function practiceGroup(g) {
+  pShell(PG[g].n, 'practice', '<div class="card center mut">Loading…</div>');
+  await Promise.all([loadPIdx(), loadPStats(), pubReady]);
+  if (!$('#pp')) return;
+  const row = s => { const L = PIDX.filter(e => e.g === g && e.s === s), d = L.filter(e => PSTATS[e.id]).length, p = L.length ? Math.round(d / L.length * 100) : 0;
+    return `<button type="button" class="subj" data-s="${esc(s)}"><div class="ic">${subjIc(g, s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(g, s))}</b><div class="prog2"><i style="width:${p}%"></i></div></div><div class="rt">${L.length ? d + ' / ' + L.length : '<span class="tiny">soon</span>'}</div></button>`; };
+  let body;
+  if (g === 'ca') {
+    if (!PCHIP || !caYears().includes(PCHIP)) PCHIP = caYears()[0];
+    body = `<div class="chips">${caYears().map(y => `<button type="button" data-y="${y}" class="${y === PCHIP ? 'on' : ''}">${y}</button>`).join('')}</div><div style="height:8px"></div>` + MONTHS.map((m, i) => row(PCHIP + '-' + String(i + 1).padStart(2, '0'))).join('');
+  } else body = subjList(g).map(row).join('') || '<div class="empty">No subjects yet.</div>';
+  $('#pp').innerHTML = body + footHtml();
+  $$('[data-y]').forEach(b => b.onclick = () => { PCHIP = +b.dataset.y; practiceGroup(g); });
+  $$('[data-s]').forEach(b => b.onclick = () => go('practice/' + g + '/' + encodeURIComponent(b.dataset.s)));
+}
+async function practiceSubject(g, s) {
+  if (!PG[g]) return go('practice');
+  pShell(subjName(g, s), 'practice/' + g, '<div class="card center mut">Loading…</div>');
+  await Promise.all([loadPIdx(), loadPStats(), pubReady]);
+  if (!$('#pp')) return;
+  const L = PIDX.filter(e => e.g === g && e.s === s).sort((a, b) => a.no - b.no), done = L.filter(e => PSTATS[e.id]).length;
+  let lastCh = null;
+  $('#pp').innerHTML = `<div class="card" style="display:flex;gap:10px;align-items:center"><span style="font-size:28px">${subjIc(g, s)}</span><div style="flex:1"><b style="font-size:17px">${esc(subjName(g, s))}</b><div class="tiny mut">${L.length} mocks · ${PG[g].n}</div></div><b>${done}/${L.length} ✓</b></div>
+    ${L.map(e => { const r = PSTATS[e.id], open = pOpen(e), ch = e.ch && e.ch !== lastCh ? `<div class="sec" style="margin:12px 0 6px;font-size:14px">${esc(e.ch)}</div>` : ''; lastCh = e.ch || lastCh;
+      return ch + `<button type="button" class="mk ${r ? 'done' : open ? '' : 'lock'}" data-p="${esc(e.id)}"><div class="n">${r ? '✓' : open ? e.no : '🔒'}</div><div style="flex:1;text-align:left"><b>Mock ${e.no}</b> ${e.a === 'free' ? '<span class="chip c-free">FREE</span>' : ''}<div class="tiny mut">${r ? `Score ${r.s}/${r.t} · ${pPct(r)}%` : `${e.c} Q · ${e.d} min · −${e.n}`}</div></div><div class="r">${r ? 'Review ›' : open ? 'Start →' : '🎟'}</div></button>`; }).join('')
+      || `<div class="empty"><div class="ic">🛠</div><b>Mocks coming soon</b><br><span class="small">New practice mocks are added every week.</span></div>`}
+    ${footHtml()}`;
+  $$('[data-p]').forEach(b => b.onclick = () => { const e = L.find(z => z.id === b.dataset.p); if (PSTATS[e.id]) return go('presult/' + e.id); if (!pOpen(e)) return pLocked(e); go('pstart/' + e.id); });
+}
+function pLocked(e) {
+  const o = sheet(`<div style="text-align:center;font-size:34px">🔒</div><div style="text-align:center;font-weight:900;font-size:17px">${esc(subjName(e.g, e.s))} – Mock ${e.no}</div>
+    <p class="small center" style="color:var(--ink2)">Unlock <b>all practice mocks</b> + <b>Live mocks</b> every month with the <b>Monthly Pass</b>.</p>
+    <button class="btn block" type="button" id="gpp">🎟 Get Monthly Pass</button><div class="tiny mut center" style="margin-top:8px">Online payment – coming soon</div>`);
+  o.querySelector('#gpp').onclick = () => toast('Online Monthly Pass – coming soon! 🚀', 'info');
+}
+async function pInstr(id) {
+  await Promise.all([loadPIdx(), loadPStats()]);
+  const e = PIDX.find(z => z.id === id); if (!e) { toast('Practice mock not found.', 'err'); return go('practice'); }
+  if (BLOCKED) { toast('Your account is blocked.', 'err'); return go('home'); }
+  if (!pOpen(e)) { go('practice/' + e.g + '/' + encodeURIComponent(e.s)); return pLocked(e); }
+  let first = null; try { const s = await getDoc(doc(db, 'pattempts', id, 'u', USER.uid)); first = s.exists() ? s.data() : null; } catch (er) {}
+  if (first && !first.submitted && ms(first.startedAt) + e.d * 60000 > now()) return pStart(id, false);
+  topBack('Practice', 'practice/' + e.g + '/' + encodeURIComponent(e.s));
+  shell(`<div class="wrapw fade"><div class="card"><div style="font-weight:900;font-size:18px">${esc(subjName(e.g, e.s))} · Mock ${e.no}</div><div class="small mut" style="margin-bottom:8px">${esc(PG[e.g].n)}${e.ch ? ' · ' + esc(e.ch) : ''}</div>
+      <table class="sum"><tr><th>Questions</th><th>Minutes</th><th>Marks</th></tr><tr><td>${e.c}</td><td>${e.d}</td><td>+${e.m} / −${e.n}</td></tr></table></div>
+    <div class="card"><ul style="padding-left:18px;margin:0;font-size:14.5px;line-height:1.7">
+      <li>Practice anytime – no fixed time. The timer starts when you press Start.</li>
+      <li>Score, correct answers ${'&amp;'} explanations come <b>immediately</b> after you submit.</li>
+      <li>Your <b>first attempt</b> counts for the <b>🏆 Top 10</b>. You can re-attempt any time to improve.</li></ul>
+      <button class="btn block" id="is" type="button" style="margin-top:14px">${first && first.submitted ? '🔁 Re-attempt ▶' : 'Start Practice ▶'}</button>
+      ${first && first.submitted ? '<button class="btn gh block" id="ir2" type="button" style="margin-top:8px">📄 See my result</button>' : ''}</div></div>`, null);
+  $('#is').onclick = () => { $('#is').disabled = true; pStart(id, !!(first && first.submitted)); };
+  if ($('#ir2')) $('#ir2').onclick = () => go('presult/' + id);
+}
+async function pStart(id, retry) {
+  await loadPIdx(); const e = PIDX.find(z => z.id === id); if (!e) return go('practice');
+  let paper;
+  try { const p = await getDoc(doc(db, 'pexams', id, 'paper', 'main')); paper = p.exists() ? p.data().questions : null; }
+  catch (er) { if ((er.code || '').includes('permission')) { go('practice'); return pLocked(e); } toast(errText(er), 'err'); return go('practice'); }
+  if (!paper || !paper.length) { toast('Questions not available yet.', 'err'); return go('practice'); }
+  PAPER['p:' + id] = paper;
+  const ref = retry ? doc(db, 'ptries', id, 'u', USER.uid) : doc(db, 'pattempts', id, 'u', USER.uid);
+  let a = null;
+  try { const s0 = await getDoc(ref); a = s0.exists() ? s0.data() : null; } catch (er) {}
+  const fresh = !a || (retry && (a.submitted || ms(a.startedAt) + e.d * 60000 < now()));
+  if (!retry && a && a.submitted) return go('presult/' + id);
+  const t0 = Date.now();
+  if (fresh) {
+    try { localStorage.removeItem(lsKey(id + (retry ? '_r' : ''))); } catch (er) {}
+    const d0 = { uid: USER.uid, name: PROFILE.name, state: PROFILE.state, startedAt: serverTimestamp(), savedAt: serverTimestamp(), answers: {}, submitted: false };
+    try { await setDoc(ref, d0); const s1 = await getDoc(ref); a = s1.data(); } catch (er) { toast(errText(er), 'err'); return go('practice'); }
+  }
+  if (a.savedAt) SKEW = ms(a.savedAt) - Math.round((t0 + Date.now()) / 2);
+  const x = { id: id + (retry ? '_r' : ''), pid: id, title: subjName(e.g, e.s) + ' · Mock ' + e.no, mark: e.m, neg: e.n, duration: e.d, practice: true, retry, entry: e };
+  const L = lsGet(x.id);
+  runExam({ x, ref, qs: paper, run: 'p:' + id + (retry ? ':r' : ''), ans: Object.assign({}, a.answers || {}, L.a), marked: new Set(L.m || []), visited: new Set(L.v || []),
+    startedAt: ms(a.startedAt), end: ms(a.startedAt) + e.d * 60000, dirty: Object.keys(L.a || {}).length > 0 });
+}
+// score a practice attempt with the answer key (same rules as live mocks)
+function pScore(qs, key, ans, m, n) {
+  let cor = 0, wrong = 0;
+  qs.forEach(q => { const a = ans[q.id]; if (!a) return; if (a === key[q.id]) cor++; else wrong++; });
+  const s = Math.round((cor * m - wrong * n) * 100) / 100;
+  return { s, t: Math.round(qs.length * m * 100) / 100, cor, wrong, skip: qs.length - cor - wrong, acc: cor + wrong ? Math.round(cor / (cor + wrong) * 1000) / 10 : 0 };
+}
+async function pFinish(auto) {
+  X.done = true; clearInterval(X.timer); $$('.ov').forEach(o => o.remove());
+  const x = X.x, snap = Object.assign({}, X.ans), started = X.startedAt, ref = X.ref;
+  $('#app').innerHTML = `<div class="wrapw"><div class="card center" style="margin-top:30px"><h2>${auto ? '⏰ Time over' : 'Submitting…'}</h2><p class="mut">Checking your answers…</p></div></div>`;
+  let ok = false, lastErr = null;
+  for (let i = 0; i < 3 && !ok; i++) {
+    const late = now() > started + (x.duration + 1) * 60000;   // app was closed till after the time: submit the last saved answers
+    try { await updateDoc(ref, late ? { submitted: true, submittedAt: serverTimestamp(), savedAt: serverTimestamp() } : { answers: snap, submitted: true, submittedAt: serverTimestamp(), savedAt: serverTimestamp() }); ok = true; }
+    catch (e) { lastErr = e; if ((e.code || '').includes('permission')) break; await new Promise(r => setTimeout(r, 1500)); }
+  }
+  stopExam(); try { sessionStorage.removeItem('iq_run'); } catch (e) {}
+  if (!ok) { toast(errText(lastErr), 'err'); return go('practice'); }
+  if (now() > started + (x.duration + 1) * 60000) { try { const s1 = await getDoc(ref); Object.keys(snap).forEach(k => delete snap[k]); Object.assign(snap, (s1.data() || {}).answers || {}); } catch (e) {} }
+  try { localStorage.removeItem(lsKey(x.id)); } catch (e) {}
+  const secs = Math.round(Math.max(0, Math.min(now(), started + x.duration * 60000) - started) / 1000);
+  try {
+    const k = await getDoc(doc(db, 'pexams', x.pid, 'akey', 'main')), key = k.exists() ? k.data().ans || {} : {};
+    const r = pScore(PAPER['p:' + x.pid], key, snap, x.mark, x.neg), e = x.entry;
+    await loadPStats();
+    const prev = PSTATS[x.pid] || {};
+    const rec = { s: r.s, t: r.t, acc: r.acc, cor: r.cor, wrong: r.wrong, secs, at: Date.now(), g: e.g, sub: e.s, no: e.no, first: prev.first || { s: r.s, acc: r.acc }, tries: (prev.tries || 0) + (x.retry ? 1 : 0) };
+    PSTATS[x.pid] = rec;
+    await setDoc(doc(db, 'pstats', USER.uid), { m: { [x.pid]: rec } }, { merge: true });
+    if (!x.retry) { try { await setDoc(doc(db, 'pscoreq', x.pid + '_' + USER.uid), { pid: x.pid, uid: USER.uid, at: serverTimestamp() }); } catch (e2) {} }
+  } catch (e) {}
+  history.replaceState(null, '', '#/presult/' + x.pid + (x.retry ? '/r' : ''));
+  route();
+}
+async function pResult(id, which) {
+  topBack('Practice result', null);
+  shell(`<div class="wrapw fade" id="pr"><div class="card center mut">Loading your result…</div></div>`, 'tests');
+  await Promise.all([loadPIdx(), loadPStats()]);
+  const e = PIDX.find(z => z.id === id); if (!e) { toast('Practice mock not found.', 'err'); return go('practice'); }
+  topBack('Practice result', 'practice/' + e.g + '/' + encodeURIComponent(e.s));
+  let paper, key = {}, exp = {}, att = null;
+  try {
+    paper = PAPER['p:' + id] || ((await getDoc(doc(db, 'pexams', id, 'paper', 'main'))).data() || {}).questions || [];
+    PAPER['p:' + id] = paper;
+    const a1 = await getDoc(doc(db, which === 'r' ? 'ptries' : 'pattempts', id, 'u', USER.uid)); att = a1.exists() ? a1.data() : null;
+    if (!att || !att.submitted) { const a0 = await getDoc(doc(db, 'pattempts', id, 'u', USER.uid)); att = a0.exists() ? a0.data() : null; which = ''; }
+    if (!att || !att.submitted) return pInstr(id);
+    const k = await getDoc(doc(db, 'pexams', id, 'akey', 'main')); if (k.exists()) { key = k.data().ans || {}; exp = k.data().exp || {}; }
+  } catch (er) { if ($('#pr')) $('#pr').innerHTML = `<div class="msg err">${esc(errText(er))}</div>`; return; }
+  if (!$('#pr')) return;
+  const ans = att.answers || {}, r = pScore(paper, key, ans, e.m, e.n), pct = Math.max(0, Math.round(r.s / r.t * 100));
+  const secs = att.submittedAt && att.startedAt ? Math.round((ms(att.submittedAt) - ms(att.startedAt)) / 1000) : null;
+  const next = PIDX.filter(z => z.g === e.g && z.s === e.s && z.no > e.no).sort((a, b) => a.no - b.no)[0];
+  let filt = 'all';
+  const draw = () => {
+    const rows = paper.map((q, i) => ({ q, i, a: ans[q.id], k: key[q.id] })).filter(o => filt === 'all' || (filt === 'wrong' ? o.a && o.a !== o.k : filt === 'skip' ? !o.a : o.a === o.k));
+    $('#rv').innerHTML = rows.map(o => `<div class="rvq ${!o.a ? 'sk' : o.a === o.k ? 'ok' : 'no'}"><div class="tiny mut">Q${o.i + 1} · ${!o.a ? 'Not answered' : o.a === o.k ? '✓ Correct' : '✗ Wrong'}</div><b>${esc(o.q.q)}</b>
+      <div class="rvo">${o.q.o.map((t, j) => { const L = 'ABCD'[j]; return `<div class="${L === o.k ? 'k' : L === o.a ? 'x' : ''}"><i>${L}</i>${esc(t)}</div>`; }).join('')}</div>
+      ${exp[o.q.id] ? `<div class="exp">💡 ${esc(exp[o.q.id])}</div>` : ''}</div>`).join('') || '<div class="empty">Nothing here.</div>';
+  };
+  $('#pr').innerHTML = `<div class="pres"><div class="tiny" style="font-weight:800">${esc(subjName(e.g, e.s))} · Mock ${e.no}${which === 'r' ? ' · Re-attempt' : ''}</div><div class="big">${r.s}<small>/${r.t}</small></div>
+      <div class="small">${pct}% · ${secs != null ? Math.floor(secs / 60) + ' min · ' : ''}✅ ${r.cor} ❌ ${r.wrong} ⏭ ${r.skip} · Accuracy ${r.acc}%</div></div>
+    <div class="pbtn"><button class="btn gh" type="button" id="pra">🔁 Re-attempt</button><button class="btn gh" type="button" id="prt">🏆 Top 10</button>${next ? `<button class="btn" type="button" id="prn">Next: Mock ${next.no} →</button>` : `<button class="btn" type="button" id="prb">More mocks →</button>`}</div>
+    <div class="tabs" style="margin-top:12px">${[['all', 'All ' + paper.length], ['wrong', '❌ Wrong ' + r.wrong], ['skip', '⏭ Skipped ' + r.skip], ['right', '✅ Correct ' + r.cor]].map(([k, l]) => `<button type="button" data-f="${k}" class="${k === filt ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div id="rv" class="nocopy">${wmHtml()}</div>${footHtml()}`;
+  draw();
+  $$('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; $$('[data-f]').forEach(z => z.classList.toggle('on', z === b)); draw(); });
+  $('#pra').onclick = () => pStart(id, true);
+  $('#prt').onclick = () => go('ptop/' + id);
+  if ($('#prn')) $('#prn').onclick = () => { if (!pOpen(next)) return pLocked(next); go('pstart/' + next.id); };
+  if ($('#prb')) $('#prb').onclick = () => go('practice/' + e.g + '/' + encodeURIComponent(e.s));
+}
+async function pTop(id) {
+  await Promise.all([loadPIdx(), loadPStats()]);
+  const e = PIDX.find(z => z.id === id); if (!e) return go('practice');
+  topBack('🏆 Top 10', 'presult/' + id);
+  shell(`<div class="wrapw fade" id="pt"><div class="card center mut">Loading…</div></div>`, 'tests');
+  let T = [];
+  try { const s = await getDoc(doc(db, 'ptop', id)); T = s.exists() ? (s.data().list || []) : []; } catch (er) {}
+  if (!$('#pt')) return;
+  const me = PSTATS[id], md = ['🥇', '🥈', '🥉'];
+  $('#pt').innerHTML = `<div class="card"><b>${esc(subjName(e.g, e.s))} · Mock ${e.no}</b><div class="tiny mut">Top 10 of all time · first attempt only · same score → higher accuracy → less time</div></div>
+    <table class="mt" style="margin-top:8px"><tr><th>Rank</th><th>Name</th><th>State</th><th class="n">Score</th><th class="n">Acc.</th></tr>
+    ${T.map((t, i) => `<tr class="${t.uid === USER.uid ? 'me' : ''}"><td>${md[i] || ''} ${i + 1}</td><td>${esc(t.n)}${t.uid === USER.uid ? ' (You)' : ''}</td><td>${esc(t.st || '')}</td><td class="n">${t.s}</td><td class="n">${t.a}%</td></tr>`).join('') || '<tr><td colspan="5" class="center mut">No entries yet – be the first! 💪</td></tr>'}</table>
+    ${me && me.first ? `<div class="note">Your first attempt: <b>${me.first.s}/${me.t}</b> · accuracy ${me.first.acc}%${T.some(t => t.uid === USER.uid) ? ' – you are in the Top 10 🎉' : ''}</div>` : ''}
+    <div class="tiny mut center" style="margin-top:8px">Top 10 updates within about 5 minutes after each first attempt.</div>${footHtml()}`;
+}
+// Results → Practice tab
+async function pResults() {
+  await Promise.all([loadPIdx(), loadPStats()]);
+  const E = Object.entries(PSTATS).map(([id, r]) => ({ id, r, e: PIDX.find(z => z.id === id) })).filter(o => o.e);
+  if (!E.length) return `<div class="empty"><div class="ic">📚</div><b>No practice yet</b><br><span class="small">Every subject has a FREE Mock 1 – start now!</span><br><br><button class="btn" type="button" data-go="practice">Open Practice Library →</button></div>`;
+  const tq = E.reduce((t, o) => t + o.e.c, 0), avg = Math.round(E.reduce((t, o) => t + pPct(o.r), 0) / E.length);
+  const by = {}; E.forEach(o => { const k = o.e.g + '|' + o.e.s; (by[k] = by[k] || []).push(pPct(o.r)); });
+  const subs = Object.entries(by).map(([k, v]) => { const [g, s] = k.split('|'); return { g, s, p: Math.round(v.reduce((a, b) => a + b, 0) / v.length), n: v.length }; }).sort((a, b) => b.p - a.p);
+  const weak = subs.length > 1 ? subs[subs.length - 1] : null;
+  return `<div class="stats"><div><b>${E.length}</b><small>Mocks done</small></div><div><b>${avg}%</b><small>Avg score</small></div><div><b>${tq}</b><small>Questions</small></div></div>
+    <div class="sec">Subject strength</div>${subs.map(o => `<div class="small" style="display:flex;justify-content:space-between"><span>${subjIc(o.g, o.s)} ${esc(subjName(o.g, o.s))} <span class="tiny mut">(${o.n})</span></span><b>${o.p}%</b></div><div class="prog2" style="width:100%;margin:4px 0 10px"><i style="width:${o.p}%;background:${o.p >= 70 ? 'var(--ok)' : o.p >= 45 ? 'var(--ink)' : 'var(--no)'}"></i></div>`).join('')}
+    ${weak && weak.p < 60 ? `<div class="note">💡 Weak: <b>${esc(subjName(weak.g, weak.s))}</b> – practise it next.</div>` : ''}
+    <div class="sec">Recent</div>${E.sort((a, b) => b.r.at - a.r.at).slice(0, 15).map(o => `<button type="button" class="subj" data-open="${esc(o.id)}"><div class="ic">${subjIc(o.e.g, o.e.s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(o.e.g, o.e.s))} · Mock ${o.e.no}</b><div class="tiny mut">${esc(agoTxt(o.r.at))}${o.r.tries ? ' · ' + o.r.tries + ' re-attempt' + (o.r.tries > 1 ? 's' : '') : ''}</div></div><div class="rt"><b>${o.r.s}/${o.r.t}</b></div></button>`).join('')}`;
+}
+// "Continue practising" + progress on Home
+async function homePractice() {
+  if (!USER || !PROFILE) return;
+  await Promise.all([loadPIdx(), loadPStats()]);
+  const el = $('#hp'); if (!el || !PIDX.length) return;
+  const E = Object.entries(PSTATS).sort((a, b) => b[1].at - a[1].at);
+  let nx = null;
+  if (E.length) { const last = PIDX.find(z => z.id === E[0][0]); if (last) nx = PIDX.filter(z => z.g === last.g && z.s === last.s && !PSTATS[z.id]).sort((a, b) => a.no - b.no)[0]; }
+  if (!nx) nx = PIDX.filter(z => z.a === 'free' && !PSTATS[z.id]).sort((a, b) => a.no - b.no)[0];
+  const subj = {}; E.forEach(([id]) => { const z = PIDX.find(q => q.id === id); if (z) subj[z.g + '|' + z.s] = 1; });
+  el.innerHTML = `${nx ? `<button type="button" class="cont" id="hpc" style="width:100%;margin-top:12px"><span style="font-size:22px">▶️</span><div style="flex:1;text-align:left">${E.length ? 'Continue practising' : 'Start practising – FREE'}<br><b>${esc(subjName(nx.g, nx.s))} · Mock ${nx.no}</b></div><span class="btn sm" style="box-shadow:none">${E.length ? 'Go' : 'Start'}</span></button>` : ''}
+    ${Object.keys(subj).length ? `<div class="sec">📚 Your subjects <button type="button" data-go="practice">See all ›</button></div>` + Object.keys(subj).slice(0, 3).map(k => { const [g, s] = k.split('|'), L = PIDX.filter(z => z.g === g && z.s === s), d = L.filter(z => PSTATS[z.id]).length;
+      return `<button type="button" class="subj" data-ps="${esc(g)}|${esc(s)}"><div class="ic">${subjIc(g, s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(g, s))}</b><div class="prog2"><i style="width:${L.length ? Math.round(d / L.length * 100) : 0}%"></i></div></div><div class="rt">${d}/${L.length}</div></button>`; }).join('') : ''}`;
+  if ($('#hpc')) $('#hpc').onclick = () => pOpen(nx) ? go('pstart/' + nx.id) : pLocked(nx);
+  el.querySelectorAll('[data-ps]').forEach(b => b.onclick = () => { const [g, s] = b.dataset.ps.split('|'); go('practice/' + g + '/' + encodeURIComponent(s)); });
+  el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+}
+// 🔒 watermark: student name + masked mobile (screenshots can be traced)
+function wmHtml() {
+  if (!PROFILE) return '';
+  const t = esc(PROFILE.name + ' · ' + String(PROFILE.mobile || '').replace(/^(\d{5})\d{3}(\d{2})$/, '$1•••$2'));
+  return `<div class="wm" aria-hidden="true">${Array(14).fill(`<span>${t}</span>`).join('')}</div>`;
+}
+const blockCopy = e => { if (document.body.classList.contains('inexam') || (e.target && e.target.closest && e.target.closest('.nocopy'))) { e.preventDefault(); if (e.type === 'copy') toast('Copying questions is not allowed 🔒', 'info'); } };
+['copy', 'cut', 'contextmenu', 'dragstart'].forEach(t => document.addEventListener(t, blockCopy));
+// Home links (Admin → Settings → 🔗 Links)
+function linkOf(k) {
+  const L = PUB.links || {}, v = String(L[k] || '').trim();
+  if (k === 'ig' && !v) return IG || '';
+  if (k === 'wa' && v && /^\+?\d[\d\s-]{8,}$/.test(v)) return 'https://wa.me/' + v.replace(/\D/g, '') + '?text=' + encodeURIComponent('Hi IQ FOR U, I want the combo 📚');
+  return /^https?:\/\//i.test(v) ? v : '';
+}
+
 // ================================================================ HOME
 async function home() {
   topMain();
@@ -704,25 +1009,30 @@ function renderHome() {
     <div class="sec">Explore</div>
     <div class="tiles">
       <button class="tl" type="button" data-go="tests"><span>📝</span>Mock Tests</button>
-      <button class="tl" type="button" data-go="results"><span>📊</span>My Results</button>
-      <button class="tl" type="button" data-soon="PYQ Practice"><span>📚</span>PYQ Practice<em>SOON</em></button>
-      <button class="tl" type="button" data-soon="Daily Quiz"><span>⚡</span>Daily Quiz<em>SOON</em></button>
-      <button class="tl" type="button" data-soon="Current Affairs"><span>📰</span>Current Affairs<em>SOON</em></button>
-      <button class="tl" type="button" data-soon="Study Notes"><span>📒</span>Study Notes<em>SOON</em></button>
-      ${IG ? `<a class="tl" href="${esc(IG)}" target="_blank" rel="noopener"><span>📷</span>Instagram</a>` : '<button class="tl" type="button" data-soon="Instagram"><span>📷</span>Instagram</button>'}
-      <button class="tl" type="button" id="hfree"><span>🆓</span>Free Mocks</button>
+      <button class="tl" type="button" data-go="practice"><span>📚</span>Practice Library</button>
+      <button class="tl" type="button" data-go="results"><span>📊</span>Results</button>
+      ${tileLink('pyq', '📄', 'PYQs')}
+      ${tileLink('notes', '🛒', 'Buy Notes')}
+      ${tileLink('tg', '🆓', 'Free Notes')}
+      ${tileLink('wa', '🎁', 'Buy Combo')}
+      ${tileLink('ig', '📷', 'Instagram')}
     </div>
+    <div id="hp"></div>
     <div class="sec">Upcoming <button type="button" data-go="tests">See all ›</button></div>
     <div class="ulist">${up.slice(0, 3).map(x => `<div class="it"><div class="e">📅</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(x.title)}</b><div class="tiny mut">${esc(fmtDT(x.startAt))} · ${x.count} Q · ${esc(x.category || 'Other')}</div></div>${priceChip(x)}</div>`).join('') || '<div class="tiny mut">No upcoming tests in this category yet.</div>'}</div>
+    <div class="sec">🤝 Join us</div>
+    <div class="jrow">${tileLink('tg', '✈️', 'Telegram')}${tileLink('wa', '💬', 'WhatsApp')}${tileLink('ig', '📷', 'Instagram')}<button class="tl" type="button" id="hia"><span>📲</span>Install App</button></div>
     ${footHtml()}`;
+  if ($('#hia')) $('#hia').onclick = installApp;
+  if (USER && PROFILE) homePractice();
   bindChips(renderHome);
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon! 🚀', 'info'));
   if ($('#hr')) $('#hr').onclick = () => go('register');
-  $('#hfree').onclick = freeTab;
   bindStrips();
   if ($('#hs')) $('#hs').onclick = () => { const s = st(hero); if (s === 'live' || s === 'resume') { if (locked(hero) && s === 'live') return payInfo(hero.id); go('start/' + hero.id); } else go('tests'); };
 }
+const tileLink = (k, ic, label) => { const u = linkOf(k); return u ? `<a class="tl" href="${esc(u)}" target="_blank" rel="noopener"><span>${ic}</span>${label}</a>` : `<button class="tl" type="button" data-soon="${label}"><span>${ic}</span>${label}<em>SOON</em></button>`; };
 const maskMail = m => { const [a, b] = String(m || '').split('@'); return b ? a.slice(0, 2) + '•••••@' + b : m; };
 async function homeStats() {
   const done = EXAMS.filter(x => ATT[x.id] && st(x) !== 'resume');
@@ -750,10 +1060,11 @@ function renderTests() {
   G.free = F0.filter(x => ord[st(x)] < 2).concat(F0.filter(x => ord[st(x)] === 2).reverse());
   if (!TTAB) TTAB = G.live.length ? 'live' : G.up.length ? 'up' : 'done';
   const names = { live: 'Live', up: 'Upcoming', done: 'Completed', free: '🆓 Free' };
-  $('#ts').innerHTML = `<div class="tabs">${Object.keys(G).map(k => `<button type="button" data-tt="${k}" class="${k === TTAB ? 'on' : ''}">${names[k]} (${G[k].length})</button>`).join('')}</div>
+  $('#ts').innerHTML = pTabs('live') + `<div class="tabs">${Object.keys(G).map(k => `<button type="button" data-tt="${k}" class="${k === TTAB ? 'on' : ''}">${names[k]} (${G[k].length})</button>`).join('')}</div>
     ${chipsHtml()}<div style="height:10px"></div>
     ${G[TTAB].map(x => examCard(x)).join('') || `<div class="empty"><div class="ic">📭</div><b>No ${TTAB === 'free' ? 'free' : names[TTAB].toLowerCase()} tests${CAT !== 'All' ? ' in ' + esc(CAT) : ''}</b><br><span class="small">Follow us on Instagram for the next mock.</span></div>`}
     ${footHtml()}`;
+  bindPTabs();
   $$('[data-tt]').forEach(b => b.onclick = () => { TTAB = b.dataset.tt; renderTests(); });
   bindChips(renderTests); bindCards($('#ts'));
 }
@@ -920,7 +1231,7 @@ function profile() {
         <button type="button" data-go="page/privacy">🔒 Privacy Policy<span class="ar">›</span></button>
       </div>
       <button class="btn red block" id="lo" type="button">Logout</button>
-      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v4.0 · <a href="#/admin">Admin login</a></div>
+      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v5.0 · <a href="#/admin">Admin login</a></div>
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#pp').onclick = () => toast('Paid mocks & purchases – coming soon.', 'info');
@@ -1063,7 +1374,7 @@ function runExam(o) {   // also used by admin preview
   // continue from the first not-visited question
   const nv = X.qs.findIndex(q => !X.visited.has(q.id)); X.cur = nv > 0 ? nv : 0;
   document.body.classList.add('inexam'); $('#top').classList.add('hide'); $('#bn').classList.add('hide');
-  if (!X.preview) { history.replaceState(null, '', '#/exam'); try { sessionStorage.setItem('iq_run', X.x.id); } catch (e) {} }
+  if (!X.preview) { history.replaceState(null, '', '#/exam'); try { sessionStorage.setItem('iq_run', X.run || X.x.id); } catch (e) {} }
   renderExam();
   X.timer = setInterval(tick, 1000); tick();
   document.addEventListener('visibilitychange', onHide);
@@ -1117,7 +1428,7 @@ function renderExam() {
       <div class="timer" id="tm">--:--</div><button class="sb" id="xs" type="button">${X.preview ? 'Close' : 'Submit'}</button></div>
       <div class="prog"><i style="width:${Math.round(answered / n * 100)}%"></i></div></div>
     ${X.secs.length > 1 ? `<div class="stabs">${X.secs.map(s => `<button type="button" data-sec="${esc(s)}" class="${s === q.sec ? 'on' : ''}">${esc(s)} ${secCount(s)}</button>`).join('')}</div>` : ''}
-    <div class="xmain"><div class="xq">
+    <div class="xmain"><div class="xq">${X.preview ? '' : wmHtml()}
       <div class="qh"><b>Question ${X.cur + 1} of ${n}</b><span>+${X.x.mark} / −${X.x.neg}${X.preview ? '' : ` · <button class="rep" id="rp" type="button">🚩 Report</button>`}</span></div>
       <p class="qt">${esc(q.q)}</p>
       <div class="opts2">${q.o.map((o, i) => { const L = 'ABCD'[i], c = 'ABCD'[q.om ? q.om[i] : i]; return `<button type="button" class="op ${a === c ? 'sel' : ''}" data-l="${c}"><i>${L}</i><span>${esc(o)}</span></button>`; }).join('')}</div>
@@ -1147,7 +1458,7 @@ function reportQ(q, no) {
   o.querySelector('#rs').onclick = async () => {
     if (!reason) return o.querySelector('#rmm').innerHTML = '<div class="msg err">Select a reason.</div>';
     o.querySelector('#rs').disabled = true;
-    try { await setDoc(doc(db, 'reports', X.x.id, 'r', USER.uid + '_' + q.id), { uid: USER.uid, qid: q.id, qno: no, reason, text: o.querySelector('#rt').value.trim().slice(0, 300), name: PROFILE.name.slice(0, 60), at: serverTimestamp() });
+    try { await setDoc(doc(db, 'reports', X.x.pid || X.x.id, 'r', USER.uid + '_' + q.id), { uid: USER.uid, qid: q.id, qno: no, reason, text: o.querySelector('#rt').value.trim().slice(0, 300), name: PROFILE.name.slice(0, 60), at: serverTimestamp() });
       o.remove(); toast('Thanks! Report sent ✓', 'ok'); }
     catch (e) { o.remove(); toast((e.code || '').includes('permission') ? 'You already reported this question ✓' : errText(e), 'info'); }
   };
@@ -1166,6 +1477,7 @@ async function askSubmit() {
 }
 async function finish(auto) {
   if (!X || X.done) return;
+  if (X.x.practice) return pFinish(auto);
   X.done = true; clearInterval(X.timer); $$('.ov').forEach(o => o.remove());
   const id = X.x.id, snap = Object.assign({}, X.ans), x = X.x, n = X.qs.length, started = X.startedAt;
   $('#app').innerHTML = `<div class="wrapw"><div class="card center" style="margin-top:30px"><h2>${auto ? '⏰ Time over' : 'Submitting…'}</h2><p class="mut">Please wait, do not close this page.</p></div></div>`;
@@ -1217,9 +1529,12 @@ function feedback(x) {
 
 // ================================================================ RESULTS
 let RS = { id: null, tab: 'score', R: null, M: null, filt: 'all' };
-async function results(id) {
+const rTabs = on => `<div class="mtabs"><button type="button" data-rm="results" class="${on === 'live' ? 'on' : ''}">🔴 Live</button><button type="button" data-rm="presults" class="${on === 'practice' ? 'on' : ''}">📚 Practice</button></div>`;
+async function results(id, mode) {
   topMain(); $('#topin').innerHTML = `<div class="ttl" style="font-size:18px">Results</div>`;
-  shell(`<div class="wrapw fade" id="rs"><div class="card center mut">Loading…</div></div>`, 'results');
+  shell(`<div id="rtop" class="wrapw" style="padding-bottom:0"></div><div class="wrapw fade" id="rs" style="padding-top:0"><div class="card center mut">Loading…</div></div>`, 'results');
+  $('#rtop').innerHTML = rTabs(mode === 'practice' ? 'practice' : 'live'); $$('[data-rm]').forEach(b => b.onclick = () => go(b.dataset.rm));
+  if (mode === 'practice') { const h = await pResults(); if ($('#rs')) { $('#rs').innerHTML = h + footHtml(); $$('#rs [data-open]').forEach(b => b.onclick = () => go('presult/' + b.dataset.open)); $$('#rs [data-go]').forEach(b => b.onclick = () => go(b.dataset.go)); } return; }
   try { if (!EXAMS.length) await loadExams(); await pubReady; } catch (e) { $('#rs').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; return; }
   const list = EXAMS.filter(x => now() > ms(x.startAt) && (ATT[x.id] || resOpen(x))).sort((a, b) => ms(b.startAt) - ms(a.startAt));
   if (!list.length) { $('#rs').innerHTML = `<div class="empty"><div class="ic">📊</div><b>No results yet</b><br><span class="small">Write a mock test — your score, rank and merit list will appear here.</span><br><br><button class="btn" type="button" onclick="location.hash='#/tests'">Go to Tests →</button></div>`; return; }
@@ -1332,7 +1647,7 @@ async function openAdmin() {
   shell('<div class="wrapw"><div class="card center mut">Opening admin…</div></div>', null);
   topBack('Admin', 'home');
   try {
-    const m = await import('./admin.js?v=4');
+    const m = await import('./admin.js?v=5');
     m.openAdmin({ app, auth, db, $, $$, esc, ms, fmtDT, fmtD, r2, toast, sheet, confirmBox, errText, runExam, stopExam, go, CATS, NAME, IG_HANDLE, setPaper, examSet,
       getUser: () => USER, setPub: p => { PUB = p; }, getPub: () => PUB });
   } catch (e) { $('#app').innerHTML = `<div class="wrapw"><div class="msg err">Could not open admin: ${esc(e.message || e)}<br>Is <b>admin.js</b> uploaded to GitHub?</div></div>`; }

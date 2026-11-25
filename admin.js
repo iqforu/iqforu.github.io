@@ -10,6 +10,7 @@ import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, 
 
 let C, db, auth, $, $$, esc, ms, fmtDT, fmtD, r2, toast;
 let EX = [];
+let ROLE = 'owner';   // 'owner' (admin Gmail in Rules) or 'editor' (team member)
 // ---- phone Back button: every admin screen gets its own history step
 let POP = false, REPL = false, QE = null;
 const VIEWS = {};
@@ -66,7 +67,7 @@ function css() {
   .sw{display:flex;align-items:center;gap:10px;font-weight:700;margin-top:12px}
   .sw input{width:22px;height:22px}
   .ast.six{grid-template-columns:repeat(3,1fr)} .ast .up{color:var(--ok)}
-  .at{grid-template-columns:repeat(3,1fr)} @media(min-width:700px){.at{grid-template-columns:repeat(10,1fr)}}
+  .at{grid-template-columns:repeat(3,1fr)} @media(min-width:700px){.at{grid-template-columns:repeat(6,1fr)}}
   .livepill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:#15803D;background:var(--ok2);border-radius:20px;padding:2px 9px}
   .livepill i{width:7px;height:7px;border-radius:50%;background:#16A34A;animation:pl 1.3s infinite}
   .impb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 8px} @media(max-width:520px){.impb{grid-template-columns:1fr 1fr}}
@@ -118,13 +119,16 @@ async function gate() {
   let adminDoc = null, allowed = false;
   if (u && isGoogle) {
     loginShell('<div class="center mut">Checking…</div>');
-    try { const s = await getDoc(doc(db, 'settings', 'admin')); allowed = true; adminDoc = s.exists() ? s.data() : null; }
-    catch (e) { allowed = false; }
+    try { const s = await getDoc(doc(db, 'settings', 'admin')); allowed = true; adminDoc = s.exists() ? s.data() : null; ROLE = 'owner'; }
+    catch (e) {
+      allowed = false;
+      try { const t = await getDoc(doc(db, 'team', (u.email || '').toLowerCase())); if (t.exists()) { allowed = true; ROLE = 'editor'; adminDoc = t.data().hash ? { hash: t.data().hash } : null; } } catch (e2) {}
+    }
   }
   if (!allowed) {
     loginShell(`<div class="tiny mut" style="font-weight:800">STEP 1 · ADMIN GMAIL</div>
       <button class="gbtn" id="g" type="button" style="margin-top:6px"><b>G</b> Continue with Google</button>
-      ${u ? `<div class="msg err">${esc(u.email || 'This account')} is ${isGoogle ? 'not an admin Gmail' : 'a student login'}. Tap the button above and choose the <b>admin Gmail</b>.</div>` : ''}
+      ${u ? `<div class="msg err">${esc(u.email || 'This account')} is ${isGoogle ? 'not an admin / team Gmail' : 'a student login'}. Tap the button above and choose the <b>admin Gmail</b>.</div>` : ''}
       <div class="tiny mut" style="font-weight:800;margin-top:14px">STEP 2 · 8-DIGIT SECURITY CODE</div><div class="tiny mut">Comes after Step 1.</div><div id="gm"></div>`);
     $('#g').onclick = async () => {
       try { if (u) await signOut(auth); await signInWithPopup(auth, new GoogleAuthProvider()); }
@@ -146,7 +150,10 @@ async function gate() {
       if (!/^\d{8}$/.test(a)) return msg($('#cm'), 'Code must be exactly 8 digits.');
       if (/^(\d)\1{7}$/.test(a) || a === '12345678' || a === '87654321') return msg($('#cm'), 'Too easy to guess. Choose another code.');
       if (a !== b) return msg($('#cm'), 'Both codes must match.');
-      try { const h = await sha(a); await setDoc(doc(db, 'settings', 'admin'), { hash: h, setAt: serverTimestamp() }); sessionStorage.setItem(SESS, h.slice(0, 16) + u.uid); toast('Security code saved ✓', 'ok'); dash(); }
+      try { const h = await sha(a);
+        if (ROLE === 'owner') await setDoc(doc(db, 'settings', 'admin'), { hash: h, setAt: serverTimestamp() });
+        else await updateDoc(doc(db, 'team', (u.email || '').toLowerCase()), { hash: h, setAt: serverTimestamp() });
+        sessionStorage.setItem(SESS, h.slice(0, 16) + u.uid); toast('Security code saved ✓', 'ok'); dash(); }
       catch (e) { msg($('#cm'), esc(errText(e))); }
     };
     return;
@@ -188,8 +195,23 @@ const needsPass = x => x.access === 'pass' || (x.access !== 'free' && (x.price |
 const accChip = x => needsPass(x) ? '<span class="chip c-pass">🎟 PASS</span>' : '<span class="chip c-free">FREE</span>';
 const dayStart = d => { const t = new Date(d || Date.now()); t.setHours(0, 0, 0, 0); return t; };
 const fmtJ = t => t ? new Date(ms(t)).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '—';
+async function edDash() {
+  top('Team Panel', null, '<button class="btn gh sm" id="sv" type="button" style="box-shadow:none">Student view</button><button class="btn gh sm" id="lo" type="button" style="box-shadow:none">Logout</button>');
+  $('#sv').onclick = () => C.go('home'); $('#lo').onclick = logout;
+  loading('Loading mocks…');
+  try { await loadEx(); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  page(`<div class="card small">👋 <b>${esc(auth.currentUser.email)}</b> · ✏️ Editor<br>You can add &amp; edit <b>draft</b> mocks. The owner checks and publishes them.</div>
+    <div class="at" style="grid-template-columns:1fr 1fr"><button class="tl" type="button" data-a="new"><span>＋</span>New Live Mock</button><button class="tl" type="button" data-a="practice"><span>📚</span>Practice Library</button></div>
+    <div class="sec">Live mocks (${EX.length})</div>
+    ${EX.map(x => `<div class="xc"><div style="display:flex;gap:5px;flex-wrap:wrap">${x.published ? '<span class="chip c-free">Published</span>' : '<span class="chip c-paid">Draft</span>'}<span class="chip c-cat">${esc(x.category || 'Other')}</span></div>
+      <h3>${esc(x.title)}</h3><div class="meta"><span>${x.count} Q · ${x.duration} min</span>${x.createdBy ? `<span>✏️ ${esc(x.createdBy)}</span>` : ''}</div>
+      <div class="acts">${x.published ? '<span class="tiny mut">Published – only the owner can change it</span>' : `<button class="btn gh sm" type="button" data-edit="${esc(x.id)}">✏️ Edit draft</button>`}</div></div>`).join('') || '<div class="card mut">No mocks yet.</div>'}`);
+  $$('[data-a]').forEach(b => b.onclick = () => b.dataset.a === 'new' ? editMock(null) : practiceAdmin());
+  $$('[data-edit]').forEach(b => b.onclick = () => editMock(b.dataset.edit));
+}
 async function dash() {
   mark('dash');
+  if (ROLE !== 'owner') return edDash();
   top('Admin Panel', null, '<button class="btn gh sm" id="sv" type="button" style="box-shadow:none">Student view</button><button class="btn gh sm" id="lo" type="button" style="box-shadow:none">Logout</button>');
   $('#sv').onclick = () => C.go('home'); $('#lo').onclick = logout;
   loading('Loading mocks…');
@@ -203,6 +225,7 @@ async function dash() {
     ${latest ? `<div class="tiny mut" style="margin-top:4px">Latest mock: <b>${esc(latest.title)}</b> · <button class="link tiny" id="la" type="button">👥 Live attempts ›</button></div>` : ''}
     <div class="at">
       <button class="tl" type="button" data-a="new"><span>＋</span>New Mock</button>
+      <button class="tl" type="button" data-a="practice"><span>📚</span>Practice<em id="pdc" class="hide">0</em></button>
       <button class="tl" type="button" data-a="students"><span>👥</span>Students</button>
       <button class="tl" type="button" data-a="passes"><span>🎟</span>Passes</button>
       <button class="tl" type="button" data-a="feedback"><span>💬</span>Feedback</button>
@@ -211,14 +234,17 @@ async function dash() {
       <button class="tl" type="button" data-a="notify"><span>🔔</span>Notify</button>
       <button class="tl" type="button" data-a="notice"><span>📢</span>Notice</button>
       <button class="tl" type="button" data-a="payments"><span>💳</span>Payments<em>SOON</em></button>
+      <button class="tl" type="button" data-a="team"><span>🧑‍🤝‍🧑</span>Team</button>
       <button class="tl" type="button" data-a="settings"><span>⚙️</span>Settings</button>
     </div>
+    ${EX.some(x => !x.published && x.createdBy) ? `<div class="msg info">📝 <b>${EX.filter(x => !x.published && x.createdBy).length}</b> live mock draft(s) from your team are waiting – check below and publish.</div>` : ''}
     <div class="sec">My mocks (${EX.length})</div>
     ${EX.map(x => `<div class="xc"><div style="display:flex;gap:5px;flex-wrap:wrap">${stChip(x)}<span class="chip c-cat">${esc(x.category || 'Other')}</span>${accChip(x)}</div>
       <h3>${esc(x.title)}</h3><div class="meta"><span>🗓 ${esc(fmtDT(x.startAt))} → ${esc(fmtDT(x.endAt))}</span><span>${x.count} Q · ${x.duration} min · −${x.neg}</span><span>📅 Result: ${x.resultAt ? esc(fmtDT(x.resultAt)) : 'not set'}</span></div>
       <div class="acts"><button class="btn sm" type="button" data-res="${esc(x.id)}">🧮 Calculate &amp; Publish</button><button class="btn gh sm" type="button" data-res="${esc(x.id)}">🏆 Merit list · CSV</button>
         <button class="btn gh sm" type="button" data-edit="${esc(x.id)}">✏️ Edit</button><button class="btn gh sm" type="button" data-tools="${esc(x.id)}">🧰 Tools · Attempts</button></div></div>`).join('') || '<div class="card mut">No mocks yet. Tap <b>＋ New Mock</b>.</div>'}`);
-  $$('[data-a]').forEach(b => b.onclick = () => ({ new: () => editMock(null), students, passes: passesView, feedback: () => pick('feedback'), analysis: () => pick('analysis'),
+  getCountFromServer(query(collection(db, 'pexams'), where('published', '==', false))).then(c => { const n = c.data().count, el = $('#pdc'); if (el && n) { el.textContent = n + ' draft'; el.classList.remove('hide'); } }).catch(() => {});
+  $$('[data-a]').forEach(b => b.onclick = () => ({ new: () => editMock(null), practice: () => practiceAdmin(), team: teamView, students, passes: passesView, feedback: () => pick('feedback'), analysis: () => pick('analysis'),
     reports: () => pick('reports'), notice, notify: notifyView, payments, settings })[b.dataset.a]());
   $$('[data-res]').forEach(b => b.onclick = () => resultsPage(b.dataset.res));
   $$('[data-edit]').forEach(b => b.onclick = () => editMock(b.dataset.edit));
@@ -277,20 +303,21 @@ function toQuestions(text) {
   const rows = parseTSV(text), out = [], errs = [];
   rows.forEach((r, i) => {
     const c = r.map(x => String(x).trim());
-    if (i === 0 && /section/i.test(c[0]) && /answer/i.test(c[c.length - 1] || '')) return;
+    if (i === 0 && /section/i.test(c[0]) && c.some(v => /answer/i.test(v))) return;
     if (c.length < 8) { errs.push(`Row ${i + 1}: needs 8 columns (Section, Topic, Question, A, B, C, D, Answer) – found ${c.length}`); return; }
     let ans = c[7].toUpperCase().replace(/[^A-D1-4]/g, '');
     if (/^[1-4]$/.test(ans)) ans = 'ABCD'[+ans - 1];
     if (!/^[A-D]$/.test(ans)) { errs.push(`Row ${i + 1}: Answer must be A, B, C or D – found "${c[7]}"`); return; }
     if (!c[2]) { errs.push(`Row ${i + 1}: Question is empty`); return; }
     if (c.slice(3, 7).some(o => o === '')) { errs.push(`Row ${i + 1}: an option is empty`); return; }
-    out.push({ sec: c[0] || 'General', topic: c[1], q: c[2], o: c.slice(3, 7), ans });
+    out.push({ sec: c[0] || 'General', topic: c[1], q: c[2], o: c.slice(3, 7), ans, exp: (c[8] || '').slice(0, 600) });
   });
   return { qs: out, errs };
 }
-function toTSV(qs, key) {
+function toTSV(qs, key, exp) {
   const cell = v => { v = String(v ?? ''); return /[\t\n"]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-  return ['Section\tTopic\tQuestion\tA\tB\tC\tD\tAnswer'].concat(qs.map(q => [q.sec, q.topic, q.q, ...q.o, key[q.id] || ''].map(cell).join('\t'))).join('\n');
+  const E = exp && Object.values(exp).some(Boolean);
+  return ['Section\tTopic\tQuestion\tA\tB\tC\tD\tAnswer' + (E ? '\tExplanation' : '')].concat(qs.map(q => [q.sec, q.topic, q.q, ...q.o, key[q.id] || ''].concat(E ? [exp[q.id] || ''] : []).map(cell).join('\t'))).join('\n');
 }
 const toLocal = t => { const d = new Date(ms(t)); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 
@@ -298,7 +325,8 @@ const toLocal = t => { const d = new Date(ms(t)); d.setMinutes(d.getMinutes() - 
 async function editMock(id, copy) {
   mark('edit', [id, copy || null]);
   const x = id ? EX.find(e => e.id === id) : (copy || null);
-  top(id ? 'Edit Mock' : 'New Mock', id ? () => tools(id) : dash);
+  top(id ? 'Edit Mock' : 'New Mock', id && ROLE === 'owner' ? () => tools(id) : dash);
+  if (id && ROLE !== 'owner' && x && x.published) { toast('Only the owner can edit a published mock.', 'info'); return dash(); }
   loading();
   let tsv = '';
   const srcId = id || (copy && copy.srcId);
@@ -313,7 +341,7 @@ async function editMock(id, copy) {
   page(`<div class="card">
     <label class="l" for="ti">Title</label><input class="inp" id="ti" maxlength="90" value="${esc(x ? x.title : 'IQ FOR U Mock – ')}">
     <label class="l" for="de">Short description (optional)</label><input class="inp" id="de" maxlength="160" value="${esc(x ? x.desc || '' : '')}" placeholder="Maths · Reasoning · Computer · previous papers">
-    <label class="l" for="ca">Exam category</label><select class="inp" id="ca">${C.CATS.map(c => `<option ${(x ? x.category || 'Other' : C.CATS[0]) === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+    <label class="l" for="ca">Exam category</label><select class="inp" id="ca">${(x && x.category && !C.CATS.includes(x.category) ? [x.category] : []).concat(C.CATS).map(c => `<option ${(x ? x.category || 'Other' : C.CATS[0]) === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
     <div class="g2"><div><label class="l" for="sa">Opens</label><input class="inp" id="sa" type="datetime-local" value="${toLocal(sA)}"></div><div><label class="l" for="ea">Closes</label><input class="inp" id="ea" type="datetime-local" value="${toLocal(eA)}"></div></div>
     <div class="g3"><div><label class="l" for="du">Minutes</label><input class="inp" id="du" type="number" min="5" max="300" value="${x ? x.duration : 60}"></div><div><label class="l" for="mk">+ Mark</label><input class="inp" id="mk" type="number" step="0.25" min="0.25" value="${x ? x.mark : 1}"></div><div><label class="l" for="ng">− Neg</label><input class="inp" id="ng" type="number" step="0.05" min="0" value="${x ? x.neg : 0.25}"></div></div>
     <label class="l" for="ra">Result date &amp; time</label><input class="inp" id="ra" type="datetime-local" value="${toLocal(rA)}" style="background:var(--y2)">
@@ -328,8 +356,9 @@ async function editMock(id, copy) {
     <input type="file" id="fpdf" accept="application/pdf,.pdf" class="hide"><input type="file" id="fxl" accept=".xlsx,.xls,.csv" class="hide">
     <label class="l" for="qs">Questions (Excel format · 8 columns: Section | Topic | Question | A | B | C | D | Answer) – you can also copy from Excel &amp; paste here</label>
     <textarea class="inp tsv" id="qs" spellcheck="false" placeholder="Maths\tRatio\tThe ratio of ...\t10\t20\t30\t40\tB">${esc(tsv)}</textarea><div id="pv"></div>
-    <label class="sw"><input type="checkbox" id="pb" ${x && x.published && !copy ? 'checked' : ''}> Published (students can see it)</label>
-    ${x && x.notifiedAt && !copy ? '<div class="tiny mut" style="margin-top:4px">🔔 Students were already told about this mock.</div>' : `<label class="sw"><input type="checkbox" id="ntf" checked> 🔔 Tell students when published (“New mock” now + “LIVE now” at open time)</label>`}
+    ${ROLE !== 'owner' ? '<div class="tiny mut" style="margin-top:8px">💾 Saved as <b>Draft</b> – the owner will check and publish.</div><input type="checkbox" id="pb" class="hide">' : `<label class="sw"><input type="checkbox" id="pb" ${x && x.published && !copy ? 'checked' : ''}> Published (students can see it)</label>
+    ${x && x.notifiedAt && !copy ? '<div class="tiny mut" style="margin-top:4px">🔔 Students were already told about this mock.</div>' : `<label class="sw"><input type="checkbox" id="ntf" checked> 🔔 Tell students when published (“New mock” now + “LIVE now” at open time)</label>`}`}
+    ${x && x.createdBy ? `<div class="tiny mut" style="margin-top:4px">✏️ Added by ${esc(x.createdBy)}</div>` : ''}
     <button class="btn dk block" id="sv" type="button" style="margin-top:14px">💾 Save Mock</button><div id="sm"></div></div>`);
   const preview = () => {
     const { qs, errs } = toQuestions($('#qs').value), secs = {}, ans = { A: 0, B: 0, C: 0, D: 0 };
@@ -369,17 +398,18 @@ async function editMock(id, copy) {
         duration, mark, neg, price, access, count: qs.length, total: r2(qs.length * mark), sections: secs, secs: secs.map(s => ({ name: s, count: cnt[s] })), cancelled: [...new Set(can)],
         published: $('#pb').checked, resultsOut: id ? !!x.resultsOut : false, resultsHold: id ? !!x.resultsHold : false, calcAt: id && x.calcAt ? x.calcAt : null, updatedAt: serverTimestamp(),
         sets: +$('#qset').value > 1 ? +$('#qset').value : 1, shuffleOpts: +$('#qset').value > 1 && $('#qso').checked,
-        notifiedAt: id && x.notifiedAt ? x.notifiedAt : null, liveNote: id && x.liveNote ? x.liveNote : null, resultNote: id && x.resultNote ? x.resultNote : null });
+        notifiedAt: id && x.notifiedAt ? x.notifiedAt : null, liveNote: id && x.liveNote ? x.liveNote : null, resultNote: id && x.resultNote ? x.resultNote : null,
+        createdBy: x && x.createdBy && !copy ? x.createdBy : (ROLE === 'owner' ? '' : auth.currentUser.email) });
       b.set(doc(db, 'exams', eid, 'paper', 'main'), { questions: paper });
       b.set(doc(db, 'keys', eid), { ans: key });
       await b.commit();
-      try {
+      if (ROLE === 'owner') try {
         const ex2 = { id: eid, title, startAt: Timestamp.fromDate(sa), count: qs.length, duration, access, liveNote: id && x.liveNote };
         if ($('#pb').checked && $('#ntf') && $('#ntf').checked) await announceMock(ex2);
         else if (id && x.liveNote && ms(x.startAt) !== sa.getTime()) await updateDoc(doc(db, 'notices', x.liveNote), { at: Timestamp.fromDate(sa), pushed: false });   // open time changed
       } catch (e) { toast('Saved, but notification failed: ' + errText(e), 'err'); }
       msg(m, 'Saved ✓' + (id && x.calcAt ? ' Answer key / cancelled questions changed? Go to Results → Re-calculate.' : ''), 'ok');
-      await loadEx(); setTimeout(() => { if (id && history.state && history.state.adm === 'edit') history.back(); else replace(() => tools(eid)); }, 700);
+      await loadEx(); setTimeout(() => { if (ROLE !== 'owner') return replace(dash); if (id && history.state && history.state.adm === 'edit') history.back(); else replace(() => tools(eid)); }, 700);
     } catch (e) { $('#sv').disabled = false; msg(m, esc(errText(e))); }
   };
 }
@@ -453,10 +483,10 @@ function fromRows(rows) {
 }
 // the TSV box (Excel paste) → questions, keeping rows that still have problems so they can be fixed
 function tsvModel(text) {
-  return parseTSV(text).filter((r, i) => !(i === 0 && /section/i.test(r[0] || '') && /answer/i.test(r[r.length - 1] || '')))
-    .map(r => { const c = r.map(v => String(v ?? '').trim()), o = fix4(c.slice(3, 7)); return { sec: c[0] || 'General', topic: c[1] || '', q: c[2] || '', o, ans: ansOf(c[7], o) }; });
+  return parseTSV(text).filter((r, i) => !(i === 0 && /section/i.test(r[0] || '') && r.some(v => /answer/i.test(v || ''))))
+    .map(r => { const c = r.map(v => String(v ?? '').trim()), o = fix4(c.slice(3, 7)); return { sec: c[0] || 'General', topic: c[1] || '', q: c[2] || '', o, ans: ansOf(c[7], o), exp: c[8] || '' }; });
 }
-const modelTSV = L => toTSV(L.map((q, i) => ({ id: 'm' + i, sec: q.sec || 'General', topic: q.topic || '', q: q.q, o: fix4(q.o) })), Object.fromEntries(L.map((q, i) => ['m' + i, q.ans || ''])));
+const modelTSV = L => toTSV(L.map((q, i) => ({ id: 'm' + i, sec: q.sec || 'General', topic: q.topic || '', q: q.q, o: fix4(q.o) })), Object.fromEntries(L.map((q, i) => ['m' + i, q.ans || ''])), Object.fromEntries(L.map((q, i) => ['m' + i, q.exp || ''])));
 
 // ---- text copied from a PDF / Word → questions
 const SUBJ = /\b(general\s*knowledge|general\s*awareness|general\s*studies|general\s*science|g\.?\s?k|g\.?\s?s|static\s*gk|reasoning|mental\s*ability|logical|maths?|mathematics|quantitative|aptitude|arithmetic|numerical|computer|current\s*affairs|english|science|history|geography|polity|economy)\b/i;
@@ -619,7 +649,7 @@ function importButtons(preview) {
 
 // ---- 👁 editable preview (rows with problems are red). Apply → goes into the questions box.
 function editor(list, preview) {
-  const L = list.map(q => ({ sec: q.sec || 'General', topic: q.topic || '', q: q.q || '', o: fix4(q.o), ans: q.ans || '', extra: q.extra || 0 }));
+  const L = list.map(q => ({ sec: q.sec || 'General', topic: q.topic || '', q: q.q || '', o: fix4(q.o), ans: q.ans || '', exp: q.exp || '', extra: q.extra || 0 }));
   let only = false;
   const o = document.createElement('div'); o.className = 'ov qe'; document.body.appendChild(o);
   try { history.pushState({ adm: 'qe' }, '', '#/admin'); } catch (e) {}
@@ -950,7 +980,7 @@ function givePass(uid, u, cur) {
   const on = passOn(cur);
   const o = C.sheet(`<h3 style="margin:0 0 4px">🎁 ${on ? 'Extend' : 'Give'} Monthly Pass</h3><div class="small mut">${esc(u.name || '')} · ${esc(u.email || '')}</div>
     ${on && cur.until != null ? `<div class="note">Current pass is valid till <b>${esc(fmtJ(cur.until))}</b>. New days are added after that date.</div>` : ''}
-    <div class="tagc one" id="gd" style="margin-top:10px">${[[30, '30 days'], [90, '90 days'], [365, '365 days'], [0, 'No expiry']].map(([d, l], i) => `<button type="button" data-d="${d}" class="${i === 0 ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="tagc one" id="gd" style="margin-top:10px">${[[1, '1 day'], [3, '3 days'], [30, '30 days'], [90, '90 days'], [365, '365 days'], [0, 'No expiry']].map(([d, l]) => `<button type="button" data-d="${d}" class="${d === 30 ? 'on' : ''}">${l}</button>`).join('')}</div>
     <label class="l" for="gn">Note (optional – only admin sees)</label><input class="inp" id="gn" maxlength="80" placeholder="Special student / paid by UPI on 24 Nov">
     <label class="l" for="gm2">Message to student (optional – added to the 🎉 congratulations)</label><input class="inp" id="gm2" maxlength="200" placeholder="Keep practising daily!">
     <div class="tiny mut" id="gw" style="margin-top:6px"></div>
@@ -1074,6 +1104,224 @@ async function top10Image(x, R) {
   }, 'image/png');
 }
 
+// ------------------------------------------------------------------ 📚 PRACTICE LIBRARY (admin)
+const PG = { gs: { n: 'General Studies', e: '📚' }, sci: { n: 'General Science', e: '🔬' }, apt: { n: 'Aptitude', e: '🧮' }, ca: { n: 'Current Affairs', e: '📰' } };
+const DEF_SUBJ = { gs: ['History', 'Geography', 'Polity', 'Economics', 'Art & Culture', 'EVS'], sci: ['Physics', 'Chemistry', 'Biology'], apt: ['Maths', 'Reasoning', 'Computer'] };
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const pSubjects = (g, P) => g === 'ca' ? [] : ((P.psubj && P.psubj[g] && P.psubj[g].length) ? P.psubj[g] : DEF_SUBJ[g]);
+const pYears = P => (P.cayears && P.cayears.length ? P.cayears : [2026]).map(Number).sort((a, b) => b - a);
+const pName = (g, s) => g === 'ca' ? (MONTHS[+s.split('-')[1] - 1] || s) + ' ' + s.split('-')[0] : s;
+const defMin = n => n <= 30 ? 20 : n <= 50 ? 30 : n <= 100 ? 60 : Math.round(n * 0.6);
+const owner = () => ROLE === 'owner';
+// published practice mocks are listed in settings/pindex (students read the whole library with ONE read)
+const pEntry = (id, d) => ({ id, g: d.g, s: d.s, no: d.no, ch: d.ch || '', c: d.count, d: d.duration, m: d.mark, n: d.neg, a: d.access, t: d.title });
+async function pIndexPatch(changes) {   // changes: { id: data | null }
+  const s = await getDoc(doc(db, 'settings', 'pindex')); let L = s.exists() ? (s.data().list || []) : [];
+  Object.entries(changes).forEach(([id, d]) => { L = L.filter(e => e.id !== id); if (d && d.published) L.push(pEntry(id, d)); });
+  L.sort((a, b) => (a.g + a.s).localeCompare(b.g + b.s) || a.no - b.no);
+  await setDoc(doc(db, 'settings', 'pindex'), { list: L, updatedAt: serverTimestamp() });
+}
+async function pIndexRebuild() {
+  const s = await getDocs(query(collection(db, 'pexams'), where('published', '==', true)));
+  const L = s.docs.map(d => pEntry(d.id, d.data())).sort((a, b) => (a.g + a.s).localeCompare(b.g + b.s) || a.no - b.no);
+  await setDoc(doc(db, 'settings', 'pindex'), { list: L, updatedAt: serverTimestamp() });
+  return L.length;
+}
+async function practiceAdmin(g) {
+  mark('practice', [g || null]);
+  top('📚 Practice Library', dash); loading();
+  const P = await readPub(); g = g || 'gs';
+  let L = [];
+  try { L = (await getDocs(query(collection(db, 'pexams'), where('g', '==', g)))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  const subs = g === 'ca' ? pYears(P).flatMap(y => MONTHS.map((m, i) => y + '-' + String(i + 1).padStart(2, '0'))) : pSubjects(g, P);
+  page(`<div class="tabs">${Object.keys(PG).map(k => `<button type="button" data-g="${k}" class="${k === g ? 'on' : ''}">${PG[k].e} ${PG[k].n}</button>`).join('')}</div>
+    <div class="card small">Each subject: <b>Mock 1 = FREE</b>, others need the Monthly Pass. ${owner() ? 'Drafts from your team wait here until you <b>Publish</b>.' : 'You save mocks as <b>Draft</b>; the owner checks and publishes.'}
+      ${owner() ? '<button class="link tiny" id="rbi" type="button" style="margin-left:6px">🔄 Repair student list</button>' : ''}</div>
+    ${subs.map(s => { const M = L.filter(x => x.s === s), pub = M.filter(x => x.published).length, dr = M.length - pub;
+      return `<button type="button" class="xc" data-s="${esc(s)}" style="width:100%;text-align:left;display:flex;align-items:center;gap:10px"><b style="flex:1">${esc(pName(g, s))}</b><span class="tiny mut">${pub} published${dr ? ` · <b style="color:var(--or)">${dr} draft</b>` : ''}</span><span>›</span></button>`; }).join('')}
+    ${g !== 'ca' && owner() ? '<div class="tiny mut" style="margin-top:6px">Change subject names in ⚙️ Settings → 📚 Practice subjects.</div>' : ''}`);
+  $$('[data-g]').forEach(b => b.onclick = () => replace(() => practiceAdmin(b.dataset.g)));
+  $$('[data-s]').forEach(b => b.onclick = () => practiceSubject(g, b.dataset.s));
+  if ($('#rbi')) $('#rbi').onclick = async () => { try { const n = await pIndexRebuild(); toast(`✓ Student list rebuilt – ${n} published mocks`, 'ok'); } catch (e) { toast(errText(e), 'err'); } };
+}
+async function practiceSubject(g, s) {
+  mark('psubj', [g, s]);
+  top(pName(g, s), () => practiceAdmin(g)); loading();
+  let L = [];
+  try { L = (await getDocs(query(collection(db, 'pexams'), where('g', '==', g), where('s', '==', s)))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.no - b.no); }
+  catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  const next = (L.reduce((m, x) => Math.max(m, x.no), 0) || 0) + 1;
+  page(`<div class="impb" style="grid-template-columns:repeat(3,1fr)"><button class="btn dk sm" id="pn" type="button">＋ New mock</button><button class="btn gh sm" id="pbx" type="button">📊 Bulk Excel</button><button class="btn gh sm" id="pqb" type="button">🗂 Question Bank</button></div>
+    ${L.map(x => `<div class="xc"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><b>Mock ${x.no}</b>${x.ch ? `<span class="tiny mut">${esc(x.ch)}</span>` : ''}
+        ${x.access === 'free' ? '<span class="chip c-free">FREE</span>' : '<span class="chip c-pass">🎟 PASS</span>'}${x.published ? '<span class="chip c-free">Published</span>' : '<span class="chip c-paid">Draft</span>'}</div>
+      <div class="meta"><span>${x.count} Q · ${x.duration} min · +${x.mark} / −${x.neg}</span>${x.createdBy ? `<span>✏️ ${esc(x.createdBy)}</span>` : ''}</div>
+      <div class="acts"><button class="btn gh sm" type="button" data-pe="${esc(x.id)}">✏️ Edit</button><button class="btn gh sm" type="button" data-pv="${esc(x.id)}">👁 Preview</button>
+        ${owner() ? `<button class="btn ${x.published ? 'gh' : ''} sm" type="button" data-pp="${esc(x.id)}">${x.published ? 'Hide' : '✅ Publish'}</button><button class="btn red sm" type="button" data-pd="${esc(x.id)}">🗑</button>` : ''}</div></div>`).join('') || '<div class="card mut">No mocks yet. Tap <b>＋ New mock</b>, <b>📊 Bulk Excel</b> or <b>🗂 Question Bank</b>.</div>'}
+    ${owner() && L.some(x => !x.published) ? '<button class="btn block" id="pall" type="button" style="margin-top:8px">✅ Publish all drafts</button>' : ''}`);
+  $('#pn').onclick = () => pEdit(null, { g, s, no: next });
+  $('#pbx').onclick = () => pBulk(g, s, L);
+  $('#pqb').onclick = () => pBank(g, s, L);
+  $$('[data-pe]').forEach(b => b.onclick = () => { const x = L.find(z => z.id === b.dataset.pe); if (!owner() && x.published) return toast('Only the owner can edit a published mock.', 'info'); pEdit(x.id, x); });
+  $$('[data-pv]').forEach(b => b.onclick = () => pPreview(b.dataset.pv, L.find(z => z.id === b.dataset.pv)));
+  $$('[data-pp]').forEach(b => b.onclick = async () => { const x = L.find(z => z.id === b.dataset.pp);
+    try { await updateDoc(doc(db, 'pexams', x.id), { published: !x.published, updatedAt: serverTimestamp() }); x.published = !x.published; await pIndexPatch({ [x.id]: x }); toast(x.published ? 'Published ✓ Students can see it' : 'Hidden ✓', 'ok'); replace(() => practiceSubject(g, s)); }
+    catch (e) { toast(errText(e), 'err'); } });
+  $$('[data-pd]').forEach(b => b.onclick = async () => { const x = L.find(z => z.id === b.dataset.pd);
+    if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Delete Mock ${x.no}?</h3><p class="small">Questions and answers of this practice mock will be deleted.</p>`, 'Delete')) return;
+    try { const bt = writeBatch(db); bt.delete(doc(db, 'pexams', x.id, 'paper', 'main')); bt.delete(doc(db, 'pexams', x.id, 'akey', 'main')); bt.delete(doc(db, 'pexams', x.id)); await bt.commit(); await pIndexPatch({ [x.id]: null }); toast('Deleted', 'ok'); replace(() => practiceSubject(g, s)); }
+    catch (e) { toast(errText(e), 'err'); } });
+  if ($('#pall')) $('#pall').onclick = async () => {
+    const D = L.filter(x => !x.published); if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Publish ${D.length} drafts?</h3><p class="small">Check the questions first (👁 Preview).</p>`, 'Publish')) return;
+    try { const bt = writeBatch(db); D.forEach(x => { bt.update(doc(db, 'pexams', x.id), { published: true, updatedAt: serverTimestamp() }); x.published = true; }); await bt.commit();
+      await pIndexPatch(Object.fromEntries(D.map(x => [x.id, x]))); toast(`✓ ${D.length} mocks published`, 'ok'); replace(() => practiceSubject(g, s)); } catch (e) { toast(errText(e), 'err'); }
+  };
+}
+const pid = (g, s, no) => ('p-' + g + '-' + s.toLowerCase().replace(/[^a-z0-9]+/g, '') + '-' + no + '-' + Math.random().toString(36).slice(2, 5));
+// write one practice mock (doc + paper + answer key) in a batch
+function pWrite(b, id, meta, qs) {
+  const paper = qs.map((q, i) => ({ id: 'q' + (i + 1), sec: q.sec || meta.s, topic: q.topic || '', q: q.q, o: q.o }));
+  const ans = {}, exp = {}; qs.forEach((q, i) => { ans['q' + (i + 1)] = q.ans; if (q.exp) exp['q' + (i + 1)] = q.exp; });
+  const d = Object.assign({ count: qs.length, total: r2(qs.length * meta.mark), updatedAt: serverTimestamp(), updatedBy: auth.currentUser.email }, meta);
+  b.set(doc(db, 'pexams', id), d); b.set(doc(db, 'pexams', id, 'paper', 'main'), { questions: paper }); b.set(doc(db, 'pexams', id, 'akey', 'main'), { ans, exp });
+  return d;
+}
+async function pEdit(id, x) {
+  mark('pedit', [id, x]);
+  top(id ? `Edit · ${pName(x.g, x.s)} Mock ${x.no}` : `New · ${pName(x.g, x.s)}`, () => practiceSubject(x.g, x.s)); loading();
+  let tsv = '';
+  if (id) { try { const [p, k] = await Promise.all([getDoc(doc(db, 'pexams', id, 'paper', 'main')), getDoc(doc(db, 'pexams', id, 'akey', 'main'))]);
+    tsv = toTSV(p.exists() ? p.data().questions : [], k.exists() ? k.data().ans : {}, k.exists() ? k.data().exp || {} : {}); } catch (e) { toast(errText(e), 'err'); } }
+  page(`<div class="card"><div class="g3"><div><label class="l" for="pno">Mock No.</label><input class="inp" id="pno" type="number" min="1" value="${x.no || 1}"></div><div style="grid-column:span 2"><label class="l" for="pch">Chapter (optional)</label><input class="inp" id="pch" maxlength="40" value="${esc(x.ch || '')}" placeholder="Ancient India"></div></div>
+    <div class="g3"><div><label class="l" for="du">Minutes</label><input class="inp" id="du" type="number" min="5" max="300" value="${x.duration || ''}" placeholder="auto"></div><div><label class="l" for="mk">+ Mark</label><input class="inp" id="mk" type="number" step="0.25" min="0.25" value="${x.mark || 1}"></div><div><label class="l" for="ng">− Neg</label><input class="inp" id="ng" type="number" step="0.05" min="0" value="${x.neg ?? 0.25}"></div></div>
+    <label class="l" for="ac">Access</label><select class="inp" id="ac"><option value="free" ${(x.access || (x.no === 1 ? 'free' : 'pass')) === 'free' ? 'selected' : ''}>🆓 Free (usually Mock 1)</option><option value="pass" ${(x.access || (x.no === 1 ? 'free' : 'pass')) === 'pass' ? 'selected' : ''}>🎟 Monthly Pass</option></select>
+    <label class="l">Add questions (30 / 50 / 100 – any number)</label>
+    <div class="impb"><button class="btn gh sm" type="button" id="ipdf">📄 Import PDF</button><button class="btn gh sm" type="button" id="ixl">📊 Import Excel</button><button class="btn gh sm" type="button" id="itx">📋 Paste text</button><button class="btn sm" type="button" id="ied">👁 Preview &amp; edit</button></div>
+    <input type="file" id="fpdf" accept="application/pdf,.pdf" class="hide"><input type="file" id="fxl" accept=".xlsx,.xls,.csv" class="hide">
+    <label class="l" for="qs">Questions (Section | Topic | Question | A | B | C | D | Answer | Explanation – last column optional)</label>
+    <textarea class="inp tsv" id="qs" spellcheck="false">${esc(tsv)}</textarea><div id="pv"></div>
+    ${owner() ? `<label class="sw"><input type="checkbox" id="pb" ${x.published ? 'checked' : ''}> Published (students can see it)</label>` : '<div class="tiny mut" style="margin-top:8px">💾 Saved as <b>Draft</b> – the owner will check and publish.</div>'}
+    <button class="btn dk block" id="sv" type="button" style="margin-top:14px">💾 ${owner() ? 'Save' : 'Save Draft'}</button><div id="sm"></div></div>`);
+  const preview = () => { const { qs, errs } = toQuestions($('#qs').value), ans = { A: 0, B: 0, C: 0, D: 0 }; qs.forEach(q => ans[q.ans]++);
+    $('#pv').innerHTML = `<div class="msg ${errs.length ? 'err' : (qs.length ? 'ok' : 'info')}"><b>${qs.length}</b> questions · ${qs.filter(q => q.exp).length} explanations · Answers A${ans.A} B${ans.B} C${ans.C} D${ans.D}${qs.length && !$('#du').value ? ` · ⏱ ${defMin(qs.length)} min (auto)` : ''}${errs.length ? '<br>' + errs.slice(0, 8).map(esc).join('<br>') : ''}</div>`; return { qs, errs }; };
+  $('#qs').oninput = preview; $('#du').oninput = preview; preview(); importButtons(preview);
+  $('#sv').onclick = async () => {
+    const { qs, errs } = preview(), m = $('#sm'), no = parseInt($('#pno').value, 10), mark2 = Number($('#mk').value), neg = Number($('#ng').value);
+    if (!(no >= 1)) return msg(m, 'Mock No. must be 1 or more.');
+    if (!qs.length || errs.length) return msg(m, 'Fix the questions first (see the red box).');
+    if (!(mark2 > 0) || neg < 0) return msg(m, 'Check + Mark and − Neg.');
+    const duration = parseInt($('#du').value, 10) || defMin(qs.length), pubd = owner() ? $('#pb').checked : false, nid = id || pid(x.g, x.s, no);
+    const meta = { title: pName(x.g, x.s) + ' · Mock ' + no, g: x.g, s: x.s, no, ch: $('#pch').value.trim(), duration, mark: mark2, neg, access: $('#ac').value, published: pubd, createdBy: x.createdBy || auth.currentUser.email };
+    $('#sv').disabled = true;
+    try { const b = writeBatch(db); const d = pWrite(b, nid, meta, qs); await b.commit(); if (owner()) await pIndexPatch({ [nid]: d });
+      msg(m, 'Saved ✓', 'ok'); setTimeout(() => replace(() => practiceSubject(x.g, x.s)), 600); }
+    catch (e) { $('#sv').disabled = false; msg(m, esc(errText(e))); }
+  };
+}
+async function pPreview(id, x) {
+  try { const [p, k] = await Promise.all([getDoc(doc(db, 'pexams', id, 'paper', 'main')), getDoc(doc(db, 'pexams', id, 'akey', 'main'))]);
+    const qs = p.exists() ? p.data().questions : []; if (!qs.length) return toast('No questions.', 'info');
+    $('#top').classList.add('hide'); C.runExam({ x: { id, title: x.title + ' (preview)', mark: x.mark, neg: x.neg, duration: x.duration }, qs, ans: {}, marked: new Set(), visited: new Set(), end: Date.now() + 3600000, preview: true, key: k.exists() ? k.data().ans : {}, back: () => { $('#top').classList.remove('hide'); practiceSubject(x.g, x.s); } });
+  } catch (e) { toast(errText(e), 'err'); }
+}
+// 📊 Bulk Excel: Mock No | Chapter | Question | A | B | C | D | Answer | Explanation  → many mocks at once
+function bulkRows(rows) {
+  rows = rows.map(r => (r || []).map(v => String(v ?? '').trim())).filter(r => r.some(Boolean));
+  if (rows.length && /mock/i.test(rows[0][0] || '') && !/^\d+$/.test(rows[0][0])) rows = rows.slice(1);
+  const out = [], errs = [];
+  rows.forEach((c, i) => { const no = parseInt(c[0], 10), o = c.slice(3, 7), ans = ansOf(c[7], o);
+    if (!(no >= 1)) return errs.push(`Row ${i + 1}: Mock No missing`);
+    if (!c[2] || o.some(v => !v) || !ans) return errs.push(`Row ${i + 1}: question / option / answer missing`);
+    out.push({ no, ch: c[1] || '', q: c[2], o, ans, exp: c[8] || '' }); });
+  return { out, errs };
+}
+function pBulk(g, s, L) {
+  const o = C.sheet(`<h3 style="margin:0 0 4px">📊 Bulk Excel – many mocks</h3><div class="small mut">Columns: <b>Mock No | Chapter | Question | A | B | C | D | Answer | Explanation</b> (explanation optional). Choose the .xlsx file or copy all rows from Excel and paste.</div>
+    <button class="btn gh block" id="bxf" type="button" style="margin-top:8px">📁 Choose Excel file</button><input type="file" id="bxi" accept=".xlsx,.xls,.csv" class="hide">
+    <textarea class="inp tsv" id="bxt" rows="6" placeholder="Mock No\tChapter\tQuestion\tA\tB\tC\tD\tAnswer\tExplanation" style="margin-top:8px"></textarea>
+    <div class="g3"><div><label class="l">− Neg</label><input class="inp" id="bxn" type="number" step="0.05" value="0.25"></div><div><label class="l">Minutes</label><input class="inp" id="bxd" type="number" placeholder="auto"></div><div><label class="l">&nbsp;</label>${owner() ? '<label class="sw" style="margin:0"><input type="checkbox" id="bxp"> Publish</label>' : '<div class="tiny mut">Draft</div>'}</div></div>
+    <div id="bxm"></div><button class="btn dk block" id="bxg" type="button" style="margin-top:10px">🔍 Check</button>`);
+  let rows = null;
+  o.querySelector('#bxf').onclick = () => o.querySelector('#bxi').click();
+  o.querySelector('#bxi').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { rows = await excelRows(f); o.querySelector('#bxt').value = ''; o.querySelector('#bxm').innerHTML = `<div class="msg ok">${esc(f.name)} – ${rows.length} rows read</div>`; } catch (er) { toast(er.message || String(er), 'err'); } };
+  o.querySelector('#bxg').onclick = async () => {
+    const R0 = rows || parseTSV(o.querySelector('#bxt').value), { out, errs } = bulkRows(R0), by = {};
+    out.forEach(q => (by[q.no] = by[q.no] || []).push(q));
+    const nos = Object.keys(by).map(Number).sort((a, b) => a - b), clash = nos.filter(n => L.some(x => x.no === n));
+    const box = o.querySelector('#bxm');
+    if (!out.length) return box.innerHTML = `<div class="msg err">No questions found.${errs.length ? '<br>' + errs.slice(0, 6).map(esc).join('<br>') : ''}</div>`;
+    box.innerHTML = `<div class="msg ${errs.length ? 'err' : 'ok'}">✓ ${out.length} questions → <b>${nos.length} mocks</b> (${nos.map(n => 'Mock ' + n + ': ' + by[n].length + 'Q').join(', ')})${errs.length ? '<br>⚠ ' + errs.length + ' rows skipped: ' + errs.slice(0, 4).map(esc).join(' · ') : ''}${clash.length ? `<br>⚠ Mock ${clash.join(', ')} already exist – they will be <b>skipped</b>.` : ''}</div>`;
+    const bt = o.querySelector('#bxg'); bt.textContent = `✨ Create ${nos.length - clash.length} mocks`;
+    bt.onclick = async () => {
+      bt.disabled = true; const neg = Number(o.querySelector('#bxn').value) || 0, dm = parseInt(o.querySelector('#bxd').value, 10), pub = owner() && o.querySelector('#bxp') && o.querySelector('#bxp').checked, idx = {};
+      try { let b = writeBatch(db), n = 0;
+        for (const no of nos) { if (clash.includes(no)) continue; const qs = by[no], id = pid(g, s, no);
+          idx[id] = pWrite(b, id, { title: pName(g, s) + ' · Mock ' + no, g, s, no, ch: qs[0].ch, duration: dm || defMin(qs.length), mark: 1, neg, access: no === 1 ? 'free' : 'pass', published: pub, createdBy: auth.currentUser.email }, qs);
+          if (++n % 120 === 0) { await b.commit(); b = writeBatch(db); } }
+        await b.commit(); if (pub) await pIndexPatch(idx);
+        o.remove(); toast(`✓ ${Object.keys(idx).length} mocks created${pub ? ' & published' : ' as drafts'}`, 'ok'); replace(() => practiceSubject(g, s)); }
+      catch (e) { bt.disabled = false; toast(errText(e), 'err'); }
+    };
+  };
+}
+// 🗂 Question Bank: all questions of a subject once → app makes 30 / 50 / 100 Q mocks (duplicates removed)
+const normQ = t => String(t || '').toLowerCase().replace(/[^a-z0-9ऀ-෿]+/g, ' ').trim();
+function pBank(g, s, L) {
+  const nextNo = (L.reduce((m, x) => Math.max(m, x.no), 0) || 0) + 1;
+  const o = C.sheet(`<h3 style="margin:0 0 4px">🗂 Question Bank · ${esc(pName(g, s))}</h3><div class="small mut">Paste all questions (app Excel format: Section | Topic | Question | A | B | C | D | Answer | Explanation) or choose a file. The app makes mocks automatically.</div>
+    <button class="btn gh block" id="qbf" type="button" style="margin-top:8px">📁 Choose Excel file</button><input type="file" id="qbi" accept=".xlsx,.xls,.csv" class="hide">
+    <textarea class="inp tsv" id="qbt" rows="6" style="margin-top:8px"></textarea>
+    <label class="l">Make mocks of</label><div class="tagc one" id="qbs">${[30, 50, 100].map(n => `<button type="button" data-n="${n}" class="${n === 50 ? 'on' : ''}">${n} Q</button>`).join('')}</div>
+    <div class="g3"><div><label class="l">Start at Mock No.</label><input class="inp" id="qbno" type="number" value="${nextNo}"></div><div><label class="l">− Neg</label><input class="inp" id="qbn" type="number" step="0.05" value="0.25"></div><div><label class="l">&nbsp;</label>${owner() ? '<label class="sw" style="margin:0"><input type="checkbox" id="qbp"> Publish</label>' : '<div class="tiny mut">Draft</div>'}</div></div>
+    <label class="sw"><input type="checkbox" id="qbc" checked> Chapter name = Topic column</label>
+    <div id="qbm"></div><button class="btn dk block" id="qbg" type="button" style="margin-top:10px">🔍 Check questions</button>`);
+  let size = 50, rows = null;
+  o.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { size = +b.dataset.n; o.querySelectorAll('[data-n]').forEach(z => z.classList.toggle('on', z === b)); o.querySelector('#qbg').textContent = '🔍 Check questions'; o.querySelector('#qbg').onclick = check; });
+  o.querySelector('#qbf').onclick = () => o.querySelector('#qbi').click();
+  o.querySelector('#qbi').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const R0 = await excelRows(f); rows = fromRows(R0); o.querySelector('#qbm').innerHTML = `<div class="msg ok">${esc(f.name)} – ${rows.length} questions read</div>`; } catch (er) { toast(er.message || String(er), 'err'); } };
+  const check = async () => {
+    const box = o.querySelector('#qbm'), list = rows || toQuestions(o.querySelector('#qbt').value).qs, bad = rows ? rows.filter(q => problems(q).length) : toQuestions(o.querySelector('#qbt').value).errs;
+    const good = (rows ? list.filter(q => !problems(q).length) : list);
+    box.innerHTML = '<div class="msg info">Checking duplicates with existing mocks…</div>';
+    const seen = new Set(); let dupOld = 0, dupNew = 0;
+    try { for (const x of L) { const p = await getDoc(doc(db, 'pexams', x.id, 'paper', 'main')); (p.exists() ? p.data().questions : []).forEach(q => seen.add(normQ(q.q))); } } catch (e) {}
+    const oldSet = new Set(seen), fin = [];
+    good.forEach(q => { const k = normQ(q.q); if (oldSet.has(k)) { dupOld++; return; } if (seen.has(k)) { dupNew++; return; } seen.add(k); fin.push(q); });
+    const n = Math.floor(fin.length / size), left = fin.length - n * size, start = parseInt(o.querySelector('#qbno').value, 10) || nextNo;
+    box.innerHTML = `<div class="msg ${n ? 'ok' : 'err'}"><b>${fin.length}</b> questions ready · ⚠ ${dupNew} repeated in this list · ⚠ ${dupOld} already in old mocks · ${bad.length} with errors (skipped)<br>→ <b>${n} mocks</b> of ${size} Q (Mock ${start}–${start + n - 1})${left ? ` · ${left} questions left for the next time` : ''}</div>`;
+    const bt = o.querySelector('#qbg'); if (!n) return; bt.textContent = `✨ Create ${n} mocks`;
+    bt.onclick = async () => {
+      bt.disabled = true; const neg = Number(o.querySelector('#qbn').value) || 0, pub = owner() && o.querySelector('#qbp') && o.querySelector('#qbp').checked, idx = {}, useCh = o.querySelector('#qbc').checked;
+      try { let b = writeBatch(db);
+        for (let i = 0; i < n; i++) { const no = start + i, qs = fin.slice(i * size, (i + 1) * size).map(q => Object.assign({}, q, { sec: s })), id = pid(g, s, no);
+          idx[id] = pWrite(b, id, { title: pName(g, s) + ' · Mock ' + no, g, s, no, ch: useCh ? (qs[0].topic || '') : '', duration: defMin(size), mark: 1, neg, access: no === 1 ? 'free' : 'pass', published: pub, createdBy: auth.currentUser.email }, qs);
+          if ((i + 1) % 120 === 0) { await b.commit(); b = writeBatch(db); } }
+        await b.commit(); if (pub) await pIndexPatch(idx);
+        o.remove(); toast(`✓ ${n} mocks created${pub ? ' & published' : ' as drafts'}`, 'ok'); replace(() => practiceSubject(g, s)); }
+      catch (e) { bt.disabled = false; toast(errText(e), 'err'); }
+    };
+  };
+  o.querySelector('#qbg').onclick = check;
+}
+
+// ------------------------------------------------------------------ 👥 TEAM (owner adds editors by Gmail)
+async function teamView() {
+  mark('team');
+  top('👥 Team', dash); loading();
+  let T = [];
+  try { T = (await getDocs(collection(db, 'team'))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  page(`<div class="card"><b>✏️ Editors</b><div class="small mut" style="margin:2px 0 8px">Editors log in at <b>${esc(location.host)}/#/admin</b> with their <b>own Gmail</b> (Google) and set their <b>own 8-digit code</b>. They can add &amp; edit <b>draft</b> mocks only. You check and publish.</div>
+      <div class="tbl"><table><tr><th>Gmail</th><th>Name</th><th>Code set</th><th></th></tr>${T.map(t => `<tr><td>${esc(t.id)}</td><td>${esc(t.name || '')}</td><td>${t.hash ? '✓' : '—'}</td><td><button class="btn red sm" type="button" data-rm="${esc(t.id)}">Remove</button></td></tr>`).join('') || '<tr><td colspan="4" class="mut">No editors yet.</td></tr>'}</table></div>
+      <div class="g2" style="margin-top:10px"><div><label class="l" for="te">Friend's Gmail</label><input class="inp" id="te" type="email" placeholder="friend@gmail.com"></div><div><label class="l" for="tn">Name</label><input class="inp" id="tn" maxlength="40" placeholder="Ravi"></div></div>
+      <button class="btn dk block" id="ta" type="button" style="margin-top:10px">＋ Add editor</button><div id="tm"></div></div>
+    <div class="card small"><b>Editor can:</b> ✅ create / edit draft mocks (live &amp; practice), import Excel / PDF, preview<br><b>Editor cannot:</b> ❌ publish · students data · passes · results · notifications · settings · payments · team</div>`);
+  $('#ta').onclick = async () => { const e = $('#te').value.trim().toLowerCase(), n = $('#tn').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return msg($('#tm'), 'Enter a valid Gmail.');
+    if (e === (auth.currentUser.email || '').toLowerCase()) return msg($('#tm'), 'That is your own owner Gmail.');
+    try { await setDoc(doc(db, 'team', e), { name: n, addedAt: serverTimestamp(), hash: '' }); toast('Editor added ✓ Ask them to open ' + location.host + '/#/admin', 'ok'); replace(teamView); } catch (er) { msg($('#tm'), esc(errText(er))); } };
+  $$('[data-rm]').forEach(b => b.onclick = async () => { if (!await C.confirmBox(`<h3 style="margin:0">Remove ${esc(b.dataset.rm)}?</h3><p class="small">Their access stops immediately.</p>`, 'Remove')) return;
+    try { await deleteDoc(doc(db, 'team', b.dataset.rm)); toast('Removed', 'ok'); replace(teamView); } catch (e) { toast(errText(e), 'err'); } });
+}
+
 // ------------------------------------------------------------------ feedback
 async function feedbackView(id) {
   mark('feedbackView', [id]);
@@ -1191,12 +1439,26 @@ async function settings() {
       <label class="l" for="vk">Web Push key (Firebase → ⚙️ Project settings → Cloud Messaging → Web Push certificates → Key pair)</label><input class="inp" id="vk" maxlength="200" value="${esc(p.vapidKey || '')}" placeholder="BExxxxxxxx…" style="font-family:ui-monospace,monospace;font-size:12.5px">
       <div class="tiny mut" id="vkn" style="margin-top:4px">This key is public (safe). Without it, students still get notifications inside the app 🔔 – phone alerts need this key + the Apps Script sender (see the v4 guide).</div>
       <button class="btn dk block" id="vks" type="button" style="margin-top:10px">💾 Save key</button><div id="vkm"></div></div>
+    <div class="card"><div style="font-weight:800">🔗 Home links</div><div class="tiny mut">Empty → the tile shows SOON. Changing a link needs no code update.</div>
+      ${[['pyq', '📄 PYQs (Google Drive link)', 'https://drive.google.com/…'], ['notes', '🛒 Buy Notes (store link)', 'https://…'], ['tg', '🆓 Free Notes (Telegram link)', 'https://t.me/…'], ['wa', '🎁 Buy Combo (WhatsApp Business link or number)', 'https://wa.me/91XXXXXXXXXX or 91XXXXXXXXXX'], ['ig', '📷 Instagram', 'https://instagram.com/…']].map(([k, l, ph]) => `<label class="l" for="lk_${k}">${l}</label><input class="inp" id="lk_${k}" value="${esc((p.links || {})[k] || '')}" placeholder="${esc(ph)}">`).join('')}
+      <button class="btn dk block" id="lks" type="button" style="margin-top:10px">💾 Save links</button><div id="lkm"></div></div>
+    <div class="card"><div style="font-weight:800">📚 Practice subjects</div><div class="tiny mut">Comma separated. Renaming a subject hides its old mocks – add new names only.</div>
+      ${[['gs', 'General Studies'], ['sci', 'General Science'], ['apt', 'Aptitude']].map(([k, l]) => `<label class="l" for="ps_${k}">${l}</label><input class="inp" id="ps_${k}" value="${esc(pSubjects(k, p).join(', '))}">`).join('')}
+      <label class="l" for="ps_ca">Current Affairs years</label><input class="inp" id="ps_ca" value="${esc(pYears(p).join(', '))}" placeholder="2026, 2027">
+      <button class="btn dk block" id="pss" type="button" style="margin-top:10px">💾 Save subjects</button><div id="psm"></div></div>
     <div class="card"><div style="font-weight:800">🔐 Change 8-digit security code</div>
       <label class="l" for="k0">Current code</label><input class="inp code" id="k0" type="password" inputmode="numeric" maxlength="8">
       <label class="l" for="k1">New code</label><input class="inp code" id="k1" type="password" inputmode="numeric" maxlength="8">
       <label class="l" for="k2">Re-enter new code</label><input class="inp code" id="k2" type="password" inputmode="numeric" maxlength="8">
       <button class="btn block" id="ks" type="button" style="margin-top:12px">Change code</button><div id="km"></div></div>`);
   $('#hs').onclick = async () => { try { await savePub({ showRegCount: $('#hr').checked, regMin: Math.max(0, Math.round(+$('#hm').value || 0)), showTotal: $('#ht').checked }); msg($('#hmm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#hmm'), esc(errText(e))); } };
+  $('#lks').onclick = async () => { const L = {}; ['pyq', 'notes', 'tg', 'wa', 'ig'].forEach(k => L[k] = $('#lk_' + k).value.trim().slice(0, 300));
+    const bad = Object.entries(L).filter(([k, v]) => v && !/^https?:\/\//i.test(v) && !(k === 'wa' && /^\+?\d[\d\s-]{8,}$/.test(v)));
+    if (bad.length) return msg($('#lkm'), 'Links must start with https:// (WhatsApp can also be a number like 919876543210).');
+    try { await savePub({ links: L }); msg($('#lkm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#lkm'), esc(errText(e))); } };
+  $('#pss').onclick = async () => { const sp = v => [...new Set(v.split(',').map(z => z.trim()).filter(Boolean))].slice(0, 20);
+    const ps = { gs: sp($('#ps_gs').value), sci: sp($('#ps_sci').value), apt: sp($('#ps_apt').value) }, yrs = sp($('#ps_ca').value).map(Number).filter(y => y >= 2020 && y <= 2100);
+    try { await savePub({ psubj: ps, cayears: yrs.length ? yrs : [2026] }); msg($('#psm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#psm'), esc(errText(e))); } };
   $('#vks').onclick = async () => { const v = $('#vk').value.trim(); if (v && !/^[A-Za-z0-9_-]{60,120}$/.test(v)) return msg($('#vkm'), 'This does not look like a Web Push key (long text starting with B…).');
     try { await savePub({ vapidKey: v }); msg($('#vkm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#vkm'), esc(errText(e))); } };
   getCountFromServer(collection(db, 'tokens')).then(c => { if ($('#vkn')) $('#vkn').innerHTML += ` <b>${c.data().count}</b> students have turned on phone alerts.`; }).catch(() => {});
@@ -1221,5 +1483,5 @@ function payments() {
     <p class="small mut">After Razorpay is connected, every payment will show here: name, mobile, Gmail, mock, amount, Razorpay payment ID, unlock status, today / month totals, “Need check” list with Verify and Manual unlock, and Excel download.</p></div>`);
 }
 
-Object.assign(VIEWS, { notify: notifyView, dash, pick, edit: editMock, tools, preview: previewMock, attempts, results: resultsPage, students, allStudents, student,
+Object.assign(VIEWS, { practice: g => practiceAdmin(g), psubj: practiceSubject, pedit: pEdit, team: teamView, notify: notifyView, dash, pick, edit: editMock, tools, preview: previewMock, attempts, results: resultsPage, students, allStudents, student,
   feedbackView, analysisView, reportsView, notice, settings, payments, passes: passesView });
