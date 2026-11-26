@@ -339,16 +339,69 @@ body.inexam #app,.nocopy{-webkit-user-select:none;user-select:none;-webkit-touch
 .wm span{white-space:nowrap}
 #rv{position:relative;overflow:hidden}
 @media print{body.inexam *{display:none!important}}
+
+/* ================= v6.1 theme: white page · light-yellow cards with black border · navy · red LIVE · line icons */
+:root{--y:#FACC15;--y2:#FEF5D3;--cy:#FEF5D3;--ink:#0F172A;--ink2:#334155;--mut:#64748B;--line:#E2E8F0;--bg:#FFFFFF;--bd:#0F172A}
+.ic{width:1em;height:1em;vertical-align:-.15em;flex:none}
+.top{background:#fff;color:var(--ink);border-bottom:1px solid var(--line)}
+.top .t1,.top .ttl{color:var(--ink)}.top .t2{color:var(--mut)}.top .back{color:var(--ink)}
+.top .mb{background:none;border:0;font-size:22px;padding:2px 4px 0 0;color:var(--ink);display:flex}
+.top .bell{color:var(--ink)!important;background:none!important;border:0!important;font-size:21px}
+.top .avt{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--y);font-weight:900;display:grid;place-items:center;border:0;font-size:13px}
+.btn{box-shadow:none!important;border:1.5px solid var(--ink)}.btn.dk{color:#fff}.btn.gh{border-color:var(--line)}
+.card,.xc,.gc,.subj,.tl,.livec,.passc.off,.menu,.ulist .it,.newc,.gph,.nt,.plan,.pres,.cont,.mk,.stats>div,.strip,.empty{background:var(--cy)!important;border:1px solid var(--bd)!important;box-shadow:none!important}
+.passc.on{border:1px solid var(--bd)!important;box-shadow:none!important}
+.bn button span{display:grid;place-items:center;font-size:21px;line-height:1;height:28px}
+.bn button.on span{background:var(--y)}
+.ib{display:inline-grid;place-items:center;border:1px solid rgba(15,23,42,.35);border-radius:10px;background:#fff}
+.k1{background:#FEE2E2;color:#DC2626}.k2{background:#E0E7FF;color:#4338CA}.k3{background:#DCFCE7;color:#15803D}.k4{background:#FCE7F3;color:#BE185D}
+.k5{background:#FEF3C7;color:#B45309}.k6{background:#CFFAFE;color:#0E7490}.k7{background:#EDE9FE;color:#6D28D9}.k8{background:#FFEDD5;color:#C2410C}.k0{background:#F1F5F9;color:#0F172A}
+.hb{background:var(--ink);color:#fff;border-radius:16px;padding:16px;position:relative;overflow:hidden;margin-top:4px}
+.hb .w{font-size:12.5px;color:#CBD5E1}.hb h2{margin:0;font-size:22px;line-height:1.15;color:var(--y);font-weight:900}.hb .a{font-weight:800;font-size:15px;margin-top:3px}
+.hb .e{font-size:12px;color:#94A3B8;margin-top:2px}.hb .pl{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;position:relative;z-index:1}
+.hb .pl button{border:1px solid #334155;background:transparent;color:#E2E8F0;border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:800}
+.hb .pl .p1{background:var(--y);color:var(--ink);border-color:var(--y)}.hb .pl .p2{background:#fff;color:var(--ink);border-color:#fff}
+.hb svg.bk{position:absolute;right:12px;top:22px;width:96px;opacity:.95}.hb .pl button{background:var(--ink);white-space:nowrap}.hb .pl .p1{background:var(--y)}.hb .pl .p2{background:#fff}
+.hb h2,.hb .a,.hb .e,.hb .w{position:relative;z-index:1;max-width:calc(100% - 100px)}@media(max-width:340px){.hb svg.bk{display:none}.hb h2,.hb .a,.hb .e,.hb .w{max-width:none}}
+.s6 .ib{font-size:15px!important}
+.cont{color:var(--ink)!important}.cont b{color:var(--ink)!important}.passc .e .ib{width:42px;height:42px;font-size:20px}
+.hn{display:flex;gap:8px;align-items:center;background:var(--cy);border:1px solid var(--bd);border-left:4px solid var(--y);border-radius:12px;padding:10px 12px;margin-top:12px;font-size:13.5px}
+.hn .ic{font-size:18px;color:#B45309}
+.q4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.q4 button,.q4 a{background:var(--cy);border:1px solid var(--bd);border-radius:14px;padding:11px 2px 9px;text-align:center;font-size:12px;font-weight:800;color:var(--ink2);text-decoration:none;position:relative;min-width:0}
+.q4 .ib{width:42px;height:42px;font-size:21px;margin:0 auto 6px;display:grid}
+.q4 .lvt{background:#FEF2F2;color:#B91C1C}.q4 .lvt .ib{background:#DC2626;color:#fff;border-color:#991B1B}
+.lvb{display:inline-flex;align-items:center;gap:4px;background:#DC2626;color:#fff;font-size:10px;font-weight:900;border-radius:20px;padding:2px 8px;letter-spacing:.3px}
+.lvb:before{content:'';width:6px;height:6px;border-radius:50%;background:#fff;animation:pl 1.3s infinite}
+.s6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.s6 button{background:var(--cy);border:1px solid var(--bd);border-radius:12px;padding:8px 4px 7px;text-align:center;font-size:12.5px;font-weight:800;min-width:0}
+.s6 .ib{width:30px!important;height:30px!important;font-size:15px;margin:0 auto 4px;display:grid}.s6 small{display:block;font-size:11px;color:var(--mut);font-weight:600}
+.s6 .pb{height:4px;background:#fff;border:1px solid var(--line);border-radius:4px;margin:4px 10px 0}.s6 .pb b{display:block;height:100%;background:var(--ok);border-radius:4px}
+.qlk{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:10px 6px}
+.qlk a,.qlk button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:none;border:0;text-align:center;font-size:11px;font-weight:700;color:var(--ink2);text-decoration:none;padding:0;min-width:0}
+.qlk .ib{width:44px;height:44px;border-radius:50%;font-size:20px;margin:0 auto 4px;display:grid;background:var(--cy);border:1px solid var(--bd)}
+.cig{color:#E4405F!important}.ctg{color:#26A5E4!important}.cwa{color:#25D366!important}.cyt{color:#FF0000!important}
+.drw{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.45);animation:up .2s}
+.drw .p{position:absolute;top:0;bottom:0;left:0;width:min(300px,84vw);background:#fff;padding:16px 14px;overflow:auto}
+.drw .dl{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-bottom:1px solid #F1F5F9;padding:12px 4px;font-size:15px;font-weight:600;color:var(--ink2);text-align:left;text-decoration:none}
+.drw .dl .ic{font-size:19px;color:var(--ink)}
+.nl{display:flex;align-items:center;gap:12px;width:100%;background:var(--cy);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px;text-align:left;text-decoration:none;color:var(--ink)}
+.nl .ib{width:44px;height:44px;font-size:21px;flex:none}.nl b{font-size:15px}.nl small{display:block;color:var(--mut);font-size:12.5px}.nl .ar{margin-left:auto;color:var(--mut);font-size:18px}
+.menu button .ic,.menu a .ic{font-size:18px;margin-right:8px;color:var(--ink)}
+.gc span .ic,.subj .si .ic{font-size:1em}
+.agree{display:flex;gap:9px;align-items:flex-start;margin-top:14px;font-size:13.5px;line-height:1.4}.agree input{width:19px;height:19px;margin-top:1px;flex:none;accent-color:var(--ink)}
+.agree a{font-weight:800;color:#1D4ED8}
 </style>
 </head>
 <body>
 <header class="top" id="top"><div class="in" id="topin"></div></header>
 <main id="app"><div class="wrapw"><div class="card center mut">Loading…</div></div></main>
 <nav class="bn" id="bn"><div class="in">
-  <button type="button" data-nav="home"><span>🏠</span>Home</button>
-  <button type="button" data-nav="tests"><span>📝</span>Tests</button>
-  <button type="button" data-nav="results"><span>📊</span>Results</button>
-  <button type="button" data-nav="profile" id="bnp"><span>👤</span>Login</button>
+  <button type="button" data-nav="home"><span id="n1"></span>Home</button>
+  <button type="button" data-nav="tests"><span id="n2"></span>Tests</button>
+  <button type="button" data-nav="results"><span id="n3"></span>Results</button>
+  <button type="button" data-nav="notes"><span id="n4"></span>Notes</button>
+  <button type="button" data-nav="profile" id="bnp"><span id="n5"></span>Login</button>
 </div></nav>
 <div id="print"></div>
 
@@ -448,6 +501,9 @@ const setName = (x, uid) => (x.sets || 1) > 1 ? 'Set ' + 'ABCD'[examSet(x, uid)]
 function leftTxt(t) { const m = Math.max(0, Math.round(t / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60; return d ? `${d}d ${h}h` : h ? `${h}h ${mm}m` : `${mm}m`; }
 
 // ================================================================ state
+const IC = {"home": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"></path><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"></path></svg>", "tests": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"></rect><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"></path><path d=\"M12 11h4\"></path><path d=\"M12 16h4\"></path><path d=\"M8 11h.01\"></path><path d=\"M8 16h.01\"></path></svg>", "results": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 3v16a2 2 0 0 0 2 2h16\"></path><path d=\"M18 17V9\"></path><path d=\"M13 17V5\"></path><path d=\"M8 17v-3\"></path></svg>", "notes": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 7v14\"></path><path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\"></path></svg>", "profile": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>", "bell": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9\"></path><path d=\"M10.3 21a1.94 1.94 0 0 0 3.4 0\"></path></svg>", "menu": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"4\" x2=\"20\" y1=\"12\" y2=\"12\"></line><line x1=\"4\" x2=\"20\" y1=\"6\" y2=\"6\"></line><line x1=\"4\" x2=\"20\" y1=\"18\" y2=\"18\"></line></svg>", "live": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4.9 19.1C1 15.2 1 8.8 4.9 4.9\"></path><path d=\"M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5\"></path><circle cx=\"12\" cy=\"12\" r=\"2\"></circle><path d=\"M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5\"></path><path d=\"M19.1 4.9C23 8.8 23 15.1 19.1 19\"></path></svg>", "practice": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m16 6 4 14\"></path><path d=\"M12 6v14\"></path><path d=\"M8 8v12\"></path><path d=\"M4 4v16\"></path></svg>", "free": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 21V7\"></path><path d=\"m16 12 2 2 4-4\"></path><path d=\"M22 6V4a1 1 0 0 0-1-1h-5a4 4 0 0 0-4 4 4 4 0 0 0-4-4H3a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h6a3 3 0 0 1 3 3 3 3 0 0 1 3-3h6a1 1 0 0 0 1-1v-1.3\"></path></svg>", "combo": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\"></rect><path d=\"M12 8v13\"></path><path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\"></path><path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\"></path></svg>", "cart": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"21\" r=\"1\"></circle><circle cx=\"19\" cy=\"21\" r=\"1\"></circle><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"></path></svg>", "pyq": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"></path><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"></path><path d=\"M10 9H8\"></path><path d=\"M16 13H8\"></path><path d=\"M16 17H8\"></path></svg>", "clock": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><polyline points=\"12 6 12 12 16 14\"></polyline></svg>", "cal": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 2v4\"></path><path d=\"M16 2v4\"></path><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"></rect><path d=\"M3 10h18\"></path><path d=\"M8 14h.01\"></path><path d=\"M12 14h.01\"></path><path d=\"M16 14h.01\"></path><path d=\"M8 18h.01\"></path><path d=\"M12 18h.01\"></path><path d=\"M16 18h.01\"></path></svg>", "help": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"></path><path d=\"M12 17h.01\"></path></svg>", "arrow": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"></path><path d=\"m12 5 7 7-7 7\"></path></svg>", "chev": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m9 18 6-6-6-6\"></path></svg>", "back": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 19-7-7 7-7\"></path><path d=\"M19 12H5\"></path></svg>", "lock": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"></rect><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"></path></svg>", "check": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><path d=\"m9 12 2 2 4-4\"></path></svg>", "trophy": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\"></path><path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\"></path><path d=\"M4 22h16\"></path><path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\"></path><path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\"></path><path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\"></path></svg>", "flag": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z\"></path><line x1=\"4\" x2=\"4\" y1=\"22\" y2=\"15\"></line></svg>", "grid": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"></rect><rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"></rect></svg>", "scale": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"></path><path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"></path><path d=\"M7 21h10\"></path><path d=\"M12 3v18\"></path><path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"></path></svg>", "landmark": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"3\" x2=\"21\" y1=\"22\" y2=\"22\"></line><line x1=\"6\" x2=\"6\" y1=\"18\" y2=\"11\"></line><line x1=\"10\" x2=\"10\" y1=\"18\" y2=\"11\"></line><line x1=\"14\" x2=\"14\" y1=\"18\" y2=\"11\"></line><line x1=\"18\" x2=\"18\" y1=\"18\" y2=\"11\"></line><polygon points=\"12 2 20 7 4 7\"></polygon></svg>", "globe": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21.54 15H17a2 2 0 0 0-2 2v4.54\"></path><path d=\"M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17\"></path><path d=\"M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05\"></path><circle cx=\"12\" cy=\"12\" r=\"10\"></circle></svg>", "flask": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2\"></path><path d=\"M8.5 2h7\"></path><path d=\"M7 16h10\"></path></svg>", "calc": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\"></rect><line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\"></line><line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\"></line><path d=\"M16 10h.01\"></path><path d=\"M12 10h.01\"></path><path d=\"M8 10h.01\"></path><path d=\"M12 14h.01\"></path><path d=\"M8 14h.01\"></path><path d=\"M12 18h.01\"></path><path d=\"M8 18h.01\"></path></svg>", "brain": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\"></path><path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\"></path><path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\"></path><path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\"></path><path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\"></path><path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\"></path><path d=\"M19.938 10.5a4 4 0 0 1 .585.396\"></path><path d=\"M6 18a4 4 0 0 1-1.967-.516\"></path><path d=\"M19.967 17.484A4 4 0 0 1 18 18\"></path></svg>", "monitor": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\"></rect><line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\"></line><line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\"></line></svg>", "news": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2\"></path><path d=\"M18 14h-8\"></path><path d=\"M15 18h-5\"></path><path d=\"M10 6h8v4h-8V6Z\"></path></svg>", "target": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><circle cx=\"12\" cy=\"12\" r=\"6\"></circle><circle cx=\"12\" cy=\"12\" r=\"2\"></circle></svg>", "atom": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><path d=\"M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z\"></path><path d=\"M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z\"></path></svg>", "dna": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m10 16 1.5 1.5\"></path><path d=\"m14 8-1.5-1.5\"></path><path d=\"M15 2c-1.798 1.998-2.518 3.995-2.807 5.993\"></path><path d=\"m16.5 10.5 1 1\"></path><path d=\"m17 6-2.891-2.891\"></path><path d=\"M2 15c6.667-6 13.333 0 20-6\"></path><path d=\"m20 9 .891.891\"></path><path d=\"M3.109 14.109 4 15\"></path><path d=\"m6.5 12.5 1 1\"></path><path d=\"m7 18 2.891 2.891\"></path><path d=\"M9 22c1.798-1.998 2.518-3.995 2.807-5.993\"></path></svg>", "ticket": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z\"></path><path d=\"M13 5v2\"></path><path d=\"M13 17v2\"></path><path d=\"M13 11v2\"></path></svg>", "mega": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m3 11 18-5v12L3 14v-3z\"></path><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\"></path></svg>", "star": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\"></path></svg>", "share": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"18\" cy=\"5\" r=\"3\"></circle><circle cx=\"6\" cy=\"12\" r=\"3\"></circle><circle cx=\"18\" cy=\"19\" r=\"3\"></circle><line x1=\"8.59\" x2=\"15.42\" y1=\"13.51\" y2=\"17.49\"></line><line x1=\"15.41\" x2=\"8.59\" y1=\"6.51\" y2=\"10.49\"></line></svg>", "download": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"></path><polyline points=\"7 10 12 15 17 10\"></polyline><line x1=\"12\" x2=\"12\" y1=\"15\" y2=\"3\"></line></svg>", "logout": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"></path><polyline points=\"16 17 21 12 16 7\"></polyline><line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\"></line></svg>", "key": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z\"></path><circle cx=\"16.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"></circle></svg>", "receipt": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"></path><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"></path><path d=\"M12 17.5v-11\"></path></svg>", "shield": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"></path><path d=\"m9 12 2 2 4-4\"></path></svg>", "install": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"></rect><path d=\"M12 18h.01\"></path></svg>", "mail": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"></rect><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"></path></svg>", "eye": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\"></path><circle cx=\"12\" cy=\"12\" r=\"3\"></circle></svg>", "refresh": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"></path><path d=\"M3 3v5h5\"></path></svg>", "x": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg>", "search": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"></circle><path d=\"m21 21-4.3-4.3\"></path></svg>", "sparkles": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"></path><path d=\"M20 3v4\"></path><path d=\"M22 5h-4\"></path><path d=\"M4 17v2\"></path><path d=\"M5 18H3\"></path></svg>", "chart": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"></polyline><polyline points=\"16 7 22 7 22 13\"></polyline></svg>", "leaf": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z\"></path><path d=\"M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12\"></path></svg>", "coins": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"8\" r=\"6\"></circle><path d=\"M18.09 10.37A6 6 0 1 1 10.34 18\"></path><path d=\"M7 6h1v4\"></path><path d=\"m16.71 13.88.7.71-2.82 2.82\"></path></svg>", "palette": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\"></circle><circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\"></circle><circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"></circle><circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\"></circle><path d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z\"></path></svg>", "book": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\"></path></svg>", "users": "<svg stroke=\"currentColor\" fill=\"none\" stroke-width=\"2\" viewBox=\"0 0 24 24\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"></path><circle cx=\"9\" cy=\"7\" r=\"4\"></circle><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"></path><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"></path></svg>", "ig": "<svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" role=\"img\" viewBox=\"0 0 24 24\"><path d=\"M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077\"></path></svg>", "tg": "<svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" role=\"img\" viewBox=\"0 0 24 24\"><path d=\"M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z\"></path></svg>", "wa": "<svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" role=\"img\" viewBox=\"0 0 24 24\"><path d=\"M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z\"></path></svg>", "yt": "<svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" role=\"img\" viewBox=\"0 0 24 24\"><path d=\"M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z\"></path></svg>"};
+const ic = (n, c) => (IC[n] || '').replace('<svg ', '<svg class="ic' + (c ? ' ' + c : '') + '" ');
+const BOOKS = '<svg class="bk" viewBox="0 0 120 90" aria-hidden="true"><rect x="18" y="62" width="88" height="14" rx="3" fill="#FACC15"/><rect x="24" y="64" width="76" height="2" fill="#fff" opacity=".7"/><rect x="10" y="46" width="90" height="14" rx="3" fill="#E2E8F0"/><rect x="16" y="48" width="78" height="2" fill="#94A3B8"/><rect x="22" y="30" width="80" height="14" rx="3" fill="#6366F1"/><rect x="28" y="32" width="68" height="2" fill="#fff" opacity=".6"/><rect x="14" y="14" width="86" height="14" rx="3" fill="#F8FAFC"/><rect x="20" y="16" width="74" height="2" fill="#CBD5E1"/><circle cx="104" cy="12" r="7" fill="#FACC15"/><path d="M101 12l2 2 4-4" stroke="#0F172A" stroke-width="1.6" fill="none"/></svg>';
 let USER = null, PROFILE = null, BLOCKED = false, EXAMS = [], ATT = {}, UNL = {}, PUB = {}, MYR = {}, PASS = null;
 let NOTES = [], INSTALL = null, MSG_ON = false;
 let OLDP = {}, CAT = 'All', TTAB = null, NEXT = null, REGISTERING = false, AUTH_READY = false, X = null;
@@ -464,19 +520,21 @@ window.addEventListener('hashchange', () => {
   route();
 });
 $$('[data-nav]').forEach(b => b.onclick = () => go(b.dataset.nav));
+[['n1', 'home'], ['n2', 'tests'], ['n3', 'results'], ['n4', 'notes'], ['n5', 'profile']].forEach(([i, k]) => { const e = document.getElementById(i); if (e) e.innerHTML = ic(k); });
 
 function setNav(k) {
   $$('[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === k));
-  $('#bnp').innerHTML = `<span>👤</span>${USER ? 'Profile' : 'Login'}`;
+  $('#bnp').innerHTML = `<span>${ic('profile')}</span>${USER ? 'Profile' : 'Login'}`;
 }
 function topMain() {
-  $('#topin').innerHTML = `<img src="logo.png" alt=""><div style="min-width:0"><div class="t1">${esc(NAME)}</div><div class="t2">${USER && PROFILE ? 'Hi, ' + esc(first(PROFILE.name)) + ' 👋' : esc(TAG)}</div></div><div class="sp"></div>
-    ${USER ? (PROFILE ? '<button class="bell" id="bel" type="button" aria-label="Notifications">🔔<b id="bellc" class="hide"></b></button>' : '') : '<button class="btn sm" id="tl" type="button" style="box-shadow:none">Login</button>'}`;
+  $('#topin').innerHTML = `<button class="mb" id="mnu" type="button" aria-label="Menu">${ic('menu')}</button><img src="logo.png" alt=""><div style="min-width:0"><div class="t1">${esc(NAME)}</div><div class="t2">${USER && PROFILE ? 'Hi, ' + esc(first(PROFILE.name)) : 'Mocks · Notes · PYQs'}</div></div><div class="sp"></div>
+    ${USER ? (PROFILE ? `<button class="bell" id="bel" type="button" aria-label="Notifications">${ic('bell')}<b id="bellc" class="hide"></b></button><button class="avt" type="button" id="tav" aria-label="Profile">${esc((PROFILE.name || '?')[0].toUpperCase())}</button>` : '') : '<button class="btn sm dk" id="tl" type="button">Login</button>'}`;
   if ($('#tl')) $('#tl').onclick = () => go('login');
+  $('#mnu').onclick = drawer; if ($('#tav')) $('#tav').onclick = () => go('profile');
   if ($('#bel')) { $('#bel').onclick = () => go('inbox'); bell(); }
 }
 function topBack(title, back) {
-  $('#topin').innerHTML = `<button class="back" id="tb" type="button" aria-label="Back">←</button><div class="ttl">${esc(title)}</div>`;
+  $('#topin').innerHTML = `<button class="back" id="tb" type="button" aria-label="Back">${ic('back')}</button><div class="ttl">${esc(title)}</div>`;
   $('#tb').onclick = () => back ? go(back) : (history.length > 1 ? history.back() : go('home'));
 }
 function shell(html, nav) {
@@ -510,6 +568,7 @@ async function route() {
     case 'page': return pageView(a);
     case 'inbox': return USER ? inboxView() : go('login');
     case 'payments': return USER ? myPayments() : go('login');
+    case 'notes': return notesView();
     case 'pass': return USER ? (profile(), buyPass()) : needLogin('#/pass');
     case 'start': return USER ? instructions(a) : needLogin('#/start/' + a);
     case 'admin': return openAdmin();
@@ -534,7 +593,7 @@ onAuthStateChanged(auth, async u => {
   route();
 });
 async function loadPass() { PASS = null; if (!USER) return; try { const s = await getDoc(doc(db, 'passes', USER.uid)); PASS = s.exists() ? s.data() : null; } catch (e) { PASS = null; } }
-// 🎟 Monthly Pass: active when it exists and (no expiry or not yet expired)
+// Monthly Pass: active when it exists and (no expiry or not yet expired)
 const passActive = () => !!(PASS && (PASS.until == null || now() < ms(PASS.until)));
 async function loadPub() { try { const s = await getDoc(doc(db, 'settings', 'public')); PUB = s.exists() ? s.data() : {}; } catch (e) { PUB = {}; } }
 const pubReady = loadPub();
@@ -570,7 +629,7 @@ const catOk = x => CAT === 'All' || (x.category || 'Other') === CAT || x.categor
 // access: 'free' = Free for all · 'pass' = Monthly Pass required (old mocks with a price also need the pass)
 function needsPass(x) { return x.access === 'pass' || (x.access !== 'free' && (x.price || 0) > 0); }
 const locked = x => needsPass(x) && !passActive() && !UNL[x.id];
-const priceChip = x => needsPass(x) ? '<span class="chip c-pass">🎟 PASS</span>' : '<span class="chip c-free">FREE</span>';
+const priceChip = x => needsPass(x) ? '<span class="chip c-pass">PASS</span>' : '<span class="chip c-free">FREE</span>';
 // Rank display: 1–100 → "#56", above 100 → "100+". Total only when admin switches ON "Show total participants".
 const showN = R => !!(PUB.showTotal && R && R.n != null);
 const rankTxt = (r, R) => r == null ? '–' : (showN(R) || r <= 100) ? '#' + r : '100+';
@@ -589,8 +648,8 @@ function examCard(x, big) {
       : s === 'live' ? `<button class="btn block" data-start="${esc(x.id)}" type="button">Login to Start →</button>`
       : `<button class="btn gh block" data-login="1" type="button">Login to see result</button>`;
   } else if (BLOCKED && (s === 'live' || s === 'resume')) act = '<div class="msg err" style="margin:0">Your account is blocked. Contact IQ FOR U.</div>';
-  else if (s === 'up') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">🎟 Monthly Pass required</button>` : `<button class="btn gh block" type="button" disabled>🔔 Opens ${esc(fmtDT(x.startAt))}</button>`;
-  else if (s === 'live') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">🎟 Monthly Pass required</button>` : `<button class="btn block" data-start="${esc(x.id)}" type="button">Start Test →</button>`;
+  else if (s === 'up') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">Monthly Pass required</button>` : `<button class="btn gh block" type="button" disabled>🔔 Opens ${esc(fmtDT(x.startAt))}</button>`;
+  else if (s === 'live') act = paid ? `<button class="btn dk block" type="button" data-pay="${esc(x.id)}">Monthly Pass required</button>` : `<button class="btn block" data-start="${esc(x.id)}" type="button">Start Test →</button>`;
   else if (s === 'resume') act = `<button class="btn block" data-start="${esc(x.id)}" type="button">↩ Resume Test</button>`;
   else if (s === 'subm') act = `<div class="msg info" style="margin:0">✅ Submitted · Result: <b>${esc(resWhen(x))}</b></div>`;
   else if (s === 'res') act = `<button class="btn dk block" data-res="${esc(x.id)}" type="button">📊 ${ATT[x.id] ? 'View my result' : 'Merit list & answer key'}</button>`;
@@ -598,7 +657,7 @@ function examCard(x, big) {
   return `<article class="xc ${s === 'live' || s === 'resume' ? 'lv' : ''} fade">
     <div style="display:flex;gap:5px;flex-wrap:wrap">${lab}${catChip(x)}${priceChip(x)}</div>
     <h3>${esc(x.title)}</h3>${x.desc ? `<p class="ds">${esc(x.desc)}</p>` : ''}
-    <div class="meta"><span>📝 ${x.count} Q</span><span>⏱ ${x.duration} min</span><span>✅ +${x.mark}</span><span>❌ −${x.neg}</span>${s === 'subm' || s === 'closed' || s === 'res' ? `<span>🗓 ${esc(fmtD(x.startAt))}</span>` : ''}</div>
+    <div class="meta"><span>${ic('help')} ${x.count} Q</span><span>${ic('clock')} ${x.duration} min</span><span style="color:#15803D">+${x.mark}</span><span style="color:#B91C1C">−${x.neg}</span>${s === 'subm' || s === 'closed' || s === 'res' ? `<span>🗓 ${esc(fmtD(x.startAt))}</span>` : ''}</div>
     ${cd}<div style="margin-top:9px">${act}</div></article>`;
 }
 function bindCards(root) {
@@ -609,9 +668,9 @@ function bindCards(root) {
 }
 function payInfo(id) {
   const x = EXAMS.find(e => e.id === id);
-  sheet(`<h3 style="margin:0 0 6px">🎟 ${esc(x ? x.title : 'Monthly Pass')}</h3><p>This mock is for <b>Monthly Pass</b> students.${PASS && !passActive() ? ' Your pass expired on <b>' + esc(fmtD(PASS.until)) + '</b>.' : ''}</p>
-    ${payOn() ? '<button class="btn dk block" style="margin-top:12px" type="button" id="pbuy2">🎟 Get Pass – from ₹' + Math.min(...plans().map(p => p.price)) + '</button>' : `<div class="note">💳 Online Monthly Pass is <b>coming soon</b>. Meanwhile write our <b>FREE mocks</b> and follow ${IG_HANDLE ? '@' + esc(IG_HANDLE) : 'us'} on Instagram for updates.</div>`}
-    <button class="btn block" style="margin-top:12px" type="button" onclick="this.closest('.ov').remove();window.__freeTab&&window.__freeTab()">🆓 See Free Mocks</button>
+  sheet(`<h3 style="margin:0 0 6px">${esc(x ? x.title : 'Monthly Pass')}</h3><p>This mock is for <b>Monthly Pass</b> students.${PASS && !passActive() ? ' Your pass expired on <b>' + esc(fmtD(PASS.until)) + '</b>.' : ''}</p>
+    ${payOn() ? '<button class="btn dk block" style="margin-top:12px" type="button" id="pbuy2">Get Pass – from ₹' + Math.min(...plans().map(p => p.price)) + '</button>' : `<div class="note">💳 Online Monthly Pass is <b>coming soon</b>. Meanwhile write our <b>FREE mocks</b> and follow ${IG_HANDLE ? '@' + esc(IG_HANDLE) : 'us'} on Instagram for updates.</div>`}
+    <button class="btn block" style="margin-top:12px" type="button" onclick="this.closest('.ov').remove();window.__freeTab&&window.__freeTab()">See Free Mocks</button>
     <button class="btn gh block" style="margin-top:8px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
   if ($('#pbuy2')) $('#pbuy2').onclick = () => buyPass('<b>' + esc(x ? x.title : 'This mock') + '</b> is for Pass students.');
 }
@@ -625,10 +684,10 @@ function buyPass(why) {
   if (!USER) return needLogin(location.hash || '#/profile');
   $$('.ov').forEach(o => o.remove());
   const on = passActive(), best = plans().reduce((b, p) => !b || p.price / p.days < b.price / b.days ? p : b, null);
-  if (!payOn()) return sheet(`<h3 style="margin:0 0 6px">🎟 Monthly Pass</h3><p class="small">${why || 'Unlock all practice mocks and 🎟 PASS live mocks.'}</p>
+  if (!payOn()) return sheet(`<h3 style="margin:0 0 6px">Monthly Pass</h3><p class="small">${why || 'Unlock all practice mocks and PASS live mocks.'}</p>
     <div class="note">💳 Online payment is <b>coming soon</b>. Meanwhile write our <b>FREE mocks</b>.</div><button class="btn gh block" type="button" style="margin-top:10px" onclick="this.closest('.ov').remove()">OK</button>`);
-  const o = sheet(`<div style="text-align:center;font-size:32px">🎟</div><h3 style="margin:0 0 2px;text-align:center">${on ? 'Extend your Pass' : 'Get the IQ FOR U Pass'}</h3>
-    <p class="small center" style="color:var(--ink2);margin:4px 0 10px">${why ? why + '<br>' : ''}All <b>practice mocks</b> + <b>🎟 PASS live mocks</b> · instant access${on && PASS.until != null ? `<br>Your pass: till <b>${esc(fmtD(PASS.until))}</b> – new days are <b>added</b>` : ''}</p>
+  const o = sheet(`<div style="text-align:center;font-size:32px"></div><h3 style="margin:0 0 2px;text-align:center">${on ? 'Extend your Pass' : 'Get the IQ FOR U Pass'}</h3>
+    <p class="small center" style="color:var(--ink2);margin:4px 0 10px">${why ? why + '<br>' : ''}All <b>practice mocks</b> + <b>PASS live mocks</b> · instant access${on && PASS.until != null ? `<br>Your pass: till <b>${esc(fmtD(PASS.until))}</b> – new days are <b>added</b>` : ''}</p>
     ${plans().map(p => `<button type="button" class="plan${p === best && plans().length > 1 ? ' best' : ''}" data-plan="${esc(p.id)}"><span><b>${esc(p.name)}</b><small>${p.days} day${p.days > 1 ? 's' : ''}${perDay(p)}</small></span>${p === best && plans().length > 1 ? '<i>BEST VALUE</i>' : ''}<em>₹${p.price}</em></button>`).join('')}
     <div class="tiny mut center" style="margin-top:8px">🔒 Secure payment by Razorpay · UPI · Cards · Net banking${String(PUB.rzpKey).startsWith('rzp_test_') ? '<br><b style="color:var(--or)">TEST MODE – no real money</b>' : ''}<br>By paying you agree to the <a href="#/page/terms">Terms</a> &amp; <a href="#/page/refund">Refund policy</a>.</div>`);
   o.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => payNow(plans().find(p => p.id === b.dataset.plan), b));
@@ -661,7 +720,7 @@ async function payNow(p, btn) {
   rz.open();
 }
 function paidSheet(p) {
-  const o = sheet(`<div class="center"><div style="font-size:44px">🎉</div><h3 style="margin:4px 0">Payment successful!</h3><p class="small">${esc(p.name)} is active${PASS && PASS.until != null ? ' till <b>' + esc(fmtD(PASS.until)) + '</b>' : ''}.<br>All practice mocks and 🎟 PASS mocks are open now.</p>
+  const o = sheet(`<div class="center"><div style="font-size:44px">🎉</div><h3 style="margin:4px 0">Payment successful!</h3><p class="small">${esc(p.name)} is active${PASS && PASS.until != null ? ' till <b>' + esc(fmtD(PASS.until)) + '</b>' : ''}.<br>All practice mocks and PASS mocks are open now.</p>
     <button class="btn dk block" type="button" id="pgo">📚 Start practising</button><button class="btn gh block" type="button" style="margin-top:8px" onclick="this.closest('.ov').remove()">OK</button></div>`);
   o.querySelector('#pgo').onclick = () => { o.remove(); go('practice'); };
   route();
@@ -719,10 +778,10 @@ async function inboxView() {
   const seen = seenAt(); lsSetS(seenKey(), String(now())); bell();
   const draw = () => {
     if (!$('#ib')) return;
-    $('#ib').innerHTML = `${pushCard()}
+    $('#ib').innerHTML = `${isStandalone() ? '' : `<div class="strip"><span class="ib k2">${ic('install')}</span><div style="flex:1"><b>Install IQ FOR U app</b><div class="tiny mut">Opens like an app from your home screen</div></div><button class="btn dk sm" type="button" id="iin">Install</button></div><div style="height:10px"></div>`}${pushCard()}
       ${NOTES.map(n => `<a class="nt ${ms(n.at) > seen ? 'un' : ''}" href="${esc(n.link || '#/home')}"><div class="b"><div class="tt">${esc(n.title)}</div>${n.body ? `<div class="bd">${esc(n.body)}</div>` : ''}<div class="tm">${esc(agoTxt(n.at))}${ms(n.at) > seen ? ' · <b style="color:var(--no)">NEW</b>' : ''}</div></div></a>`).join('')
-        || '<div class="empty"><div class="ic">🔔</div><b>No notifications yet</b><br><span class="small">New mocks, results and pass updates will appear here.</span></div>'}`;
-    bindPush(draw);
+        || '<div class="empty"><div class="ic">' + ic('bell') + '</div><b>No notifications yet</b><br><span class="small">New mocks, results and pass updates will appear here.</span></div>'}`;
+    bindPush(draw); if ($('#iin')) $('#iin').onclick = installApp;
   };
   draw();
 }
@@ -753,11 +812,11 @@ async function enablePush(silent) {
 }
 function pushCard() {
   if (!USER || !PUB.vapidKey) return '';
-  if (isIOS && !isStandalone()) return `<div class="strip">📲<div style="flex:1"><b>iPhone:</b> to get phone notifications, first add this site to your Home Screen (Share ⬆ → Add to Home Screen), then open it from there.</div></div><div style="height:10px"></div>`;
+  if (isIOS && !isStandalone()) return `<div class="strip"><span class="ib k2">${ic('install')}</span><div style="flex:1"><b>iPhone:</b> to get phone notifications, first add this site to your Home Screen (Share ⬆ → Add to Home Screen), then open it from there.</div></div><div style="height:10px"></div>`;
   if (!('Notification' in window)) return '';
-  if (pushOn()) return `<div class="strip" style="border-color:var(--ok)">✅<div style="flex:1"><b>Phone notifications are ON</b><div class="tiny mut">You will get alerts for new mocks, live tests and results.</div></div></div><div style="height:10px"></div>`;
-  if (Notification.permission === 'denied') return `<div class="strip" style="border-color:var(--no)">🚫<div style="flex:1"><b>Notifications are blocked</b><div class="tiny mut">Tap 🔒 next to the website address → Notifications → Allow, then reload.</div></div></div><div style="height:10px"></div>`;
-  return `<div class="strip">🔔<div style="flex:1"><b>Get phone alerts</b><div class="tiny mut">New mocks, “test is LIVE”, results – even when the app is closed.</div></div><button class="btn dk sm" type="button" data-pushon="1">Turn on</button></div><div style="height:10px"></div>`;
+  if (pushOn()) return `<div class="strip" style="border-color:var(--ok)"><span class="ib k3">${ic('check')}</span><div style="flex:1"><b>Phone notifications are ON</b><div class="tiny mut">You will get alerts for new mocks, live tests and results.</div></div></div><div style="height:10px"></div>`;
+  if (Notification.permission === 'denied') return `<div class="strip" style="border-color:var(--no)"><span class="ib k1">${ic('x')}</span><div style="flex:1"><b>Notifications are blocked</b><div class="tiny mut">Tap 🔒 next to the website address → Notifications → Allow, then reload.</div></div></div><div style="height:10px"></div>`;
+  return `<div class="strip"><span class="ib k6">${ic('bell')}</span><div style="flex:1"><b>Get phone alerts</b><div class="tiny mut">New mocks, “test is LIVE”, results – even when the app is closed.</div></div><button class="btn dk sm" type="button" data-pushon="1">Turn on</button></div><div style="height:10px"></div>`;
 }
 function bindPush(after) { $$('[data-pushon]').forEach(b => b.onclick = async () => { b.disabled = true; await enablePush(false); b.disabled = false; if (after) after(); }); }
 // ---- 📲 Install app (PWA)
@@ -765,7 +824,7 @@ window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTAL
 window.addEventListener('appinstalled', () => { INSTALL = null; toast('📲 IQ FOR U app installed ✓', 'ok'); });
 function installApp() {
   if (INSTALL) { INSTALL.prompt(); INSTALL.userChoice.finally(() => { INSTALL = null; if ($('#hm')) renderHome(); }); return; }
-  sheet(`<h3 style="margin:0 0 6px">📲 Install IQ FOR U app</h3>${isIOS
+  sheet(`<h3 style="margin:0 0 6px">${ic('install')} Install IQ FOR U app</h3>${isIOS
     ? '<ol class="small" style="padding-left:18px;line-height:1.8"><li>Open this site in <b>Safari</b>.</li><li>Tap <b>Share ⬆</b> at the bottom.</li><li>Tap <b>Add to Home Screen</b> → <b>Add</b>.</li></ol>'
     : '<ol class="small" style="padding-left:18px;line-height:1.8"><li>Open this site in <b>Chrome</b>.</li><li>Tap <b>⋮</b> (top right).</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li></ol>'}
     <div class="note">The IQ FOR U icon comes on your phone's home screen and opens like an app.</div><button class="btn gh block" style="margin-top:10px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
@@ -800,14 +859,15 @@ pubReady.then(() => { setTimeout(() => { if (USER && PROFILE && PUB.vapidKey && 
 // settings/pindex.list = published practice mocks [{id,g,s,no,ch,c,d,m,n,a,t}]  (one read for the whole library)
 // pexams/{id}/paper/main = questions · pexams/{id}/akey/main = answers (+ explanations), readable after the first attempt
 // pattempts/{id}/u/{uid} = first attempt (Top 10) · ptries/{id}/u/{uid} = re-attempt · pstats/{uid}.m = my progress
-const PG = { gs: { n: 'General Studies', e: '📚', c: 'g1' }, sci: { n: 'General Science', e: '🔬', c: 'g2' }, apt: { n: 'Aptitude', e: '🧮', c: 'g3' }, ca: { n: 'Current Affairs', e: '📰', c: 'g4' }, mix: { n: 'Combined Mocks', e: '🎯', c: 'g5' } };
+const PG = { gs: { n: 'General Studies', i: 'book', k: 'k5', c: 'g1' }, sci: { n: 'General Science', i: 'flask', k: 'k3', c: 'g2' }, apt: { n: 'Aptitude', i: 'calc', k: 'k2', c: 'g3' }, ca: { n: 'Current Affairs', i: 'news', k: 'k4', c: 'g4' }, mix: { n: 'Combined Mocks', i: 'target', k: 'k1', c: 'g5' } };
+Object.values(PG).forEach(g => { g.e = `<span class="ib ${g.k}" style="width:1.7em;height:1.7em;font-size:.85em">${ic(g.i)}</span>`; });
 const DEF_SUBJ = { gs: ['History', 'Geography', 'Polity', 'Economics', 'Art & Culture', 'EVS'], sci: ['Physics', 'Chemistry', 'Biology'], apt: ['Maths', 'Reasoning', 'Computer'], mix: ['OSSSC Full Mock', 'SSC Full Mock', 'Railway Full Mock'] };
-const SUBJ_IC = { History: '🏛', Geography: '🌍', Polity: '⚖️', Economics: '💰', 'Art & Culture': '🎨', EVS: '🌱', Physics: '⚛️', Chemistry: '🧪', Biology: '🧬', Maths: '🧮', Reasoning: '🧩', Computer: '💻', 'OSSSC Full Mock': '🎯', 'SSC Full Mock': '🎯', 'Railway Full Mock': '🚆' };
+const SUBJ_IC = { History: ['landmark', 'k8'], Geography: ['globe', 'k3'], Polity: ['scale', 'k2'], Economics: ['coins', 'k5'], 'Art & Culture': ['palette', 'k4'], EVS: ['leaf', 'k3'], Physics: ['atom', 'k6'], Chemistry: ['flask', 'k7'], Biology: ['dna', 'k3'], Maths: ['calc', 'k7'], Reasoning: ['brain', 'k4'], Computer: ['monitor', 'k6'], 'OSSSC Full Mock': ['target', 'k1'], 'SSC Full Mock': ['target', 'k1'], 'Railway Full Mock': ['target', 'k1'] };
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const subjList = g => g === 'ca' ? [] : ((PUB.psubj && PUB.psubj[g] && PUB.psubj[g].length) ? PUB.psubj[g] : DEF_SUBJ[g] || []);
 const caYears = () => (PUB.cayears && PUB.cayears.length ? PUB.cayears : [2026]).map(Number).sort((a, b) => b - a);
 const subjName = (g, s) => g === 'ca' ? (MONTHS[+s.split('-')[1] - 1] || s) + ' ' + s.split('-')[0] : s;
-const subjIc = (g, s) => g === 'ca' ? '📰' : SUBJ_IC[s] || PG[g].e;
+const subjIc = (g, s) => { const [i, k] = g === 'ca' ? ['news', 'k4'] : SUBJ_IC[s] || [PG[g].i, PG[g].k]; return `<span class="ib ${k}" style="width:1.7em;height:1.7em;font-size:.85em">${ic(i)}</span>`; };
 let PIDX = null, PSTATS = null, PCHIP = null, PIDX_AT = 0;
 async function loadPIdx(force) {
   if (PIDX && !force && Date.now() - PIDX_AT < 60000) return PIDX;   // auto refresh: new mocks appear without reloading
@@ -826,7 +886,7 @@ const pOpen = e => pFree(e) || passActive();
 const freeTxt = () => freeN() === 1 ? 'Mock 1 FREE' : freeN() > 1 ? 'First ' + freeN() + ' mocks FREE' : 'FREE mocks';
 const pPct = r => r && r.t ? Math.max(0, Math.round(r.s / r.t * 100)) : 0;
 function pTabs(on) {
-  return `<div class="mtabs"><button type="button" data-mt="tests" class="${on === 'live' ? 'on' : ''}">🔴 Live Mocks</button><button type="button" data-mt="practice" class="${on === 'practice' ? 'on' : ''}">📚 Practice Library</button></div>`;
+  return `<div class="mtabs"><button type="button" data-mt="tests" class="${on === 'live' ? 'on lvon' : ''}" style="${on === 'live' ? '' : 'color:#DC2626'}"><span style="color:#DC2626">●</span> Live Mocks</button><button type="button" data-mt="practice" class="${on === 'practice' ? 'on' : ''}">${ic('practice')} Practice</button></div>`;
 }
 const bindPTabs = () => $$('[data-mt]').forEach(b => b.onclick = () => go(b.dataset.mt));
 function pShell(title, back, inner) {
@@ -842,7 +902,7 @@ async function practice(g, s) {
   const n = g => PIDX.filter(e => e.g === g).length;
   const recent = Object.entries(PSTATS).sort((a, b) => b[1].at - a[1].at).slice(0, 3);
   $('#pp').innerHTML = pTabs('practice') + `<div class="grp">${Object.keys(PG).map(k => `<button type="button" class="gc ${PG[k].c}" data-g="${k}"><span>${PG[k].e}</span><b>${PG[k].n}</b><small>${k === 'ca' ? caYears()[0] + ' · month-wise' : subjList(k).join(' · ')}</small><i>${n(k)} mocks</i></button>`).join('')}</div>
-    <div class="cont" style="margin-top:12px"><span>🎟</span><div style="flex:1">${passActive() ? '<b>Monthly Pass active</b> – all practice mocks are open for you ✓' : 'Every subject: <b>' + freeTxt() + '</b>.<br>Monthly Pass → <b>all practice mocks</b> + Live mocks'}</div></div>
+    <div class="cont" style="margin-top:12px"><span class="ib k6">${ic('ticket')}</span><div style="flex:1">${passActive() ? '<b>Monthly Pass active</b> – all practice mocks are open for you ✓' : 'Every subject: <b>' + freeTxt() + '</b>.<br>Monthly Pass → <b>all practice mocks</b> + Live mocks'}</div></div>
     ${recent.length ? `<div class="sec">Recently practised</div>${recent.map(([id, r]) => { const e = PIDX.find(z => z.id === id); return e ? `<button type="button" class="subj" data-open="${esc(id)}"><div class="ic">${subjIc(e.g, e.s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(e.g, e.s))} · Mock ${e.no}</b><div class="tiny mut">${r.s}/${r.t} · ${pPct(r)}% · ${esc(agoTxt(r.at))}</div></div><div class="rt">Review ›</div></button>` : ''; }).join('')}` : ''}
     ${footHtml()}`;
   bindPTabs();
@@ -873,15 +933,15 @@ async function practiceSubject(g, s) {
   let lastCh = null;
   $('#pp').innerHTML = `<div class="card" style="display:flex;gap:10px;align-items:center"><span style="font-size:28px">${subjIc(g, s)}</span><div style="flex:1"><b style="font-size:17px">${esc(subjName(g, s))}</b><div class="tiny mut">${L.length} mocks · ${PG[g].n}</div></div><b>${done}/${L.length} ✓</b></div>
     ${L.map(e => { const r = PSTATS[e.id], open = pOpen(e), ch = e.ch && e.ch !== lastCh ? `<div class="sec" style="margin:12px 0 6px;font-size:14px">${esc(e.ch)}</div>` : ''; lastCh = e.ch || lastCh;
-      return ch + `<button type="button" class="mk ${r ? 'done' : open ? '' : 'lock'}" data-p="${esc(e.id)}"><div class="n">${r ? '✓' : open ? e.no : '🔒'}</div><div style="flex:1;text-align:left"><b>Mock ${e.no}</b> ${pFree(e) ? '<span class="chip c-free">FREE</span>' : ''}<div class="tiny mut">${r ? `Score ${r.s}/${r.t} · ${pPct(r)}%` : `${e.c} Q · ${e.d} min · −${e.n}`}</div></div><div class="r">${r ? 'Review ›' : open ? 'Start →' : '🎟'}</div></button>`; }).join('')
-      || `<div class="empty"><div class="ic">🛠</div><b>Mocks coming soon</b><br><span class="small">New practice mocks are added every week.</span></div>`}
+      return ch + `<button type="button" class="mk ${r ? 'done' : open ? '' : 'lock'}" data-p="${esc(e.id)}"><div class="n">${r ? ic('check') : open ? e.no : ic('lock')}</div><div style="flex:1;text-align:left"><b>Mock ${e.no}</b> ${pFree(e) ? '<span class="chip c-free">FREE</span>' : ''}<div class="tiny mut">${r ? `Score ${r.s}/${r.t} · ${pPct(r)}%` : `${e.c} Q · ${e.d} min · −${e.n}`}</div></div><div class="r">${r ? 'Review ›' : open ? 'Start →' : ''}</div></button>`; }).join('')
+      || `<div class="empty"><div class="ic">${ic('practice')}</div><b>Mocks coming soon</b><br><span class="small">New practice mocks are added every week.</span></div>`}
     ${footHtml()}`;
   $$('[data-p]').forEach(b => b.onclick = () => { const e = L.find(z => z.id === b.dataset.p); if (PSTATS[e.id]) return go('presult/' + e.id); if (!pOpen(e)) return pLocked(e); go('pstart/' + e.id); });
 }
 function pLocked(e) {
-  const o = sheet(`<div style="text-align:center;font-size:34px">🔒</div><div style="text-align:center;font-weight:900;font-size:17px">${esc(subjName(e.g, e.s))} – Mock ${e.no}</div>
+  const o = sheet(`<div style="text-align:center;font-size:30px">${ic('lock')}</div><div style="text-align:center;font-weight:900;font-size:17px">${esc(subjName(e.g, e.s))} – Mock ${e.no}</div>
     <p class="small center" style="color:var(--ink2)">Unlock <b>all practice mocks</b> + <b>Live mocks</b> every month with the <b>Monthly Pass</b>.</p>
-    <button class="btn block" type="button" id="gpp">🎟 Get Pass${payOn() ? ' – from ₹' + Math.min(...plans().map(p => p.price)) : ''}</button><div class="tiny mut center" style="margin-top:8px">${payOn() ? 'Instant access · UPI / cards' : 'Online payment – coming soon'}</div>`);
+    <button class="btn block" type="button" id="gpp">Get Pass${payOn() ? ' – from ₹' + Math.min(...plans().map(p => p.price)) : ''}</button><div class="tiny mut center" style="margin-top:8px">${payOn() ? 'Instant access · UPI / cards' : 'Online payment – coming soon'}</div>`);
   o.querySelector('#gpp').onclick = () => buyPass(`🔒 <b>${esc(subjName(e.g, e.s))} – Mock ${e.no}</b> needs the Pass.`);
 }
 async function pInstr(id) {
@@ -1019,7 +1079,7 @@ async function pTop(id) {
 async function pResults() {
   await Promise.all([loadPIdx(), loadPStats()]);
   const E = Object.entries(PSTATS).map(([id, r]) => ({ id, r, e: PIDX.find(z => z.id === id) })).filter(o => o.e);
-  if (!E.length) return `<div class="empty"><div class="ic">📚</div><b>No practice yet</b><br><span class="small">Every subject: ${freeTxt()} – start now!</span><br><br><button class="btn" type="button" data-go="practice">Open Practice Library →</button></div>`;
+  if (!E.length) return `<div class="empty"><div class="ic">${ic('practice')}</div><b>No practice yet</b><br><span class="small">Every subject: ${freeTxt()} – start now!</span><br><br><button class="btn" type="button" data-go="practice">Open Practice Library →</button></div>`;
   const tq = E.reduce((t, o) => t + o.e.c, 0), avg = Math.round(E.reduce((t, o) => t + pPct(o.r), 0) / E.length);
   const by = {}; E.forEach(o => { const k = o.e.g + '|' + o.e.s; (by[k] = by[k] || []).push(pPct(o.r)); });
   const subs = Object.entries(by).map(([k, v]) => { const [g, s] = k.split('|'); return { g, s, p: Math.round(v.reduce((a, b) => a + b, 0) / v.length), n: v.length }; }).sort((a, b) => b.p - a.p);
@@ -1040,9 +1100,8 @@ async function homePractice() {
   if (E.length) { const last = PIDX.find(z => z.id === E[0][0]); if (last) nx = PIDX.filter(z => z.g === last.g && z.s === last.s && !PSTATS[z.id]).sort((a, b) => a.no - b.no)[0]; }
   if (!nx) nx = PIDX.filter(z => pFree(z) && !PSTATS[z.id]).sort((a, b) => a.no - b.no)[0];
   const subj = {}; E.forEach(([id]) => { const z = PIDX.find(q => q.id === id); if (z) subj[z.g + '|' + z.s] = 1; });
-  el.innerHTML = `${nx ? `<button type="button" class="cont" id="hpc" style="width:100%;margin-top:12px"><span style="font-size:22px">▶️</span><div style="flex:1;text-align:left">${E.length ? 'Continue practising' : 'Start practising – FREE'}<br><b>${esc(subjName(nx.g, nx.s))} · Mock ${nx.no}</b></div><span class="btn sm" style="box-shadow:none">${E.length ? 'Go' : 'Start'}</span></button>` : ''}
-    ${Object.keys(subj).length ? `<div class="sec">📚 Your subjects <button type="button" data-go="practice">See all ›</button></div>` + Object.keys(subj).slice(0, 3).map(k => { const [g, s] = k.split('|'), L = PIDX.filter(z => z.g === g && z.s === s), d = L.filter(z => PSTATS[z.id]).length;
-      return `<button type="button" class="subj" data-ps="${esc(g)}|${esc(s)}"><div class="ic">${subjIc(g, s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(g, s))}</b><div class="prog2"><i style="width:${L.length ? Math.round(d / L.length * 100) : 0}%"></i></div></div><div class="rt">${d}/${L.length}</div></button>`; }).join('') : ''}`;
+  el.innerHTML = `${nx ? `<button type="button" class="cont" id="hpc" style="width:100%;margin-top:12px"><span class="ib k2" style="width:40px;height:40px;font-size:18px">${ic('practice')}</span><div style="flex:1;text-align:left">${E.length ? 'Continue practising' : 'Start practising – FREE'}<br><b>${esc(subjName(nx.g, nx.s))} · Mock ${nx.no}</b></div><span class="btn sm" style="box-shadow:none">${E.length ? 'Go' : 'Start'}</span></button>` : ''}
+`;
   if ($('#hpc')) $('#hpc').onclick = () => pOpen(nx) ? go('pstart/' + nx.id) : pLocked(nx);
   el.querySelectorAll('[data-ps]').forEach(b => b.onclick = () => { const [g, s] = b.dataset.ps.split('|'); go('practice/' + g + '/' + encodeURIComponent(s)); });
   el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
@@ -1077,41 +1136,84 @@ function renderHome() {
   const hero = live[0] || up[0];
   $('#hm').innerHTML = `
     ${BLOCKED ? '<div class="banner b">⛔ Your account is blocked. Please contact IQ FOR U.</div>' : ''}
-    ${PUB.noticeOn && PUB.notice ? `<div class="banner n">📢 <b>Notice:</b> ${esc(PUB.notice)}</div>` : ''}
-    ${hero ? `<div class="livec">${live[0] ? '<span class="chip c-live"><span class="dot"></span>LIVE NOW</span>' : '<span class="chip" style="background:#fff">NEXT TEST</span>'} ${catChip(hero)} ${priceChip(hero)}
-        <h3>${esc(hero.title)}</h3><div class="m">${(hero.sections || []).map(esc).join(' · ') || ''}${(hero.sections || []).length ? ' · ' : ''}${hero.count} Q · ${hero.duration} min</div>
-        <div class="r"><b style="font-size:13px">${live[0] ? 'Closes in ' + leftTxt(ms(hero.endAt) - now()) : 'Opens ' + esc(fmtDT(hero.startAt))}</b>
-        ${live[0] ? `<button class="btn dk sm" type="button" id="hs">${st(hero) === 'resume' ? '↩ Resume' : 'Start Test →'}</button>` : `<button class="btn dk sm" type="button" id="hs">View →</button>`}</div></div>`
-      : ''}
-    ${PUB.showRegCount && (PUB.regCount || 0) >= (PUB.regMin ?? 100) ? `<div class="regb">👥 <b>${regLabel(PUB.regCount)}</b> students registered</div>` : ''}
-    ${stripsHtml()}
-    ${USER ? '' : `<div class="newc"><div class="e">🎓</div><div style="flex:1"><b>New here?</b><div class="small mut">Register free to write tests &amp; get your rank</div></div><button class="btn dk sm" id="hr" type="button">Register</button></div>`}
-    <div style="height:12px"></div>
-    <button type="button" class="bigc lv" data-go="tests"><span class="bi">🔴</span><div class="in2"><h3>Live Mocks</h3><div class="m">${live.length ? '<b>' + live.length + ' live now</b> · ' : ''}${up.length ? up.length + ' upcoming' : hero ? 'Real exam screen · rank · merit list' : 'No live test now – next mock on Instagram' + (IG_HANDLE ? ' @' + esc(IG_HANDLE) : '')}</div></div><span class="go">Open ›</span></button>
-    <button type="button" class="bigc pr" data-go="practice"><span class="bi">📚</span><div class="in2"><h3>Practice Mocks</h3><div class="m" id="hpm">Subject-wise · ${esc(freeTxt())} in every subject</div></div><span class="go">Open ›</span></button>
-    <div class="sec">Explore</div>
-    <div class="tiles">
-      <button class="tl" type="button" data-go="results"><span>📊</span>Results</button>
-      ${tileLink('pyq', '📄', 'PYQs')}
-      ${tileLink('notes', '🛒', 'Buy Notes')}
-      ${tileLink('tg', '🆓', 'Free Notes')}
-      ${tileLink('wa', '🎁', 'Buy Combo')}
-      ${tileLink('ig', '📷', 'Instagram')}
-    </div>
+    <div class="hb"><div class="w">Welcome to</div><h2>${esc(NAME)} Mocks</h2><div class="a">All Competitive Exams</div><div class="e">PSC · SSC · TET · Police · Railway</div>
+      <div class="pl"><button type="button" class="p1" data-go="practice">Mocks ›</button><button type="button" class="p2" id="hnt">Notes ›</button><button type="button" id="hpy">PYQs${linkOf('pyq') ? ' ›' : ' · soon'}</button></div>${BOOKS}</div>
+    ${PUB.noticeOn && PUB.notice ? `<div class="hn">${ic('mega')}<span><b>Notice:</b> ${esc(PUB.notice)}</span></div>` : ''}
+    ${USER ? '' : `<div class="newc" style="margin-top:12px"><div class="e">${ic('users')}</div><div style="flex:1"><b>New here?</b><div class="small mut">Register free to write tests &amp; get your rank</div></div><button class="btn dk sm" id="hr" type="button">Register</button></div>`}
+    <div class="q4"><button type="button" class="lvt" data-go="tests"><span class="ib">${ic('live')}</span>Live Mocks${live.length ? '<br><span class="lvb">LIVE</span>' : ''}</button>
+      <button type="button" data-go="practice"><span class="ib k2">${ic('practice')}</span>Practice</button>
+      <button type="button" id="hbn"><span class="ib k5">${ic('cart')}</span>Buy Notes</button>
+      ${qTile('tg', 'free', 'k3', 'Free Notes')}</div>
+    ${hero ? `<div class="livec" style="margin-top:12px"><div style="display:flex;gap:5px;flex-wrap:wrap">${live[0] ? '<span class="lvb">LIVE NOW</span>' : `<span class="lvb" style="background:#B91C1C">LIVE IN ${esc(leftTxt(ms(hero.startAt) - now()).toUpperCase())}</span>`} ${catChip(hero)} ${priceChip(hero)}</div>
+        <h3>${esc(hero.title)}</h3><div class="m">${(hero.sections || []).map(esc).join(' · ')}</div>
+        <div class="m" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">${ic('help')} ${hero.count} Q <span>${ic('clock')} ${hero.duration} min</span><span>${ic('cal')} ${esc(fmtDT(hero.startAt))}</span></div>
+        <div class="r" style="border-top:1px dashed rgba(15,23,42,.25);padding-top:9px;margin-top:9px"><b style="font-size:13px">${live[0] ? 'Closes in ' + leftTxt(ms(hero.endAt) - now()) : 'Opens in ' + leftTxt(ms(hero.startAt) - now())}</b>
+        <button class="btn dk sm" type="button" id="hs">${live[0] ? (st(hero) === 'resume' ? 'Resume' : 'Start test') : 'View test'} ${ic('arrow')}</button></div></div>` : ''}
+    ${PUB.showRegCount && (PUB.regCount || 0) >= (PUB.regMin ?? 100) ? `<div class="regb">${ic('users')} <b>${regLabel(PUB.regCount)}</b> students registered</div>` : ''}
+    <div id="hsub"></div>
     <div id="hp"></div>
-    <div class="sec">Upcoming <button type="button" data-go="tests">See all ›</button></div>
-    <div class="ulist">${up.slice(0, 3).map(x => `<div class="it"><div class="e">📅</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(x.title)}</b><div class="tiny mut">${esc(fmtDT(x.startAt))} · ${x.count} Q · ${esc(x.category || 'Other')}</div></div>${priceChip(x)}</div>`).join('') || '<div class="tiny mut">No upcoming tests in this category yet.</div>'}</div>
-    <div class="sec">🤝 Join us</div>
-    <div class="jrow">${tileLink('tg', '✈️', 'Telegram')}${tileLink('wa', '💬', 'WhatsApp')}${tileLink('ig', '📷', 'Instagram')}<button class="tl" type="button" id="hia"><span>📲</span>Install App</button></div>
+    ${up.length > (hero && !live[0] ? 1 : 0) ? `<div class="sec">Upcoming tests <button type="button" data-go="tests">See all ›</button></div>
+    <div class="ulist">${up.filter(x => x !== hero).slice(0, 3).map(x => `<div class="it"><div class="e ib k1" style="width:40px;height:40px;font-size:18px">${ic('cal')}</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(x.title)}</b><div class="tiny mut">${esc(fmtDT(x.startAt))} · ${x.count} Q · ${esc(x.category || 'Other')}</div></div>${priceChip(x)}</div>`).join('')}</div>` : ''}
+    <div class="sec">Quick links</div>
+    <div class="qlk"><button type="button" data-go="results"><span class="ib k2">${ic('results')}</span>Results</button>${qLink('pyq', 'pyq', 'k7', 'PYQs')}${qLink('combo', 'combo', 'k4', 'Combo')}${qLink('ig', 'ig', 'cig', 'Instagram')}${qLink('tgc', 'tg', 'ctg', 'Telegram')}${qLink('wa', 'wa', 'cwa', 'WhatsApp')}</div>
     ${footHtml()}`;
-  if ($('#hia')) $('#hia').onclick = installApp;
   if (USER && PROFILE) homePractice();
-  $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
-  loadPIdx().then(() => { const n = (PIDX || []).length; if (n && $('#hpm')) $('#hpm').innerHTML = `<b>${n} mocks</b> · ${esc(freeTxt())} in every subject`; });
-  $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon! 🚀', 'info'));
+  homeSubjects();
+  $$('#hm [data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+  $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon!', 'info'));
+  $('#hnt').onclick = () => openLink('notes', 'Notes'); $('#hpy').onclick = () => openLink('pyq', 'PYQs'); $('#hbn').onclick = buyNotes;
   if ($('#hr')) $('#hr').onclick = () => go('register');
-  bindStrips();
   if ($('#hs')) $('#hs').onclick = () => { const s = st(hero); if (s === 'live' || s === 'resume') { if (locked(hero) && s === 'live') return payInfo(hero.id); go('start/' + hero.id); } else go('tests'); };
+}
+// links from Admin → Settings → Home links (combo falls back to the WhatsApp link, Telegram channel to Free notes)
+const lnk = k => k === 'combo' ? (linkOf('combo') || linkOf('wa')) : k === 'tgc' ? (linkOf('tgc') || linkOf('tg')) : linkOf(k);
+function openLink(k, label) { const u = lnk(k); if (u) window.open(u, '_blank', 'noopener'); else toast(label + ' – coming soon!', 'info'); }
+const qTile = (k, icn, cls, label) => { const u = lnk(k); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener"><span class="ib ${cls}">${ic(icn)}</span>${label}</a>` : `<button type="button" data-soon="${label}"><span class="ib ${cls}">${ic(icn)}</span>${label}</button>`; };
+const qLink = (k, icn, cls, label) => { const u = lnk(k); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener"><span class="ib ${cls}">${ic(icn)}</span>${label}</a>` : `<button type="button" data-soon="${label}"><span class="ib ${cls}">${ic(icn)}</span>${label}</button>`; };
+function buyNotes() {
+  const o = sheet(`<div style="text-align:center;font-weight:900;font-size:17px">${ic('cart')} Buy Notes</div><div class="small mut center" style="margin:2px 0 12px">Choose what you need</div>
+    <button type="button" class="nl" id="bn1"><span class="ib k5">${ic('book')}</span><span><b>Single Notes</b><small>Subject-wise notes PDF</small></span><span class="ar">${ic('chev')}</span></button>
+    <button type="button" class="nl" id="bn2"><span class="ib k4">${ic('combo')}</span><span><b>Combo Pack</b><small>All notes at one price</small></span><span class="ar">${ic('chev')}</span></button>`);
+  o.querySelector('#bn1').onclick = () => { o.remove(); openLink('notes', 'Notes'); };
+  o.querySelector('#bn2').onclick = () => { o.remove(); openLink('combo', 'Combo'); };
+}
+// Home → Your subjects (6, with progress)
+async function homeSubjects() {
+  await loadPIdx(); if (USER) await loadPStats(); if (!$('#hsub')) return;
+  const S = []; ['gs', 'sci', 'apt'].forEach(g => subjList(g).forEach(n => S.push([g, n])));
+  const cnt = (g, n) => (PIDX || []).filter(e => e.g === g && e.s === n), done = L => L.filter(e => PSTATS && PSTATS[e.id]).length;
+  const L = S.map(([g, n]) => ({ g, n, t: cnt(g, n).length, d: done(cnt(g, n)) })).filter(x => x.t).sort((a, b) => b.t - a.t).slice(0, 6);
+  if (!L.some(x => x.t)) return;
+  $('#hsub').innerHTML = `<div class="sec">Your subjects <button type="button" data-go="practice">See all ›</button></div><div class="s6">${L.map(x => `<button type="button" data-ps="${x.g}|${esc(x.n)}">${subjIc(x.g, x.n)}<span>${esc(x.n)}</span><small>${x.d}/${x.t}</small><div class="pb"><b style="width:${x.t ? Math.round(x.d / x.t * 100) : 0}%"></b></div></button>`).join('')}</div>`;
+  $$('#hsub [data-ps]').forEach(b => b.onclick = () => { const [g, n] = b.dataset.ps.split('|'); go('practice/' + g + '/' + encodeURIComponent(n)); });
+  $$('#hsub [data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+}
+// ☰ side menu
+function drawer() {
+  const d = document.createElement('div'); d.className = 'drw';
+  const it = (k, l, a) => `<button type="button" class="dl" data-d="${a}">${ic(k)}${l}</button>`;
+  d.innerHTML = `<div class="p">${USER && PROFILE ? `<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span class="avt" style="width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--y);font-weight:900;display:grid;place-items:center;font-size:17px">${esc((PROFILE.name || '?')[0].toUpperCase())}</span><div><b>${esc(PROFILE.name)}</b><div class="tiny mut">${esc(PROFILE.roll || '')} · ${esc(PROFILE.state || '')}</div></div></div>
+      <div class="card" style="padding:10px;font-size:13px">${ic('ticket')} ${passActive() ? `<b>Pass active</b><div class="tiny mut">${PASS.until == null ? 'No expiry' : 'till ' + esc(fmtD(PASS.until))}</div>` : '<b>No pass</b> · <button type="button" class="link" data-d="pass">Get Pass</button>'}</div>`
+      : `<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><img src="logo.png" style="width:40px;border-radius:50%"><b>${esc(NAME)}</b></div><button class="btn dk block" type="button" data-d="login">Login / Register</button>`}
+    ${it('live', 'Live Mocks', 'tests')}${it('practice', 'Practice Mocks', 'practice')}${it('results', 'My Results', 'results')}${it('notes', 'Notes &amp; PYQs', 'notes')}
+    ${USER ? it('receipt', 'My Payments', 'payments') + it('bell', 'Notifications', 'inbox') : ''}${isStandalone() ? '' : it('install', 'Install App', '!install')}
+    ${it('mail', 'Contact us', 'page/contact')}${it('shield', 'Terms &amp; Privacy', 'page/terms')}${USER ? it('logout', 'Logout', '!logout') : ''}</div>`;
+  document.body.appendChild(d);
+  d.onclick = e => { if (e.target === d) d.remove(); };
+  d.querySelectorAll('[data-d]').forEach(b => b.onclick = async () => { d.remove(); const a = b.dataset.d;
+    if (a === '!install') return installApp(); if (a === 'pass') return buyPass();
+    if (a === '!logout') { if (await confirmBox('<h3 style="margin:0">Logout?</h3>', 'Logout')) { await signOut(auth); go('home'); } return; }
+    go(a); });
+}
+// Notes tab
+function notesView() {
+  topMain(); $('#topin').querySelector('.t2').textContent = 'Notes & PYQs';
+  const row = (k, icn, cls, t, d) => `<button type="button" class="nl" data-l="${k}|${t}"><span class="ib ${cls}">${ic(icn)}</span><span><b>${t}</b><small>${d}</small></span><span class="ar">${ic('chev')}</span></button>`;
+  shell(`<div class="wrapw fade"><div class="sec" style="margin-top:4px">Notes &amp; PYQs</div>
+    ${row('tg', 'free', 'k3', 'Free Notes', 'One-liners · short notes PDF')}${row('notes', 'cart', 'k5', 'Buy Notes', 'Subject-wise premium notes')}${row('combo', 'combo', 'k4', 'Combo Pack', 'All notes at one price')}${row('pyq', 'pyq', 'k2', 'Previous Year Papers', 'OSSSC · SSC · Railway')}
+    <div class="sec">Follow us</div><div class="qlk" style="grid-template-columns:repeat(4,minmax(0,1fr))">${qLink('ig', 'ig', 'cig', 'Instagram')}${qLink('tgc', 'tg', 'ctg', 'Telegram')}${qLink('wa', 'wa', 'cwa', 'WhatsApp')}${qLink('yt', 'yt', 'cyt', 'YouTube')}</div></div>${footHtml()}`, 'notes');
+  $$('[data-l]').forEach(b => b.onclick = () => { const [k, t] = b.dataset.l.split('|'); openLink(k, t); });
+  $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon!', 'info'));
 }
 const tileLink = (k, ic, label) => { const u = linkOf(k); return u ? `<a class="tl" href="${esc(u)}" target="_blank" rel="noopener"><span>${ic}</span>${label}</a>` : `<button class="tl" type="button" data-soon="${label}"><span>${ic}</span>${label}<em>SOON</em></button>`; };
 const maskMail = m => { const [a, b] = String(m || '').split('@'); return b ? a.slice(0, 2) + '•••••@' + b : m; };
@@ -1163,10 +1265,10 @@ function renderTests() {
   const F0 = L.filter(x => !needsPass(x)), ord = { live: 0, resume: 0, up: 1, subm: 2, res: 2, closed: 2 };
   G.free = F0.filter(x => ord[st(x)] < 2).concat(F0.filter(x => ord[st(x)] === 2).reverse());
   if (!TTAB) TTAB = G.live.length ? 'live' : G.up.length ? 'up' : 'done';
-  const names = { live: 'Live', up: 'Upcoming', done: 'Completed', free: '🆓 Free' };
+  const names = { live: 'Live', up: 'Upcoming', done: 'Completed', free: 'Free' };
   $('#ts').innerHTML = pTabs('live') + `<div class="tabs">${Object.keys(G).map(k => `<button type="button" data-tt="${k}" class="${k === TTAB ? 'on' : ''}">${names[k]} (${G[k].length})</button>`).join('')}</div>
     ${showCats ? chipsHtml() : ''}<div style="height:10px"></div>
-    ${G[TTAB].map(x => examCard(x)).join('') || `<div class="empty"><div class="ic">📭</div><b>No ${TTAB === 'free' ? 'free' : names[TTAB].toLowerCase()} tests${CAT !== 'All' ? ' in ' + esc(CAT) : ''}</b><br><span class="small">Follow us on Instagram for the next mock.</span></div>`}
+    ${G[TTAB].map(x => examCard(x)).join('') || `<div class="empty"><div class="ic">${ic('cal')}</div><b>No ${TTAB === 'free' ? 'free' : names[TTAB].toLowerCase()} tests${CAT !== 'All' ? ' in ' + esc(CAT) : ''}</b><br><span class="small">Follow us on Instagram for the next mock.</span></div>`}
     ${footHtml()}`;
   bindPTabs();
   $$('[data-tt]').forEach(b => b.onclick = () => { TTAB = b.dataset.tt; renderTests(); });
@@ -1227,11 +1329,12 @@ function registerView() {
     <label class="l" for="rp">Create password</label>${pwField('rp', 'At least 6 characters', 'new-password')}
     <label class="l" for="rp2">Re-enter password</label>${pwField('rp2', 'Type the same password again', 'new-password')}<div class="hint" id="rh"></div>
     <div class="note">🔒 Your mobile &amp; Gmail are private. Only your <b>name + state</b> show in the merit list.</div>
+    <label class="agree"><input type="checkbox" id="rag"><span>I have read and agree to the <a href="#/page/terms" target="_blank">Terms &amp; Conditions</a> and <a href="#/page/privacy" target="_blank">Privacy Policy</a>.</span></label>
     <button class="btn dk block" id="rb" type="button" style="margin-top:14px">Register</button><div id="rmsg"></div>
     <div class="small center" style="margin-top:12px">Already registered? <a href="#/login" style="font-weight:800">Login</a></div>
     <div class="or">or</div><button class="gbtn" id="rg" type="button"><b>G</b> Continue with Google</button>`);
   bindEyes();
-  $('#rg').onclick = googleLogin;
+  $('#rg').onclick = () => { if (!$('#rag').checked) { $('#rmsg').innerHTML = '<div class="msg err">Please tick ☑ “I agree to the Terms &amp; Conditions” first.</div>'; return $('#rag').focus(); } googleLogin(); };
   $('#rm').oninput = e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10); };
   const chk = () => { const a = $('#rp').value, b = $('#rp2').value, h = $('#rh');
     if (!b) { h.className = 'hint'; h.textContent = ''; $('#rp2').className = 'inp'; return; }
@@ -1247,11 +1350,12 @@ function registerView() {
     if (!state) return err('Select your state.');
     if (p.length < 6) return err('Password must be at least 6 characters.');
     if (p !== p2) return err('Both passwords must match.');
+    if (!$('#rag').checked) return err('Please tick ☑ “I agree to the Terms &amp; Conditions”.');
     $('#rb').disabled = true; $('#rmsg').innerHTML = '<div class="msg info">Creating your account…</div>';
     REGISTERING = true;
     try {
       const cr = await createUserWithEmailAndPassword(auth, email, p);
-      const d = { name, mobile, state, email, updatedAt: serverTimestamp(), createdAt: serverTimestamp() };
+      const d = { name, mobile, state, email, updatedAt: serverTimestamp(), createdAt: serverTimestamp(), termsAt: serverTimestamp() };
       try { await setDoc(doc(db, 'users', cr.user.uid), d); PROFILE = Object.assign({ _new: Date.now() }, d); } catch (e) { PROFILE = null; }
       try { await sendEmailVerification(cr.user); } catch (e) {}
       USER = cr.user; REGISTERING = false; AUTH_READY = true;
@@ -1274,13 +1378,14 @@ function forgotView() {
     catch (er) { $('#fb').disabled = false; m.innerHTML = `<div class="msg err">${esc(errText(er))}</div>`; }
   };
 }
-function profileForm(p, btn) {
+function profileForm(p, btn, terms) {
   return `<label class="l" for="pn">Full name</label><input class="inp" id="pn" maxlength="60" autocomplete="name" value="${esc(p.name || '')}">
     <label class="l" for="pm">Mobile number</label><div class="mob"><b>+91</b><input class="inp" id="pm" type="tel" inputmode="numeric" maxlength="16" value="${esc(p.mobile || '')}"></div>
     <label class="l" for="ps">State</label><select class="inp" id="ps">${stateOpts(p.state || '')}</select>
     <label class="l">Gmail</label><input class="inp" value="${esc(USER.email || '')}" disabled style="background:#F3F4F6;color:var(--mut)">
     <label class="sw" style="margin-top:12px"><input type="checkbox" id="phn" ${p.hideName ? '' : 'checked'}> Show my name in merit lists &amp; Top 10</label>
     <div class="note">🔒 Mobile &amp; Gmail are private. Merit list shows only <b>name + state</b>. Switch OFF → it shows <b>IQ Student 🔒</b> instead of your name (your rank stays the same).</div>
+    ${terms ? '<label class="agree"><input type="checkbox" id="pag"><span>I have read and agree to the <a href="#/page/terms" target="_blank">Terms &amp; Conditions</a> and <a href="#/page/privacy" target="_blank">Privacy Policy</a>.</span></label>' : ''}
     <button class="btn dk block" id="pb" type="button" style="margin-top:14px">${btn}</button><div id="pmsg"></div>`;
 }
 function bindProfileForm(after) {
@@ -1291,19 +1396,21 @@ function bindProfileForm(after) {
     if (name.length < 3) return err('Enter your full name.');
     if (!/^[6-9]\d{9}$/.test(mobile)) return err('Enter a valid 10-digit mobile number.');
     if (!state) return err('Select your state.');
+    if ($('#pag') && !$('#pag').checked) return err('Please tick ☑ “I agree to the Terms &amp; Conditions”.');
     $('#pb').disabled = true;
     try {
       const ref = doc(db, 'users', USER.uid), cur = await getDoc(ref);
       const d = { name, mobile, state, email: (USER.email || '').toLowerCase(), updatedAt: serverTimestamp(), hideName: !$('#phn').checked };
       // registration time: new profile → now; existing profile → keep the same (never changes). Roll number is kept as it is.
-      if (!cur.exists()) d.createdAt = serverTimestamp(); else { if (cur.data().createdAt) d.createdAt = cur.data().createdAt; if (cur.data().roll) d.roll = cur.data().roll; }
+      if (!cur.exists()) d.createdAt = serverTimestamp(); else { if (cur.data().createdAt) d.createdAt = cur.data().createdAt; if (cur.data().roll) d.roll = cur.data().roll; if (cur.data().termsAt) d.termsAt = cur.data().termsAt; }
+      if (!d.termsAt && $('#pag') && $('#pag').checked) d.termsAt = serverTimestamp();
       await setDoc(ref, d); PROFILE = d; toast('Saved ✓', 'ok'); after();
     }
     catch (e) { $('#pb').disabled = false; err(esc(errText(e))); }
   };
 }
 function completeView() {
-  authShell(`<h2>Complete your profile</h2><div class="small mut">Only once. Takes 10 seconds.</div>${profileForm({ name: OLDP.name || USER.displayName || '', mobile: OLDP.mobile || '' }, 'Save &amp; Continue →')}
+  authShell(`<h2>Complete your profile</h2><div class="small mut">Only once. Takes 10 seconds.</div>${profileForm({ name: OLDP.name || USER.displayName || '', mobile: OLDP.mobile || '' }, 'Save &amp; Continue →', true)}
     <div class="center small" style="margin-top:12px">Not you? <button class="link" id="co" type="button">Logout</button></div>`);
   $('#co').onclick = () => { signOut(auth); go('home'); };
   bindProfileForm(() => { const n = NEXT; NEXT = null; if (n) location.hash = n; else go('home'); });
@@ -1314,29 +1421,29 @@ function profile() {
   topBack('My Profile', 'home'); $('#topin').innerHTML = `<div class="ttl" style="font-size:18px">My Profile</div>`;
   const pwd = isPwdUser(USER);
   shell(`<div class="pf"><div class="av">${esc((PROFILE.name || '?')[0].toUpperCase())}</div><div style="font-weight:800;font-size:17px;margin-top:8px">${esc(PROFILE.name)}</div>
-      <div class="small" style="color:#BFC3CC">${esc(PROFILE.state)} · +91 ${esc(PROFILE.mobile)}</div>${PROFILE.roll ? `<div style="margin-top:6px"><span class="chip" style="background:var(--y);color:var(--ink);font-weight:900">🎫 Roll No. ${esc(PROFILE.roll)}</span></div>` : '<div class="tiny" style="color:#BFC3CC;margin-top:4px">🎫 Roll number will be given in a few minutes</div>'}<div class="tiny" style="color:#BFC3CC">${esc(USER.email || '')}${pwd ? (USER.emailVerified ? ' · ✓ verified' : ' · not verified') : ''}</div></div>
+      <div class="small" style="color:#BFC3CC">${esc(PROFILE.state)} · +91 ${esc(PROFILE.mobile)}</div>${PROFILE.roll ? `<div style="margin-top:6px"><span class="chip" style="background:var(--y);color:var(--ink);font-weight:900">${ic('ticket')} Roll No. ${esc(PROFILE.roll)}</span></div>` : '<div class="tiny" style="color:#BFC3CC;margin-top:4px">🎫 Roll number will be given in a few minutes</div>'}<div class="tiny" style="color:#BFC3CC">${esc(USER.email || '')}${pwd ? (USER.emailVerified ? ' · ✓ verified' : ' · not verified') : ''}</div></div>
     <div class="wrapw fade">
       ${pwd && !USER.emailVerified ? `<div class="banner v"><b>📧 Verify your Gmail (optional)</b><br><span class="small">We sent a link to <b>${esc(maskMail(USER.email))}</b>. Tapping it once helps you reset your password if you forget it. Tests work without it.</span>
         <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn gh sm" id="vr" type="button">Resend link</button><button class="btn gh sm" id="vd" type="button">I have verified ✓</button><button class="btn gh sm" id="vw" type="button">Wrong Gmail?</button></div></div>` : ''}
       ${passCard()}
       <div class="menu">
-        <button type="button" data-go="edit">✏️ Edit profile<span class="ar">›</span></button>
-        ${pwd ? '<button type="button" data-go="password">🔑 Change password<span class="ar">›</span></button>' : ''}
-        <button type="button" data-go="results">📊 My results<span class="ar">›</span></button>
-        <button type="button" data-go="inbox">🔔 Notifications<span class="ar">›</span></button>
-        ${isStandalone() ? '' : '<button type="button" id="pin">📲 Install IQ FOR U app<span class="ar">›</span></button>'}
-        <button type="button" id="pp">🧾 My payments<span class="ar">›</span></button>
-        ${IG ? `<a href="${esc(IG)}" target="_blank" rel="noopener">📷 Follow on Instagram<span class="ar">›</span></a>` : ''}
-        <button type="button" data-go="page/contact">💬 Contact us<span class="ar">›</span></button>
+        <button type="button" data-go="edit">${ic('profile')}Edit profile<span class="ar">›</span></button>
+        ${pwd ? `<button type="button" data-go="password">${ic('key')}Change password<span class="ar">›</span></button>` : ''}
+        <button type="button" data-go="results">${ic('results')}My results<span class="ar">›</span></button>
+        <button type="button" data-go="inbox">${ic('bell')}Notifications<span class="ar">›</span></button>
+        ${isStandalone() ? '' : `<button type="button" id="pin">${ic('install')}Install IQ FOR U app<span class="ar">›</span></button>`}
+        <button type="button" id="pp">${ic('receipt')}My payments<span class="ar">›</span></button>
+        ${IG ? `<a href="${esc(IG)}" target="_blank" rel="noopener">${ic('ig', 'cig')}Follow on Instagram<span class="ar">›</span></a>` : ''}
+        <button type="button" data-go="page/contact">${ic('mail')}Contact us<span class="ar">›</span></button>
       </div>
       <div class="tiny mut" style="font-weight:800;margin:4px 4px 6px">ABOUT</div>
       <div class="menu">
-        <button type="button" data-go="page/terms">📄 Terms &amp; Conditions<span class="ar">›</span></button>
-        <button type="button" data-go="page/refund">↩️ Refund &amp; Cancellation<span class="ar">›</span></button>
-        <button type="button" data-go="page/privacy">🔒 Privacy Policy<span class="ar">›</span></button>
+        <button type="button" data-go="page/terms">${ic('shield')}Terms &amp; Conditions<span class="ar">›</span></button>
+        <button type="button" data-go="page/refund">${ic('refresh')}Refund &amp; Cancellation<span class="ar">›</span></button>
+        <button type="button" data-go="page/privacy">${ic('lock')}Privacy Policy<span class="ar">›</span></button>
       </div>
       <button class="btn red block" id="lo" type="button">Logout</button>
-      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v6.0 · <a href="#/admin">Admin login</a></div>
+      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v6.1 · <a href="#/admin">Admin login</a></div>
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#pp').onclick = () => go('payments'); if ($('#pbuy')) $('#pbuy').onclick = () => buyPass();
@@ -1352,8 +1459,8 @@ function profile() {
   $('#lo').onclick = async () => { if (await confirmBox('<h3 style="margin:0">Logout?</h3>', 'Logout')) { await signOut(auth); go('home'); } };
 }
 function passCard() {
-  if (passActive()) return `<div class="passc on"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass · Active</b><div class="small">${PASS.until == null ? 'No expiry' : 'Valid till <b>' + esc(fmtD(PASS.until)) + '</b> (' + leftTxt(ms(PASS.until) - now()) + ' left)'}</div><div class="tiny" style="color:var(--ink2)">All 🎟 PASS mocks are open for you.</div></div>${payOn() && PASS.until != null ? '<button class="btn sm" type="button" id="pbuy">＋ Extend</button>' : ''}</div>`;
-  return `<div class="passc off"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass</b>${PASS ? ` <span class="chip c-live">Expired ${esc(fmtD(PASS.until))}</span>` : ''}<div class="small mut">${payOn() ? 'No active pass. Get it from <b>₹' + Math.min(...plans().map(p => p.price)) + '</b> – instant access.' : 'No active pass. Online pass – <b>coming soon</b>.'} 🆓 Free mocks are open for everyone.</div></div>${payOn() ? '<button class="btn dk sm" type="button" id="pbuy">🎟 Get Pass</button>' : '<button class="btn sm" type="button" id="pfree">Free →</button>'}</div>`;
+  if (passActive()) return `<div class="passc on"><div class="e"><span class="ib k6">${ic('ticket')}</span></div><div style="flex:1"><b>Monthly Pass · Active</b><div class="small">${PASS.until == null ? 'No expiry' : 'Valid till <b>' + esc(fmtD(PASS.until)) + '</b> (' + leftTxt(ms(PASS.until) - now()) + ' left)'}</div><div class="tiny" style="color:var(--ink2)">All PASS mocks are open for you.</div></div>${payOn() && PASS.until != null ? '<button class="btn sm" type="button" id="pbuy">＋ Extend</button>' : ''}</div>`;
+  return `<div class="passc off"><div class="e"><span class="ib k6">${ic('ticket')}</span></div><div style="flex:1"><b>Monthly Pass</b>${PASS ? ` <span class="chip c-live">Expired ${esc(fmtD(PASS.until))}</span>` : ''}<div class="small mut">${payOn() ? 'No active pass. Get it from <b>₹' + Math.min(...plans().map(p => p.price)) + '</b> – instant access.' : 'No active pass. Online pass – <b>coming soon</b>.'} 🆓 Free mocks are open for everyone.</div></div>${payOn() ? '<button class="btn dk sm" type="button" id="pbuy">Get Pass</button>' : '<button class="btn sm" type="button" id="pfree">Free →</button>'}</div>`;
 }
 function editProfile() {
   topBack('Edit profile', 'profile');
@@ -1642,7 +1749,7 @@ async function results(id, mode) {
   if (mode === 'practice') { const h = await pResults(); if ($('#rs')) { $('#rs').innerHTML = h + footHtml(); $$('#rs [data-open]').forEach(b => b.onclick = () => go('presult/' + b.dataset.open)); $$('#rs [data-go]').forEach(b => b.onclick = () => go(b.dataset.go)); } return; }
   try { if (!EXAMS.length) await loadExams(); await pubReady; } catch (e) { $('#rs').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; return; }
   const list = EXAMS.filter(x => now() > ms(x.startAt) && (ATT[x.id] || resOpen(x))).sort((a, b) => ms(b.startAt) - ms(a.startAt));
-  if (!list.length) { $('#rs').innerHTML = `<div class="empty"><div class="ic">📊</div><b>No results yet</b><br><span class="small">Write a mock test — your score, rank and merit list will appear here.</span><br><br><button class="btn" type="button" onclick="location.hash='#/tests'">Go to Tests →</button></div>`; return; }
+  if (!list.length) { $('#rs').innerHTML = `<div class="empty"><div class="ic">${ic('results')}</div><b>No results yet</b><br><span class="small">Write a mock test — your score, rank and merit list will appear here.</span><br><br><button class="btn" type="button" onclick="location.hash='#/tests'">Go to Tests →</button></div>`; return; }
   if (!id || !list.find(x => x.id === id)) id = (list.find(x => ATT[x.id] && resOpen(x)) || list.find(resOpen) || list[0]).id;
   if (!$('#rprog')) { const d = document.createElement('div'); d.id = 'rprog'; $('#rs').before(d); d.className = 'wrapw'; d.style.paddingTop = '0'; d.style.paddingBottom = '0'; liveProgress().then(h => { if ($('#rprog')) $('#rprog').innerHTML = h; }).catch(() => {}); }
   if (RS.id !== id) RS = { id, tab: 'score', R: null, M: null, filt: 'all' };
@@ -1760,7 +1867,7 @@ async function openAdmin() {
   shell('<div class="wrapw"><div class="card center mut">Opening admin…</div></div>', null);
   topBack('Admin', 'home');
   try {
-    const m = await import('./admin.js?v=6');
+    const m = await import('./admin.js?v=61');
     m.openAdmin({ app, auth, db, $, $$, esc, ms, fmtDT, fmtD, r2, toast, sheet, confirmBox, errText, runExam, stopExam, go, CATS, NAME, IG_HANDLE, setPaper, examSet,
       rsHtml, printSheets, getUser: () => USER, setPub: p => { PUB = p; }, getPub: () => PUB });
   } catch (e) { $('#app').innerHTML = `<div class="wrapw"><div class="msg err">Could not open admin: ${esc(e.message || e)}<br>Is <b>admin.js</b> uploaded to GitHub?</div></div>`; }

@@ -953,7 +953,7 @@ async function allStudents(per0) {
   let L = [];
   try { L = (await getDocs(collection(db, 'users'))).docs.map(d => ({ uid: d.id, ...d.data() })); }
   catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
-  try { const n = await assignRolls(L); if (n) toast(`🎫 Roll numbers given to ${n} student(s)`, 'ok'); } catch (e) {}
+  try { const n = await assignRolls(L); if (n) toast(`🎫 Roll numbers updated for ${n} student(s)`, 'ok'); } catch (e) {}
   let F = L, st = 'All', per = per0 || 'all', sort = 'new';
   const states = ['All', ...[...new Set(L.map(u => u.state || '—'))].sort()];
   const jt = u => u.createdAt ? fmtJ(u.createdAt) : '—';
@@ -992,16 +992,23 @@ async function allStudents(per0) {
     if (img.complete) go(); else { img.onload = go; img.onerror = go; }
   };
 }
-// 🎫 Roll numbers IQ26-0001 … in joining order. Never changed once given. (The Apps Script also gives them to new students every 5 min.)
-const rollOf = (n, t) => 'IQ' + String(new Date(t || Date.now()).getFullYear()).slice(2) + '-' + String(n).padStart(4, '0');
+// 🎫 Roll numbers like IQ26-48213 (v6.1: jumbled, so nobody can guess how many students joined). Never changed once given.
+// n = joining serial (kept secret in settings/rollctr). x⁵ mod prime 89989 mixes the numbers; every n (up to 89988 students) gives a different 5-digit code.
+const rollNo = n => { const P = 89989; let b = (n + 4321) % (P - 1) + 1, r = 1; for (let i = 0; i < 5; i++) r = (r * b) % P; return String(r + 10000); };
+const rollOf = (n, t) => 'IQ' + String(new Date(t || Date.now()).getFullYear()).slice(2) + '-' + rollNo(n);
+const OLDROLL = /^IQ(\d\d)-(\d{4})$/;   // v5.1 style IQ26-0001 → converted once to the jumbled style (same serial)
 async function assignRolls(L) {
-  const need = L.filter(u => !u.roll && u.name); if (!need.length) return 0;
+  const old = L.filter(u => OLDROLL.test(u.roll || '')), need = L.filter(u => !u.roll && u.name);
+  if (!need.length && !old.length) return 0;
   const c = await getDoc(doc(db, 'settings', 'rollctr')), C0 = c.exists() ? c.data() : {};
-  let n = Math.max(C0.n || 0, ...L.map(u => parseInt(String(u.roll || '').split('-')[1], 10) || 0));
+  let n = Math.max(C0.n || 0, ...old.map(u => parseInt(u.roll.match(OLDROLL)[2], 10)));
   need.sort((a, b) => (ms(a.createdAt) || 0) - (ms(b.createdAt) || 0) || a.uid.localeCompare(b.uid));
-  for (let i = 0; i < need.length; i += 400) { const b = writeBatch(db); need.slice(i, i + 400).forEach(u => { u.roll = rollOf(++n, ms(u.createdAt) || Date.now()); b.update(doc(db, 'users', u.uid), { roll: u.roll }); }); await b.commit(); }
-  await setDoc(doc(db, 'settings', 'rollctr'), { n, lastAt: Math.max(C0.lastAt || 0, ...L.map(u => ms(u.createdAt) || 0)) });
-  return need.length;
+  const W = [];
+  old.forEach(u => { const m = u.roll.match(OLDROLL); u.roll = 'IQ' + m[1] + '-' + rollNo(parseInt(m[2], 10)); W.push(u); });
+  need.forEach(u => { u.roll = rollOf(++n, ms(u.createdAt) || Date.now()); W.push(u); });
+  for (let i = 0; i < W.length; i += 400) { const b = writeBatch(db); W.slice(i, i + 400).forEach(u => b.update(doc(db, 'users', u.uid), { roll: u.roll })); await b.commit(); }
+  await setDoc(doc(db, 'settings', 'rollctr'), { n, v: 2, lastAt: Math.max(C0.lastAt || 0, ...L.map(u => ms(u.createdAt) || 0)) });
+  return W.length;
 }
 async function student(uid) {
   mark('student', [uid]);
@@ -1534,7 +1541,7 @@ async function settings() {
       <div class="tiny mut" id="vkn" style="margin-top:4px">This key is public (safe). Without it, students still get notifications inside the app 🔔 – phone alerts need this key + the Apps Script sender (see the v4 guide).</div>
       <button class="btn dk block" id="vks" type="button" style="margin-top:10px">💾 Save key</button><div id="vkm"></div></div>
     <div class="card"><div style="font-weight:800">🔗 Home links</div><div class="tiny mut">Empty → the tile shows SOON. Changing a link needs no code update.</div>
-      ${[['pyq', '📄 PYQs (Google Drive link)', 'https://drive.google.com/…'], ['notes', '🛒 Buy Notes (store link)', 'https://…'], ['tg', '🆓 Free Notes (Telegram link)', 'https://t.me/…'], ['wa', '🎁 Buy Combo (WhatsApp Business link or number)', 'https://wa.me/91XXXXXXXXXX or 91XXXXXXXXXX'], ['ig', '📷 Instagram', 'https://instagram.com/…']].map(([k, l, ph]) => `<label class="l" for="lk_${k}">${l}</label><input class="inp" id="lk_${k}" value="${esc((p.links || {})[k] || '')}" placeholder="${esc(ph)}">`).join('')}
+      ${[['pyq', '📄 PYQs (Google Drive link)', 'https://drive.google.com/…'], ['notes', '🛒 Buy Notes (store link)', 'https://…'], ['tg', '🆓 Free Notes (Telegram link)', 'https://t.me/…'], ['wa', '🎁 Buy Combo (WhatsApp Business link or number)', 'https://wa.me/91XXXXXXXXXX or 91XXXXXXXXXX'], ['ig', '📷 Instagram', 'https://instagram.com/…'], ['combo', '🎁 Combo Pack link (empty = uses WhatsApp above)', 'https://…'], ['tgc', '✈️ Telegram channel (empty = uses Free Notes link)', 'https://t.me/…'], ['yt', '▶️ YouTube', 'https://youtube.com/@…']].map(([k, l, ph]) => `<label class="l" for="lk_${k}">${l}</label><input class="inp" id="lk_${k}" value="${esc((p.links || {})[k] || '')}" placeholder="${esc(ph)}">`).join('')}
       <button class="btn dk block" id="lks" type="button" style="margin-top:10px">💾 Save links</button><div id="lkm"></div></div>
     <div class="card"><div style="font-weight:800">📚 Practice subjects</div><div class="tiny mut">＋ Add a subject, then add mocks to it. A subject can be removed (✕) only while it has no mocks.</div>
       <div id="psx"></div>
@@ -1557,7 +1564,7 @@ async function settings() {
       <label class="l" for="k2">Re-enter new code</label><input class="inp code" id="k2" type="password" inputmode="numeric" maxlength="8">
       <button class="btn block" id="ks" type="button" style="margin-top:12px">Change code</button><div id="km"></div></div>`);
   $('#hs').onclick = async () => { try { await savePub({ showRegCount: $('#hr').checked, regMin: Math.max(0, Math.round(+$('#hm').value || 0)), showTotal: $('#ht').checked }); msg($('#hmm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#hmm'), esc(errText(e))); } };
-  $('#lks').onclick = async () => { const L = {}; ['pyq', 'notes', 'tg', 'wa', 'ig'].forEach(k => L[k] = $('#lk_' + k).value.trim().slice(0, 300));
+  $('#lks').onclick = async () => { const L = {}; ['pyq', 'notes', 'tg', 'wa', 'ig', 'combo', 'tgc', 'yt'].forEach(k => L[k] = $('#lk_' + k).value.trim().slice(0, 300));
     const bad = Object.entries(L).filter(([k, v]) => v && !/^https?:\/\//i.test(v) && !(k === 'wa' && /^\+?\d[\d\s-]{8,}$/.test(v)));
     if (bad.length) return msg($('#lkm'), 'Links must start with https:// (WhatsApp can also be a number like 919876543210).');
     try { await savePub({ links: L }); msg($('#lkm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#lkm'), esc(errText(e))); } };
