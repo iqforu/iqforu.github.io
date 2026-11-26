@@ -1182,9 +1182,9 @@ async function homeSubjects() {
   await loadPIdx(); if (USER) await loadPStats(); if (!$('#hsub')) return;
   const S = []; ['gs', 'sci', 'apt'].forEach(g => subjList(g).forEach(n => S.push([g, n])));
   const cnt = (g, n) => (PIDX || []).filter(e => e.g === g && e.s === n), done = L => L.filter(e => PSTATS && PSTATS[e.id]).length;
-  const L = S.map(([g, n]) => ({ g, n, t: cnt(g, n).length, d: done(cnt(g, n)) })).filter(x => x.t).sort((a, b) => b.t - a.t).slice(0, 6);
-  if (!L.some(x => x.t)) return;
-  $('#hsub').innerHTML = `<div class="sec">Your subjects <button type="button" data-go="practice">See all ›</button></div><div class="s6">${L.map(x => `<button type="button" data-ps="${x.g}|${esc(x.n)}">${subjIc(x.g, x.n)}<span>${esc(x.n)}</span><small>${x.d}/${x.t}</small><div class="pb"><b style="width:${x.t ? Math.round(x.d / x.t * 100) : 0}%"></b></div></button>`).join('')}</div>`;
+  const L = S.map(([g, n]) => ({ g, n, t: cnt(g, n).length, d: done(cnt(g, n)) })).sort((a, b) => b.t - a.t).slice(0, 6);   // always 6: subjects with mocks first, others show 'Soon'
+  if (!L.length) return;
+  $('#hsub').innerHTML = `<div class="sec">Your subjects <button type="button" data-go="practice">See all ›</button></div><div class="s6">${L.map(x => `<button type="button" data-ps="${x.g}|${esc(x.n)}">${subjIc(x.g, x.n)}<span>${esc(x.n)}</span><small>${x.t ? x.d + '/' + x.t : 'Soon'}</small><div class="pb"><b style="width:${x.t ? Math.round(x.d / x.t * 100) : 0}%"></b></div></button>`).join('')}</div>`;
   $$('#hsub [data-ps]').forEach(b => b.onclick = () => { const [g, n] = b.dataset.ps.split('|'); go('practice/' + g + '/' + encodeURIComponent(n)); });
   $$('#hsub [data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
 }
