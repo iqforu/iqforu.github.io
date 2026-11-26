@@ -300,6 +300,10 @@ table.mt tr.me td{background:var(--y2);font-weight:800}
 .gc i{position:absolute;left:11px;bottom:7px;font-style:normal;font-size:11px;font-weight:800}
 .g1{background:#FFF6B3}.g2{background:#DCFCE7}.g3{background:#E0E7FF}.g4{background:#FFE4E6}.g5{background:#FFEDD5;grid-column:1/-1}
 /* v5.1 home big cards · graphs · roll watermark */
+.plan{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:8px;position:relative;cursor:pointer}
+.plan span{flex:1;min-width:0}.plan small{display:block;color:var(--mut);font-size:12px}.plan em{font-style:normal;font-weight:900;font-size:20px}
+.plan.best{border-color:var(--ink);box-shadow:3px 3px 0 var(--ink);background:var(--y2)}.plan i{position:absolute;top:-9px;right:12px;background:var(--ink);color:var(--y);font-style:normal;font-size:10px;font-weight:900;border-radius:20px;padding:2px 8px}
+.plan:disabled{opacity:.6}
 .bigc{display:flex;width:100%;align-items:center;gap:12px;text-align:left;border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink);border-radius:16px;padding:14px;margin-bottom:12px;font:inherit;color:var(--ink);min-width:0}
 .bigc .bi{font-size:34px;flex:none}.bigc h3{margin:0;font-size:19px;font-weight:900}.bigc .m{font-size:12.5px;color:var(--ink2);margin-top:2px}
 .bigc .go{margin-left:auto;flex:none;background:var(--ink);color:var(--y);font-weight:800;border-radius:10px;padding:8px 11px;font-size:13px}
@@ -505,6 +509,8 @@ async function route() {
     case 'complete': return USER ? completeView() : go('login');
     case 'page': return pageView(a);
     case 'inbox': return USER ? inboxView() : go('login');
+    case 'payments': return USER ? myPayments() : go('login');
+    case 'pass': return USER ? (profile(), buyPass()) : needLogin('#/pass');
     case 'start': return USER ? instructions(a) : needLogin('#/start/' + a);
     case 'admin': return openAdmin();
     case 'exam': { let r = null; try { r = sessionStorage.getItem('iq_run'); } catch (e) {}
@@ -604,9 +610,70 @@ function bindCards(root) {
 function payInfo(id) {
   const x = EXAMS.find(e => e.id === id);
   sheet(`<h3 style="margin:0 0 6px">🎟 ${esc(x ? x.title : 'Monthly Pass')}</h3><p>This mock is for <b>Monthly Pass</b> students.${PASS && !passActive() ? ' Your pass expired on <b>' + esc(fmtD(PASS.until)) + '</b>.' : ''}</p>
-    <div class="note">💳 Online Monthly Pass is <b>coming soon</b>. Meanwhile write our <b>FREE mocks</b> and follow ${IG_HANDLE ? '@' + esc(IG_HANDLE) : 'us'} on Instagram for updates.</div>
+    ${payOn() ? '<button class="btn dk block" style="margin-top:12px" type="button" id="pbuy2">🎟 Get Pass – from ₹' + Math.min(...plans().map(p => p.price)) + '</button>' : `<div class="note">💳 Online Monthly Pass is <b>coming soon</b>. Meanwhile write our <b>FREE mocks</b> and follow ${IG_HANDLE ? '@' + esc(IG_HANDLE) : 'us'} on Instagram for updates.</div>`}
     <button class="btn block" style="margin-top:12px" type="button" onclick="this.closest('.ov').remove();window.__freeTab&&window.__freeTab()">🆓 See Free Mocks</button>
     <button class="btn gh block" style="margin-top:8px" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
+  if ($('#pbuy2')) $('#pbuy2').onclick = () => buyPass('<b>' + esc(x ? x.title : 'This mock') + '</b> is for Pass students.');
+}
+
+// ================================================================ 💳 BUY PASS (Razorpay) – v6
+const PLANS0 = [{ id: 'd1', name: '1 Day Pass', days: 1, price: 4 }, { id: 'm1', name: '1 Month Pass', days: 30, price: 49 }, { id: 'm3', name: '3 Months Pass', days: 90, price: 99 }, { id: 'm6', name: '6 Months Pass', days: 180, price: 149 }];
+const plans = () => (PUB.plans || PLANS0).filter(p => p && p.on !== false && p.price > 0 && p.days > 0);
+const payOn = () => !!(PUB.payUrl && PUB.rzpKey && plans().length);
+const perDay = p => p.days >= 30 ? ' · ₹' + (Math.round(p.price / (p.days / 30) * 10) / 10) + '/month' : '';
+function buyPass(why) {
+  if (!USER) return needLogin(location.hash || '#/profile');
+  $$('.ov').forEach(o => o.remove());
+  const on = passActive(), best = plans().reduce((b, p) => !b || p.price / p.days < b.price / b.days ? p : b, null);
+  if (!payOn()) return sheet(`<h3 style="margin:0 0 6px">🎟 Monthly Pass</h3><p class="small">${why || 'Unlock all practice mocks and 🎟 PASS live mocks.'}</p>
+    <div class="note">💳 Online payment is <b>coming soon</b>. Meanwhile write our <b>FREE mocks</b>.</div><button class="btn gh block" type="button" style="margin-top:10px" onclick="this.closest('.ov').remove()">OK</button>`);
+  const o = sheet(`<div style="text-align:center;font-size:32px">🎟</div><h3 style="margin:0 0 2px;text-align:center">${on ? 'Extend your Pass' : 'Get the IQ FOR U Pass'}</h3>
+    <p class="small center" style="color:var(--ink2);margin:4px 0 10px">${why ? why + '<br>' : ''}All <b>practice mocks</b> + <b>🎟 PASS live mocks</b> · instant access${on && PASS.until != null ? `<br>Your pass: till <b>${esc(fmtD(PASS.until))}</b> – new days are <b>added</b>` : ''}</p>
+    ${plans().map(p => `<button type="button" class="plan${p === best && plans().length > 1 ? ' best' : ''}" data-plan="${esc(p.id)}"><span><b>${esc(p.name)}</b><small>${p.days} day${p.days > 1 ? 's' : ''}${perDay(p)}</small></span>${p === best && plans().length > 1 ? '<i>BEST VALUE</i>' : ''}<em>₹${p.price}</em></button>`).join('')}
+    <div class="tiny mut center" style="margin-top:8px">🔒 Secure payment by Razorpay · UPI · Cards · Net banking${String(PUB.rzpKey).startsWith('rzp_test_') ? '<br><b style="color:var(--or)">TEST MODE – no real money</b>' : ''}<br>By paying you agree to the <a href="#/page/terms">Terms</a> &amp; <a href="#/page/refund">Refund policy</a>.</div>`);
+  o.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => payNow(plans().find(p => p.id === b.dataset.plan), b));
+}
+async function payApi(body) {
+  const t = await USER.getIdToken();
+  const r = await fetch(PUB.payUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ t }, body)) });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'Payment server error'); return j;
+}
+function rzpLib() {
+  if (window.Razorpay) return Promise.resolve();
+  return new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://checkout.razorpay.com/v1/checkout.js'; sc.onload = ok; sc.onerror = () => no(new Error('Could not open the payment window – check internet.')); document.head.appendChild(sc); });
+}
+async function payNow(p, btn) {
+  if (!p || btn.disabled) return; if (BLOCKED) return toast('Your account is blocked.', 'err');
+  const all = $$('[data-plan]'); all.forEach(b => b.disabled = true); const t0 = btn.innerHTML; btn.innerHTML = '<span><b>⏳ Opening payment…</b></span>';
+  const back = () => { all.forEach(b => b.disabled = false); btn.innerHTML = t0; };
+  let o;
+  try { [o] = await Promise.all([payApi({ a: 'order', plan: p.id }), rzpLib()]); } catch (e) { back(); return toast(e.message, 'err'); }
+  const rz = new window.Razorpay({ key: o.key, order_id: o.order, amount: o.amount, currency: 'INR', name: NAME, description: o.plan, image: new URL('logo.png', location.href).href,
+    prefill: { name: o.name, email: o.email, contact: o.mobile ? '+91' + o.mobile : '' }, notes: { plan: p.id }, theme: { color: '#111318' },
+    modal: { ondismiss: () => { back(); toast('Payment cancelled – no money taken.', 'info'); } },
+    handler: async r => {
+      $$('.ov').forEach(z => z.remove());
+      const w = sheet('<div class="center" style="padding:16px"><div style="font-size:34px">⏳</div><b>Confirming your payment…</b><div class="small mut">Please don\'t close this page.</div></div>');
+      try { await payApi({ a: 'verify', order: r.razorpay_order_id, pid: r.razorpay_payment_id, sig: r.razorpay_signature }); w.remove(); await loadPass(); loadNotes().catch(() => {}); paidSheet(p); }
+      catch (e) { w.remove(); sheet(`<h3 style="margin:0 0 6px">💳 Payment received</h3><p class="small">${esc(e.message)}</p><div class="note">Don't pay again. If your pass is not active in <b>10 minutes</b>, contact us with this Payment ID:<br><b>${esc(r.razorpay_payment_id)}</b></div><button class="btn gh block" type="button" style="margin-top:10px" onclick="this.closest('.ov').remove()">OK</button>`); }
+    } });
+  rz.on('payment.failed', f => toast('Payment failed: ' + ((f.error && f.error.description) || 'try again') + ' – no money taken.', 'err'));
+  rz.open();
+}
+function paidSheet(p) {
+  const o = sheet(`<div class="center"><div style="font-size:44px">🎉</div><h3 style="margin:4px 0">Payment successful!</h3><p class="small">${esc(p.name)} is active${PASS && PASS.until != null ? ' till <b>' + esc(fmtD(PASS.until)) + '</b>' : ''}.<br>All practice mocks and 🎟 PASS mocks are open now.</p>
+    <button class="btn dk block" type="button" id="pgo">📚 Start practising</button><button class="btn gh block" type="button" style="margin-top:8px" onclick="this.closest('.ov').remove()">OK</button></div>`);
+  o.querySelector('#pgo').onclick = () => { o.remove(); go('practice'); };
+  route();
+}
+async function myPayments() {
+  topBack('My payments', 'profile'); shell('<div class="wrapw fade"><div class="center mut">Loading…</div></div>', 'profile');
+  let L = [];
+  try { L = (await getDocs(query(collection(db, 'payments'), where('uid', '==', USER.uid)))).docs.map(d => ({ id: d.id, ...d.data() })).filter(x => x.status === 'paid').sort((a, b) => ms(b.at) - ms(a.at)); } catch (e) {}
+  shell(`<div class="wrapw fade">${passCard()}<div class="sec">Payments</div>${L.map(x => `<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(x.planName || '')}</b><b>₹${x.amount}</b></div>
+    <div class="small mut">${esc(fmtDT(x.paidAt || x.at))}${x.until ? ' · valid till ' + esc(fmtD(x.until)) : ''}</div><div class="tiny mut">Payment ID: ${esc(x.pid || '')}${x.mode === 'test' ? ' · TEST' : ''}</div></div>`).join('') || '<div class="card mut">No payments yet.</div>'}
+    <div class="tiny mut center">Problem with a payment? Profile → Contact, with the Payment ID.</div></div>${footHtml()}`, 'profile');
+  if ($('#pbuy')) $('#pbuy').onclick = () => buyPass(); if ($('#pfree')) $('#pfree').onclick = freeTab;
 }
 function chipsHtml() {
   return `<div class="chips" id="cats">${['All', ...CATS.filter(c => c !== ALLX)].map(c => `<button type="button" class="${c === CAT ? 'on' : ''}" data-cat="${esc(c)}">${esc(c === 'Other' ? 'Others' : c)}</button>`).join('')}</div>`;
@@ -814,8 +881,8 @@ async function practiceSubject(g, s) {
 function pLocked(e) {
   const o = sheet(`<div style="text-align:center;font-size:34px">🔒</div><div style="text-align:center;font-weight:900;font-size:17px">${esc(subjName(e.g, e.s))} – Mock ${e.no}</div>
     <p class="small center" style="color:var(--ink2)">Unlock <b>all practice mocks</b> + <b>Live mocks</b> every month with the <b>Monthly Pass</b>.</p>
-    <button class="btn block" type="button" id="gpp">🎟 Get Monthly Pass</button><div class="tiny mut center" style="margin-top:8px">Online payment – coming soon</div>`);
-  o.querySelector('#gpp').onclick = () => toast('Online Monthly Pass – coming soon! 🚀', 'info');
+    <button class="btn block" type="button" id="gpp">🎟 Get Pass${payOn() ? ' – from ₹' + Math.min(...plans().map(p => p.price)) : ''}</button><div class="tiny mut center" style="margin-top:8px">${payOn() ? 'Instant access · UPI / cards' : 'Online payment – coming soon'}</div>`);
+  o.querySelector('#gpp').onclick = () => buyPass(`🔒 <b>${esc(subjName(e.g, e.s))} – Mock ${e.no}</b> needs the Pass.`);
 }
 async function pInstr(id) {
   await Promise.all([loadPIdx(), loadPStats()]);
@@ -1258,7 +1325,7 @@ function profile() {
         <button type="button" data-go="results">📊 My results<span class="ar">›</span></button>
         <button type="button" data-go="inbox">🔔 Notifications<span class="ar">›</span></button>
         ${isStandalone() ? '' : '<button type="button" id="pin">📲 Install IQ FOR U app<span class="ar">›</span></button>'}
-        <button type="button" id="pp">🧾 My purchases<span class="ar small">coming soon ›</span></button>
+        <button type="button" id="pp">🧾 My payments<span class="ar">›</span></button>
         ${IG ? `<a href="${esc(IG)}" target="_blank" rel="noopener">📷 Follow on Instagram<span class="ar">›</span></a>` : ''}
         <button type="button" data-go="page/contact">💬 Contact us<span class="ar">›</span></button>
       </div>
@@ -1269,10 +1336,10 @@ function profile() {
         <button type="button" data-go="page/privacy">🔒 Privacy Policy<span class="ar">›</span></button>
       </div>
       <button class="btn red block" id="lo" type="button">Logout</button>
-      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v5.1 · <a href="#/admin">Admin login</a></div>
+      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v6.0 · <a href="#/admin">Admin login</a></div>
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
-  $('#pp').onclick = () => toast('Paid mocks & purchases – coming soon.', 'info');
+  $('#pp').onclick = () => go('payments'); if ($('#pbuy')) $('#pbuy').onclick = () => buyPass();
   if ($('#pfree')) $('#pfree').onclick = freeTab;
   if ($('#pin')) $('#pin').onclick = installApp;
   if ($('#vr')) {
@@ -1285,8 +1352,8 @@ function profile() {
   $('#lo').onclick = async () => { if (await confirmBox('<h3 style="margin:0">Logout?</h3>', 'Logout')) { await signOut(auth); go('home'); } };
 }
 function passCard() {
-  if (passActive()) return `<div class="passc on"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass · Active</b><div class="small">${PASS.until == null ? 'No expiry' : 'Valid till <b>' + esc(fmtD(PASS.until)) + '</b> (' + leftTxt(ms(PASS.until) - now()) + ' left)'}</div><div class="tiny" style="color:var(--ink2)">All 🎟 PASS mocks are open for you.</div></div></div>`;
-  return `<div class="passc off"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass</b>${PASS ? ` <span class="chip c-live">Expired ${esc(fmtD(PASS.until))}</span>` : ''}<div class="small mut">No active pass. Online pass – <b>coming soon</b>. 🆓 Free mocks are open for everyone.</div></div><button class="btn sm" type="button" id="pfree">Free →</button></div>`;
+  if (passActive()) return `<div class="passc on"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass · Active</b><div class="small">${PASS.until == null ? 'No expiry' : 'Valid till <b>' + esc(fmtD(PASS.until)) + '</b> (' + leftTxt(ms(PASS.until) - now()) + ' left)'}</div><div class="tiny" style="color:var(--ink2)">All 🎟 PASS mocks are open for you.</div></div>${payOn() && PASS.until != null ? '<button class="btn sm" type="button" id="pbuy">＋ Extend</button>' : ''}</div>`;
+  return `<div class="passc off"><div class="e">🎟</div><div style="flex:1"><b>Monthly Pass</b>${PASS ? ` <span class="chip c-live">Expired ${esc(fmtD(PASS.until))}</span>` : ''}<div class="small mut">${payOn() ? 'No active pass. Get it from <b>₹' + Math.min(...plans().map(p => p.price)) + '</b> – instant access.' : 'No active pass. Online pass – <b>coming soon</b>.'} 🆓 Free mocks are open for everyone.</div></div>${payOn() ? '<button class="btn dk sm" type="button" id="pbuy">🎟 Get Pass</button>' : '<button class="btn sm" type="button" id="pfree">Free →</button>'}</div>`;
 }
 function editProfile() {
   topBack('Edit profile', 'profile');
@@ -1324,13 +1391,13 @@ async function pageView(k) {
       <h2>1. Account</h2><ul><li>Register with your own name, mobile number and Gmail. One account per student.</li><li>Keep your password private. You are responsible for activity on your account.</li><li>We may block accounts that cheat, share answers during a live test, or misuse the site.</li></ul>
       <h2>2. Mock tests</h2><ul><li>Each mock can be attempted only <b>once</b> within its open time.</li><li>The timer cannot be paused. The test submits automatically when time ends.</li><li>Results, ranks and the merit list are shown on the announced result date. Answer keys may be corrected after student reports; ranks are then re-calculated.</li><li>Mock tests are for practice only. They are not official exams and do not guarantee selection.</li></ul>
       <h2>3. Content</h2><p>Questions, solutions and notes are for personal study. Copying or selling them is not allowed.</p>
-      <h2>4. Paid mocks</h2><p>Some mocks may be paid. Prices are shown before payment. See the Refund &amp; Cancellation policy.</p>
+      <h2>4. Pass &amp; payments</h2><p>Free mocks are open to everyone. The IQ FOR U Pass opens all practice mocks and Pass live mocks for the plan period. Prices are shown in ₹ (INR) before payment. Payments are processed securely by Razorpay; we never see your card / UPI PIN. See the Refund &amp; Cancellation policy.</p>
       <h2>5. Changes</h2><p>We may update these terms. The latest version is always on this page.</p>`],
-    refund: ['Refund & Cancellation', `<h2>1. Digital product</h2><p>Mock tests and study material are digital products that are unlocked on your account right after a successful payment.</p>
-      <h2>2. Payment debited but not unlocked</h2><p>If money is debited but the mock is not unlocked, contact us with your registered Gmail and the payment ID. After checking with the payment gateway we will either unlock the mock or refund the amount to the original payment method.</p>
-      <h2>3. Double payment</h2><p>If you are charged twice for the same mock, the extra amount will be refunded.</p>
-      <h2>4. Cancelled mock</h2><p>If we cancel a paid mock, you will get a full refund or a free replacement mock.</p>
-      <h2>5. Other cases</h2><p>Once a mock is unlocked and the test window has started, the purchase cannot be cancelled.</p>
+    refund: ['Refund & Cancellation', `<h2>1. Digital pass</h2><p>The IQ FOR U Pass (1 day / 1 month / 3 months / 6 months, or as shown on the payment screen) is a digital product. It opens all practice mocks and Pass live mocks on your account <b>immediately</b> after a successful payment, for the number of days of the plan. If you already have an active pass, the new days are added to it.</p>
+      <h2>2. Payment debited but pass not active</h2><p>Our system checks every payment again within 10 minutes and activates the pass automatically. If it is still not active, contact us with your registered Gmail and the Razorpay <b>Payment ID</b>. After checking with the payment gateway we will activate the pass or refund the full amount.</p>
+      <h2>3. Double / wrong payment</h2><p>If you are charged twice for the same order, or charged but the payment failed, the extra amount is refunded.</p>
+      <h2>4. Refund time</h2><p>Approved refunds go back to the original payment method (UPI / card / bank) within <b>5–7 working days</b>.</p>
+      <h2>5. Other cases</h2><p>Once the pass is active on your account, it cannot be cancelled or refunded, and it cannot be moved to another account.</p>
       <h2>Contact</h2><ul>${contactLines}</ul>`],
     privacy: ['Privacy Policy', `<h2>What we collect</h2><ul><li>Name, mobile number, state and Gmail you enter while registering.</li><li>Your test answers, scores, ranks and feedback.</li><li>Payment details are handled by the payment gateway. We do not store card or UPI PIN details.</li></ul>
       <h2>How we use it</h2><ul><li>To run tests, calculate results and show the merit list.</li><li>Only your <b>name and state</b> appear in the public merit list. Your mobile number and Gmail are visible only to the ${esc(NAME)} admin.</li><li>To contact you about tests, results or payments.</li></ul>
@@ -1693,7 +1760,7 @@ async function openAdmin() {
   shell('<div class="wrapw"><div class="card center mut">Opening admin…</div></div>', null);
   topBack('Admin', 'home');
   try {
-    const m = await import('./admin.js?v=51');
+    const m = await import('./admin.js?v=6');
     m.openAdmin({ app, auth, db, $, $$, esc, ms, fmtDT, fmtD, r2, toast, sheet, confirmBox, errText, runExam, stopExam, go, CATS, NAME, IG_HANDLE, setPaper, examSet,
       rsHtml, printSheets, getUser: () => USER, setPub: p => { PUB = p; }, getPub: () => PUB });
   } catch (e) { $('#app').innerHTML = `<div class="wrapw"><div class="msg err">Could not open admin: ${esc(e.message || e)}<br>Is <b>admin.js</b> uploaded to GitHub?</div></div>`; }

@@ -243,7 +243,7 @@ async function dash() {
       <button class="tl" type="button" data-a="reports"><span>🚩</span>Reports</button>
       <button class="tl" type="button" data-a="notify"><span>🔔</span>Notify</button>
       <button class="tl" type="button" data-a="notice"><span>📢</span>Notice</button>
-      <button class="tl" type="button" data-a="payments"><span>💳</span>Payments<em>SOON</em></button>
+      <button class="tl" type="button" data-a="payments"><span>💳</span>Payments</button>
       <button class="tl" type="button" data-a="team"><span>🧑‍🤝‍🧑</span>Team</button>
       <button class="tl" type="button" data-a="settings"><span>⚙️</span>Settings</button>
     </div>
@@ -1542,6 +1542,15 @@ async function settings() {
       <div class="tiny mut">Mock 1 … this number are FREE in every subject; the rest need the Monthly Pass. Applies to old mocks too.</div>
       <label class="l" for="ps_ca">Current Affairs years</label><input class="inp" id="ps_ca" value="${esc(pYears(p).join(', '))}" placeholder="2026, 2027">
       <button class="btn dk block" id="pss" type="button" style="margin-top:10px">💾 Save subjects</button><div id="psm"></div></div>
+    <div class="card"><div style="font-weight:800">💳 Online payments (Razorpay)</div>
+      <div class="tiny mut">Key <b>ID</b> only here (it is public). The Key <b>Secret</b> goes ONLY into Apps Script → Script properties → <b>RZP_SECRET</b>.</div>
+      <label class="l" for="rk">Razorpay Key ID</label><input class="inp" id="rk" value="${esc(p.rzpKey || '')}" placeholder="rzp_test_… or rzp_live_…" autocomplete="off">
+      <label class="l" for="ru">Payment web app URL (Apps Script → Deploy → Web app)</label><input class="inp" id="ru" value="${esc(p.payUrl || '')}" placeholder="https://script.google.com/macros/s/…/exec">
+      <label class="l">Plans <span class="tiny mut">(name · days · ₹ price · ON)</span></label><div id="plx"></div>
+      <button class="btn gh sm" type="button" id="pla" style="margin-top:6px">＋ Add plan</button>
+      <label class="sw"><input type="checkbox" id="pon" ${p.payOff ? '' : 'checked'}> Show “Get Pass” to students (payments ON)</label>
+      <div class="tiny mut" id="pmode"></div>
+      <button class="btn dk block" id="pys" type="button" style="margin-top:10px">💾 Save payments</button><div id="pym"></div></div>
     <div class="card"><div style="font-weight:800">🔐 Change 8-digit security code</div>
       <label class="l" for="k0">Current code</label><input class="inp code" id="k0" type="password" inputmode="numeric" maxlength="8">
       <label class="l" for="k1">New code</label><input class="inp code" id="k1" type="password" inputmode="numeric" maxlength="8">
@@ -1564,6 +1573,23 @@ async function settings() {
         if (!q.empty) return toast(`“${n}” has mocks – delete its mocks first.`, 'err'); } catch (e) { return toast(errText(e), 'err'); }
       SUB[k].splice(+i, 1); drawSub(); msg($('#psm'), 'Removed – press 💾 Save subjects', 'info'); }); };
   drawSub();
+  // 💳 plans editor
+  const PL = (p.plans || [{ id: 'd1', name: '1 Day Pass', days: 1, price: 4 }, { id: 'm1', name: '1 Month Pass', days: 30, price: 49 }, { id: 'm3', name: '3 Months Pass', days: 90, price: 99 }, { id: 'm6', name: '6 Months Pass', days: 180, price: 149 }]).map(x => Object.assign({ on: true }, x));
+  const drawPl = () => { $('#plx').innerHTML = PL.map((x, i) => `<div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,.7fr) minmax(0,.8fr) auto;gap:6px;margin-top:6px;align-items:center">
+      <input class="inp" data-pf="name|${i}" value="${esc(x.name)}" maxlength="30" aria-label="Plan name"><input class="inp" data-pf="days|${i}" type="number" min="1" max="3650" value="${x.days}" aria-label="Days"><input class="inp" data-pf="price|${i}" type="number" min="1" max="100000" value="${x.price}" aria-label="Price ₹">
+      <label class="sw" style="margin:0"><input type="checkbox" data-pf="on|${i}" ${x.on !== false ? 'checked' : ''}> ON</label></div>`).join('');
+    $$('[data-pf]').forEach(el => el.oninput = el.onchange = () => { const [k, i] = el.dataset.pf.split('|'); PL[+i][k] = k === 'on' ? el.checked : k === 'name' ? el.value : +el.value; }); };
+  drawPl();
+  const mode = () => { const k = $('#rk').value.trim(); $('#pmode').innerHTML = k.startsWith('rzp_live_') ? '🟢 <b>LIVE</b> – real money' : k.startsWith('rzp_test_') ? '🟠 <b>TEST mode</b> – no real money. Change to the rzp_live_ key after KYC.' : ''; };
+  $('#rk').oninput = mode; mode();
+  $('#pla').onclick = () => { PL.push({ id: 'p' + Date.now().toString(36), name: 'New plan', days: 7, price: 19, on: true }); drawPl(); };
+  $('#pys').onclick = async () => { const k = $('#rk').value.trim(), u = $('#ru').value.trim(), m = $('#pym');
+    if (k && !/^rzp_(test|live)_[A-Za-z0-9]+$/.test(k)) return msg(m, 'Key ID should look like rzp_test_XXXX (not the Secret!).');
+    if (u && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(u)) return msg(m, 'Web app URL should start with https://script.google.com/macros/s/ and end with /exec');
+    const bad = PL.find(x => !x.name.trim() || !(x.days >= 1) || !(x.price >= 1)); if (bad) return msg(m, 'Every plan needs a name, days ≥ 1 and price ≥ ₹1.');
+    try { await savePub({ rzpKey: $('#pon').checked ? k : '', rzpKeySaved: k, payUrl: u, payOff: !$('#pon').checked, plans: PL.map(x => ({ id: x.id, name: x.name.trim(), days: Math.round(x.days), price: Math.round(x.price), on: x.on !== false })) }); msg(m, 'Saved ✓', 'ok'); }
+    catch (e) { msg(m, esc(errText(e))); } };
+  if (!p.rzpKey && p.rzpKeySaved) $('#rk').value = p.rzpKeySaved;
   $('#pss').onclick = async () => { const sp = v => [...new Set(v.split(',').map(z => z.trim()).filter(Boolean))].slice(0, 20);
     const yrs = sp($('#ps_ca').value).map(Number).filter(y => y >= 2020 && y <= 2100), fn = Math.max(0, Math.min(50, parseInt($('#pfn').value, 10) || 0));
     try { await savePub({ psubj: SUB, cayears: yrs.length ? yrs : [2026], pfree: fn }); msg($('#psm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#psm'), esc(errText(e))); } };
@@ -1584,11 +1610,31 @@ async function settings() {
     } catch (e) { msg(m, esc(errText(e))); }
   };
 }
-function payments() {
+async function payments() {
   mark('payments');
-  top('Payments', dash);
-  page(`<div class="card center"><div style="font-size:40px">💳</div><div style="font-weight:900;font-size:18px">Payments – coming soon</div>
-    <p class="small mut">After Razorpay is connected, every payment will show here: name, mobile, Gmail, mock, amount, Razorpay payment ID, unlock status, today / month totals, “Need check” list with Verify and Manual unlock, and Excel download.</p></div>`);
+  top('💳 Payments', dash); loading();
+  let L = [];
+  try { L = (await getDocs(query(collection(db, 'payments'), orderBy('at', 'desc'), limit(1000)))).docs.map(d => ({ id: d.id, ...d.data() })); }
+  catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  const paid = L.filter(x => x.status === 'paid'), live = paid.filter(x => x.mode !== 'test'), d0 = new Date(); d0.setHours(0, 0, 0, 0);
+  const m0 = new Date(d0.getFullYear(), d0.getMonth(), 1), sum = a => a.reduce((t, x) => t + (x.amount || 0), 0);
+  let F = 'paid';
+  const draw = () => {
+    const S = F === 'all' ? L : F === 'paid' ? paid : L.filter(x => x.status !== 'paid');
+    $('#ptb').innerHTML = S.map(x => `<tr data-u="${esc(x.uid)}" style="cursor:pointer"><td style="white-space:nowrap">${esc(fmtDT(x.paidAt || x.at))}</td><td><b>${esc(x.name || '')}</b><div class="tiny mut">${esc(x.roll || '')}</div></td><td>${esc(x.planName || '')}</td><td><b>₹${x.amount}</b></td>
+      <td>${x.status === 'paid' ? '<span class="chip c-free">PAID</span>' : x.status === 'created' ? '<span class="chip c-paid">started</span>' : '<span class="chip">' + esc(x.status) + '</span>'}${x.mode === 'test' ? ' <span class="chip">TEST</span>' : ''}</td>
+      <td class="tiny">${esc(x.pid || x.id)}</td><td class="tiny">${esc(x.mobile || '')}<br>${esc(x.email || '')}</td></tr>`).join('') || '<tr><td colspan="7" class="mut">Nothing here.</td></tr>';
+    $$('#ptb [data-u]').forEach(r => r.onclick = () => student(r.dataset.u));
+  };
+  page(`<div class="ast six"><div><b>₹${sum(live.filter(x => ms(x.paidAt) >= d0))}</b><small>Today</small></div><div><b>₹${sum(live.filter(x => ms(x.paidAt) >= m0))}</b><small>This month</small></div><div><b>₹${sum(live)}</b><small>All time (${live.length})</small></div></div>
+    ${paid.length > live.length ? `<div class="tiny mut" style="margin-top:4px">+ ${paid.length - live.length} TEST payments (not counted – no real money)</div>` : ''}
+    <div class="tagc one" id="pf" style="margin-top:10px"><button type="button" data-f="paid" class="on">✅ Paid</button><button type="button" data-f="other">⏳ Started / not paid</button><button type="button" data-f="all">All</button></div>
+    <button class="btn gh sm" type="button" id="pcsv" style="margin:8px 0">⬇ CSV</button>
+    <div class="tbl"><table><tr><th>Date</th><th>Student</th><th>Plan</th><th>₹</th><th>Status</th><th>Payment ID</th><th>Contact</th></tr><tbody id="ptb"></tbody></table></div>
+    <div class="card small" style="margin-top:10px">Paid but pass not given? The server checks every 5 minutes and gives it automatically. “Started / not paid” = student opened the payment window but did not pay. Money settles to the bank account in Razorpay → Settlements.</div>`);
+  draw();
+  $$('#pf [data-f]').forEach(b => b.onclick = () => { F = b.dataset.f; $$('#pf [data-f]').forEach(z => z.classList.toggle('on', z === b)); draw(); });
+  $('#pcsv').onclick = () => csv('IQFORU_payments.csv', [['Date', 'Name', 'Roll No.', 'Mobile', 'Gmail', 'Plan', 'Days', 'Amount', 'Status', 'Mode', 'Payment ID', 'Order ID', 'Valid till']].concat(L.map(x => [fmtDT(x.paidAt || x.at), x.name || '', x.roll || '', x.mobile || '', x.email || '', x.planName || '', x.days || '', x.amount, x.status, x.mode || '', x.pid || '', x.id, x.until ? fmtJ(x.until) : ''])));
 }
 
 Object.assign(VIEWS, { practice: g => practiceAdmin(g), psubj: practiceSubject, pedit: pEdit, team: teamView, notify: notifyView, dash, pick, edit: editMock, tools, preview: previewMock, attempts, results: resultsPage, students, allStudents, student,
