@@ -26,6 +26,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font:inherit;cursor:pointer;color:inherit}
 a{color:inherit}
@@ -84,7 +85,7 @@ body.adm .top .in{max-width:1000px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .stats div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px;text-align:center}
 .stats b{display:block;font-size:19px;font-weight:900} .stats small{font-size:11px;color:var(--mut);font-weight:600}
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .tl{position:relative;background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px 3px 8px;text-align:center;font-size:11.5px;font-weight:700;line-height:1.2;text-decoration:none}
 .tl span{display:block;font-size:23px;margin-bottom:4px}
 .tl em{position:absolute;top:-6px;right:-3px;background:var(--ink);color:var(--y);font-size:8.5px;font-style:normal;padding:1px 5px;border-radius:6px;font-weight:800}
@@ -251,6 +252,7 @@ table.mt tr.me td{background:var(--y2);font-weight:800}
   body.printing{background:#fff}
 }
 #print{font-size:11px;color:#111}
+#print .pg+.pg{page-break-before:always;break-before:page}
 #print .ph{display:flex;align-items:center;gap:10px;border-bottom:3px solid #111;padding-bottom:8px}
 #print .ph img{width:52px;height:52px}
 #print .ph .tag{margin-left:auto;background:#FFE51F;border:1.5px solid #111;font-weight:900;padding:4px 9px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -292,11 +294,20 @@ table.mt tr.me td{background:var(--y2);font-weight:800}
 .mtabs{display:flex;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px}
 .mtabs button{flex:1;border:0;background:none;padding:11px 4px;font-weight:800;font-size:14px;color:var(--mut);border-bottom:3px solid transparent}
 .mtabs button.on{color:var(--ink);border-color:var(--y);background:#FFFDF0}
-.grp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.gc{position:relative;text-align:left;border-radius:14px;padding:12px 11px 26px;border:1.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);font:inherit;color:var(--ink)}
+.grp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gc{position:relative;min-width:0;overflow:hidden;overflow-wrap:anywhere;text-align:left;border-radius:14px;padding:12px 11px 26px;border:1.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);font:inherit;color:var(--ink)}
 .gc span{font-size:26px;display:block}.gc b{font-size:15px;display:block;margin-top:4px}.gc small{font-size:11px;color:var(--ink2);display:block;line-height:1.35;margin-top:2px}
 .gc i{position:absolute;left:11px;bottom:7px;font-style:normal;font-size:11px;font-weight:800}
-.g1{background:#FFF6B3}.g2{background:#DCFCE7}.g3{background:#E0E7FF}.g4{background:#FFE4E6}
+.g1{background:#FFF6B3}.g2{background:#DCFCE7}.g3{background:#E0E7FF}.g4{background:#FFE4E6}.g5{background:#FFEDD5;grid-column:1/-1}
+/* v5.1 home big cards · graphs · roll watermark */
+.bigc{display:flex;width:100%;align-items:center;gap:12px;text-align:left;border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink);border-radius:16px;padding:14px;margin-bottom:12px;font:inherit;color:var(--ink);min-width:0}
+.bigc .bi{font-size:34px;flex:none}.bigc h3{margin:0;font-size:19px;font-weight:900}.bigc .m{font-size:12.5px;color:var(--ink2);margin-top:2px}
+.bigc .go{margin-left:auto;flex:none;background:var(--ink);color:var(--y);font-weight:800;border-radius:10px;padding:8px 11px;font-size:13px}
+.bigc.lv{background:var(--y)}.bigc.pr{background:#E0E7FF}
+.bigc .in2{flex:1;min-width:0}
+.gph{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 10px 6px;margin-top:10px}
+.gph svg{display:block;width:100%;height:auto}
+.wm2{margin-top:18px;text-align:center;font-size:12px;font-weight:700;color:var(--mut);opacity:.75;pointer-events:none}
 .subj{display:flex;width:100%;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px;margin-bottom:8px;font:inherit;color:inherit}
 .subj .ic{width:40px;height:40px;flex:none;border-radius:11px;background:var(--y2);display:grid;place-items:center;font-size:20px}
 .subj .rt{text-align:right;font-size:12px;color:var(--mut);font-weight:700}
@@ -316,7 +327,7 @@ table.mt tr.me td{background:var(--y2);font-weight:800}
 .rvo .k{background:var(--ok2);font-weight:700}.rvo .k i{background:var(--ok);border-color:var(--ok);color:#fff}
 .rvo .x{background:var(--no2)}.rvo .x i{background:var(--no);border-color:var(--no);color:#fff}
 .exp{background:var(--y2);border-radius:9px;padding:7px 9px;margin-top:7px;font-size:13px}
-.jrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.jrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 /* 🔒 copy block + watermark */
 body.inexam #app,.nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .xq,.nocopy{position:relative}
@@ -722,18 +733,18 @@ pubReady.then(() => { setTimeout(() => { if (USER && PROFILE && PUB.vapidKey && 
 // settings/pindex.list = published practice mocks [{id,g,s,no,ch,c,d,m,n,a,t}]  (one read for the whole library)
 // pexams/{id}/paper/main = questions · pexams/{id}/akey/main = answers (+ explanations), readable after the first attempt
 // pattempts/{id}/u/{uid} = first attempt (Top 10) · ptries/{id}/u/{uid} = re-attempt · pstats/{uid}.m = my progress
-const PG = { gs: { n: 'General Studies', e: '📚', c: 'g1' }, sci: { n: 'General Science', e: '🔬', c: 'g2' }, apt: { n: 'Aptitude', e: '🧮', c: 'g3' }, ca: { n: 'Current Affairs', e: '📰', c: 'g4' } };
-const DEF_SUBJ = { gs: ['History', 'Geography', 'Polity', 'Economics', 'Art & Culture', 'EVS'], sci: ['Physics', 'Chemistry', 'Biology'], apt: ['Maths', 'Reasoning', 'Computer'] };
-const SUBJ_IC = { History: '🏛', Geography: '🌍', Polity: '⚖️', Economics: '💰', 'Art & Culture': '🎨', EVS: '🌱', Physics: '⚛️', Chemistry: '🧪', Biology: '🧬', Maths: '🧮', Reasoning: '🧩', Computer: '💻' };
+const PG = { gs: { n: 'General Studies', e: '📚', c: 'g1' }, sci: { n: 'General Science', e: '🔬', c: 'g2' }, apt: { n: 'Aptitude', e: '🧮', c: 'g3' }, ca: { n: 'Current Affairs', e: '📰', c: 'g4' }, mix: { n: 'Combined Mocks', e: '🎯', c: 'g5' } };
+const DEF_SUBJ = { gs: ['History', 'Geography', 'Polity', 'Economics', 'Art & Culture', 'EVS'], sci: ['Physics', 'Chemistry', 'Biology'], apt: ['Maths', 'Reasoning', 'Computer'], mix: ['OSSSC Full Mock', 'SSC Full Mock', 'Railway Full Mock'] };
+const SUBJ_IC = { History: '🏛', Geography: '🌍', Polity: '⚖️', Economics: '💰', 'Art & Culture': '🎨', EVS: '🌱', Physics: '⚛️', Chemistry: '🧪', Biology: '🧬', Maths: '🧮', Reasoning: '🧩', Computer: '💻', 'OSSSC Full Mock': '🎯', 'SSC Full Mock': '🎯', 'Railway Full Mock': '🚆' };
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const subjList = g => g === 'ca' ? [] : ((PUB.psubj && PUB.psubj[g] && PUB.psubj[g].length) ? PUB.psubj[g] : DEF_SUBJ[g] || []);
 const caYears = () => (PUB.cayears && PUB.cayears.length ? PUB.cayears : [2026]).map(Number).sort((a, b) => b - a);
 const subjName = (g, s) => g === 'ca' ? (MONTHS[+s.split('-')[1] - 1] || s) + ' ' + s.split('-')[0] : s;
 const subjIc = (g, s) => g === 'ca' ? '📰' : SUBJ_IC[s] || PG[g].e;
-let PIDX = null, PSTATS = null, PCHIP = null;
+let PIDX = null, PSTATS = null, PCHIP = null, PIDX_AT = 0;
 async function loadPIdx(force) {
-  if (PIDX && !force) return PIDX;
-  try { const s = await getDoc(doc(db, 'settings', 'pindex')); PIDX = s.exists() ? (s.data().list || []) : []; } catch (e) { PIDX = []; }
+  if (PIDX && !force && Date.now() - PIDX_AT < 60000) return PIDX;   // auto refresh: new mocks appear without reloading
+  try { const s = await getDoc(doc(db, 'settings', 'pindex')); PIDX = s.exists() ? (s.data().list || []) : []; PIDX_AT = Date.now(); } catch (e) { if (!PIDX) PIDX = []; }
   return PIDX;
 }
 async function loadPStats() {
@@ -742,7 +753,10 @@ async function loadPStats() {
   try { const s = await getDoc(doc(db, 'pstats', USER.uid)); PSTATS = s.exists() ? (s.data().m || {}) : {}; } catch (e) { PSTATS = {}; }
   return PSTATS;
 }
-const pOpen = e => e.a === 'free' || passActive();
+const freeN = () => { const n = parseInt(PUB.pfree, 10); return n >= 0 ? n : 3; };   // Admin → Settings → Free mocks per subject
+const pFree = e => e.a === 'free' || e.no <= freeN();
+const pOpen = e => pFree(e) || passActive();
+const freeTxt = () => freeN() === 1 ? 'Mock 1 FREE' : freeN() > 1 ? 'First ' + freeN() + ' mocks FREE' : 'FREE mocks';
 const pPct = r => r && r.t ? Math.max(0, Math.round(r.s / r.t * 100)) : 0;
 function pTabs(on) {
   return `<div class="mtabs"><button type="button" data-mt="tests" class="${on === 'live' ? 'on' : ''}">🔴 Live Mocks</button><button type="button" data-mt="practice" class="${on === 'practice' ? 'on' : ''}">📚 Practice Library</button></div>`;
@@ -761,7 +775,7 @@ async function practice(g, s) {
   const n = g => PIDX.filter(e => e.g === g).length;
   const recent = Object.entries(PSTATS).sort((a, b) => b[1].at - a[1].at).slice(0, 3);
   $('#pp').innerHTML = pTabs('practice') + `<div class="grp">${Object.keys(PG).map(k => `<button type="button" class="gc ${PG[k].c}" data-g="${k}"><span>${PG[k].e}</span><b>${PG[k].n}</b><small>${k === 'ca' ? caYears()[0] + ' · month-wise' : subjList(k).join(' · ')}</small><i>${n(k)} mocks</i></button>`).join('')}</div>
-    <div class="cont" style="margin-top:12px"><span>🎟</span><div style="flex:1">${passActive() ? '<b>Monthly Pass active</b> – all practice mocks are open for you ✓' : 'Every subject: <b>Mock 1 FREE</b>.<br>Monthly Pass → <b>all practice mocks</b> + Live mocks'}</div></div>
+    <div class="cont" style="margin-top:12px"><span>🎟</span><div style="flex:1">${passActive() ? '<b>Monthly Pass active</b> – all practice mocks are open for you ✓' : 'Every subject: <b>' + freeTxt() + '</b>.<br>Monthly Pass → <b>all practice mocks</b> + Live mocks'}</div></div>
     ${recent.length ? `<div class="sec">Recently practised</div>${recent.map(([id, r]) => { const e = PIDX.find(z => z.id === id); return e ? `<button type="button" class="subj" data-open="${esc(id)}"><div class="ic">${subjIc(e.g, e.s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(e.g, e.s))} · Mock ${e.no}</b><div class="tiny mut">${r.s}/${r.t} · ${pPct(r)}% · ${esc(agoTxt(r.at))}</div></div><div class="rt">Review ›</div></button>` : ''; }).join('')}` : ''}
     ${footHtml()}`;
   bindPTabs();
@@ -792,7 +806,7 @@ async function practiceSubject(g, s) {
   let lastCh = null;
   $('#pp').innerHTML = `<div class="card" style="display:flex;gap:10px;align-items:center"><span style="font-size:28px">${subjIc(g, s)}</span><div style="flex:1"><b style="font-size:17px">${esc(subjName(g, s))}</b><div class="tiny mut">${L.length} mocks · ${PG[g].n}</div></div><b>${done}/${L.length} ✓</b></div>
     ${L.map(e => { const r = PSTATS[e.id], open = pOpen(e), ch = e.ch && e.ch !== lastCh ? `<div class="sec" style="margin:12px 0 6px;font-size:14px">${esc(e.ch)}</div>` : ''; lastCh = e.ch || lastCh;
-      return ch + `<button type="button" class="mk ${r ? 'done' : open ? '' : 'lock'}" data-p="${esc(e.id)}"><div class="n">${r ? '✓' : open ? e.no : '🔒'}</div><div style="flex:1;text-align:left"><b>Mock ${e.no}</b> ${e.a === 'free' ? '<span class="chip c-free">FREE</span>' : ''}<div class="tiny mut">${r ? `Score ${r.s}/${r.t} · ${pPct(r)}%` : `${e.c} Q · ${e.d} min · −${e.n}`}</div></div><div class="r">${r ? 'Review ›' : open ? 'Start →' : '🎟'}</div></button>`; }).join('')
+      return ch + `<button type="button" class="mk ${r ? 'done' : open ? '' : 'lock'}" data-p="${esc(e.id)}"><div class="n">${r ? '✓' : open ? e.no : '🔒'}</div><div style="flex:1;text-align:left"><b>Mock ${e.no}</b> ${pFree(e) ? '<span class="chip c-free">FREE</span>' : ''}<div class="tiny mut">${r ? `Score ${r.s}/${r.t} · ${pPct(r)}%` : `${e.c} Q · ${e.d} min · −${e.n}`}</div></div><div class="r">${r ? 'Review ›' : open ? 'Start →' : '🎟'}</div></button>`; }).join('')
       || `<div class="empty"><div class="ic">🛠</div><b>Mocks coming soon</b><br><span class="small">New practice mocks are added every week.</span></div>`}
     ${footHtml()}`;
   $$('[data-p]').forEach(b => b.onclick = () => { const e = L.find(z => z.id === b.dataset.p); if (PSTATS[e.id]) return go('presult/' + e.id); if (!pOpen(e)) return pLocked(e); go('pstart/' + e.id); });
@@ -911,7 +925,7 @@ async function pResult(id, which) {
       <div class="small">${pct}% · ${secs != null ? Math.floor(secs / 60) + ' min · ' : ''}✅ ${r.cor} ❌ ${r.wrong} ⏭ ${r.skip} · Accuracy ${r.acc}%</div></div>
     <div class="pbtn"><button class="btn gh" type="button" id="pra">🔁 Re-attempt</button><button class="btn gh" type="button" id="prt">🏆 Top 10</button>${next ? `<button class="btn" type="button" id="prn">Next: Mock ${next.no} →</button>` : `<button class="btn" type="button" id="prb">More mocks →</button>`}</div>
     <div class="tabs" style="margin-top:12px">${[['all', 'All ' + paper.length], ['wrong', '❌ Wrong ' + r.wrong], ['skip', '⏭ Skipped ' + r.skip], ['right', '✅ Correct ' + r.cor]].map(([k, l]) => `<button type="button" data-f="${k}" class="${k === filt ? 'on' : ''}">${l}</button>`).join('')}</div>
-    <div id="rv" class="nocopy">${wmHtml()}</div>${footHtml()}`;
+    <div id="rv" class="nocopy"></div>${wmHtml()}${footHtml()}`;
   draw();
   $$('[data-f]').forEach(b => b.onclick = () => { filt = b.dataset.f; $$('[data-f]').forEach(z => z.classList.toggle('on', z === b)); draw(); });
   $('#pra').onclick = () => pStart(id, true);
@@ -938,13 +952,14 @@ async function pTop(id) {
 async function pResults() {
   await Promise.all([loadPIdx(), loadPStats()]);
   const E = Object.entries(PSTATS).map(([id, r]) => ({ id, r, e: PIDX.find(z => z.id === id) })).filter(o => o.e);
-  if (!E.length) return `<div class="empty"><div class="ic">📚</div><b>No practice yet</b><br><span class="small">Every subject has a FREE Mock 1 – start now!</span><br><br><button class="btn" type="button" data-go="practice">Open Practice Library →</button></div>`;
+  if (!E.length) return `<div class="empty"><div class="ic">📚</div><b>No practice yet</b><br><span class="small">Every subject: ${freeTxt()} – start now!</span><br><br><button class="btn" type="button" data-go="practice">Open Practice Library →</button></div>`;
   const tq = E.reduce((t, o) => t + o.e.c, 0), avg = Math.round(E.reduce((t, o) => t + pPct(o.r), 0) / E.length);
   const by = {}; E.forEach(o => { const k = o.e.g + '|' + o.e.s; (by[k] = by[k] || []).push(pPct(o.r)); });
   const subs = Object.entries(by).map(([k, v]) => { const [g, s] = k.split('|'); return { g, s, p: Math.round(v.reduce((a, b) => a + b, 0) / v.length), n: v.length }; }).sort((a, b) => b.p - a.p);
   const weak = subs.length > 1 ? subs[subs.length - 1] : null;
   return `<div class="stats"><div><b>${E.length}</b><small>Mocks done</small></div><div><b>${avg}%</b><small>Avg score</small></div><div><b>${tq}</b><small>Questions</small></div></div>
-    <div class="sec">Subject strength</div>${subs.map(o => `<div class="small" style="display:flex;justify-content:space-between"><span>${subjIc(o.g, o.s)} ${esc(subjName(o.g, o.s))} <span class="tiny mut">(${o.n})</span></span><b>${o.p}%</b></div><div class="prog2" style="width:100%;margin:4px 0 10px"><i style="width:${o.p}%;background:${o.p >= 70 ? 'var(--ok)' : o.p >= 45 ? 'var(--ink)' : 'var(--no)'}"></i></div>`).join('')}
+    ${E.length > 1 ? `<div class="gph"><b class="small">📈 Last ${Math.min(10, E.length)} practice mocks (%)</b>${lineSvg(E.slice().sort((a, b) => a.r.at - b.r.at).slice(-10).map((o, i) => ({ v: pPct(o.r), l: (o.e.s.slice(0, 4)) + o.e.no })), '#4F46E5')}</div>` : ''}
+    <div class="sec">📊 Subject-wise accuracy</div>${subs.map(o => `<div class="small" style="display:flex;justify-content:space-between"><span>${subjIc(o.g, o.s)} ${esc(subjName(o.g, o.s))} <span class="tiny mut">(${o.n})</span></span><b>${o.p}%</b></div><div class="prog2" style="width:100%;margin:4px 0 10px"><i style="width:${o.p}%;background:${o.p >= 70 ? 'var(--ok)' : o.p >= 45 ? 'var(--ink)' : 'var(--no)'}"></i></div>`).join('')}
     ${weak && weak.p < 60 ? `<div class="note">💡 Weak: <b>${esc(subjName(weak.g, weak.s))}</b> – practise it next.</div>` : ''}
     <div class="sec">Recent</div>${E.sort((a, b) => b.r.at - a.r.at).slice(0, 15).map(o => `<button type="button" class="subj" data-open="${esc(o.id)}"><div class="ic">${subjIc(o.e.g, o.e.s)}</div><div style="flex:1;text-align:left"><b>${esc(subjName(o.e.g, o.e.s))} · Mock ${o.e.no}</b><div class="tiny mut">${esc(agoTxt(o.r.at))}${o.r.tries ? ' · ' + o.r.tries + ' re-attempt' + (o.r.tries > 1 ? 's' : '') : ''}</div></div><div class="rt"><b>${o.r.s}/${o.r.t}</b></div></button>`).join('')}`;
 }
@@ -956,7 +971,7 @@ async function homePractice() {
   const E = Object.entries(PSTATS).sort((a, b) => b[1].at - a[1].at);
   let nx = null;
   if (E.length) { const last = PIDX.find(z => z.id === E[0][0]); if (last) nx = PIDX.filter(z => z.g === last.g && z.s === last.s && !PSTATS[z.id]).sort((a, b) => a.no - b.no)[0]; }
-  if (!nx) nx = PIDX.filter(z => z.a === 'free' && !PSTATS[z.id]).sort((a, b) => a.no - b.no)[0];
+  if (!nx) nx = PIDX.filter(z => pFree(z) && !PSTATS[z.id]).sort((a, b) => a.no - b.no)[0];
   const subj = {}; E.forEach(([id]) => { const z = PIDX.find(q => q.id === id); if (z) subj[z.g + '|' + z.s] = 1; });
   el.innerHTML = `${nx ? `<button type="button" class="cont" id="hpc" style="width:100%;margin-top:12px"><span style="font-size:22px">▶️</span><div style="flex:1;text-align:left">${E.length ? 'Continue practising' : 'Start practising – FREE'}<br><b>${esc(subjName(nx.g, nx.s))} · Mock ${nx.no}</b></div><span class="btn sm" style="box-shadow:none">${E.length ? 'Go' : 'Start'}</span></button>` : ''}
     ${Object.keys(subj).length ? `<div class="sec">📚 Your subjects <button type="button" data-go="practice">See all ›</button></div>` + Object.keys(subj).slice(0, 3).map(k => { const [g, s] = k.split('|'), L = PIDX.filter(z => z.g === g && z.s === s), d = L.filter(z => PSTATS[z.id]).length;
@@ -968,8 +983,7 @@ async function homePractice() {
 // 🔒 watermark: student name + masked mobile (screenshots can be traced)
 function wmHtml() {
   if (!PROFILE) return '';
-  const t = esc(PROFILE.name + ' · ' + String(PROFILE.mobile || '').replace(/^(\d{5})\d{3}(\d{2})$/, '$1•••$2'));
-  return `<div class="wm" aria-hidden="true">${Array(14).fill(`<span>${t}</span>`).join('')}</div>`;
+  return `<div class="wm2" aria-hidden="true">${esc(PROFILE.name)}${PROFILE.roll ? ' · ' + esc(PROFILE.roll) : ''}</div>`;
 }
 const blockCopy = e => { if (document.body.classList.contains('inexam') || (e.target && e.target.closest && e.target.closest('.nocopy'))) { e.preventDefault(); if (e.type === 'copy') toast('Copying questions is not allowed 🔒', 'info'); } };
 ['copy', 'cut', 'contextmenu', 'dragstart'].forEach(t => document.addEventListener(t, blockCopy));
@@ -988,11 +1002,11 @@ async function home() {
   try { await Promise.all([loadExams(), pubReady]); }
   catch (e) { $('#hm').innerHTML = `<div class="msg err">${esc(errText(e))}</div><button class="btn gh" style="margin-top:10px" type="button" onclick="location.reload()">↻ Retry</button>`; return; }
   renderHome();
-  if (USER) { homeStats(); if (PROFILE) loadNotes().then(celebrate); }
+  if (USER && PROFILE) loadNotes().then(celebrate);
 }
 function renderHome() {
   if (!$('#hm')) return;
-  const L = EXAMS.filter(catOk), live = L.filter(x => ['live', 'resume'].includes(st(x))), up = L.filter(x => st(x) === 'up');
+  const L = EXAMS, live = L.filter(x => ['live', 'resume'].includes(st(x))), up = L.filter(x => st(x) === 'up');
   const hero = live[0] || up[0];
   $('#hm').innerHTML = `
     ${BLOCKED ? '<div class="banner b">⛔ Your account is blocked. Please contact IQ FOR U.</div>' : ''}
@@ -1001,16 +1015,15 @@ function renderHome() {
         <h3>${esc(hero.title)}</h3><div class="m">${(hero.sections || []).map(esc).join(' · ') || ''}${(hero.sections || []).length ? ' · ' : ''}${hero.count} Q · ${hero.duration} min</div>
         <div class="r"><b style="font-size:13px">${live[0] ? 'Closes in ' + leftTxt(ms(hero.endAt) - now()) : 'Opens ' + esc(fmtDT(hero.startAt))}</b>
         ${live[0] ? `<button class="btn dk sm" type="button" id="hs">${st(hero) === 'resume' ? '↩ Resume' : 'Start Test →'}</button>` : `<button class="btn dk sm" type="button" id="hs">View →</button>`}</div></div>`
-      : `<div class="livec"><h3 style="margin-top:0">No live test right now</h3><div class="m">Next mock will be announced on Instagram${IG_HANDLE ? ' @' + esc(IG_HANDLE) : ''}.</div></div>`}
+      : ''}
     ${PUB.showRegCount && (PUB.regCount || 0) >= (PUB.regMin ?? 100) ? `<div class="regb">👥 <b>${regLabel(PUB.regCount)}</b> students registered</div>` : ''}
     ${stripsHtml()}
-    ${USER ? '<div class="stats" id="st"><div><b>–</b><small>Tests taken</small></div><div><b>–</b><small>Best score</small></div><div><b>–</b><small>Best rank</small></div></div>'
-      : `<div class="newc"><div class="e">🎓</div><div style="flex:1"><b>New here?</b><div class="small mut">Register free to write tests &amp; get your rank</div></div><button class="btn dk sm" id="hr" type="button">Register</button></div>`}
-    <div class="sec">Choose exam</div>${chipsHtml()}
+    ${USER ? '' : `<div class="newc"><div class="e">🎓</div><div style="flex:1"><b>New here?</b><div class="small mut">Register free to write tests &amp; get your rank</div></div><button class="btn dk sm" id="hr" type="button">Register</button></div>`}
+    <div style="height:12px"></div>
+    <button type="button" class="bigc lv" data-go="tests"><span class="bi">🔴</span><div class="in2"><h3>Live Mocks</h3><div class="m">${live.length ? '<b>' + live.length + ' live now</b> · ' : ''}${up.length ? up.length + ' upcoming' : hero ? 'Real exam screen · rank · merit list' : 'No live test now – next mock on Instagram' + (IG_HANDLE ? ' @' + esc(IG_HANDLE) : '')}</div></div><span class="go">Open ›</span></button>
+    <button type="button" class="bigc pr" data-go="practice"><span class="bi">📚</span><div class="in2"><h3>Practice Mocks</h3><div class="m" id="hpm">Subject-wise · ${esc(freeTxt())} in every subject</div></div><span class="go">Open ›</span></button>
     <div class="sec">Explore</div>
     <div class="tiles">
-      <button class="tl" type="button" data-go="tests"><span>📝</span>Mock Tests</button>
-      <button class="tl" type="button" data-go="practice"><span>📚</span>Practice Library</button>
       <button class="tl" type="button" data-go="results"><span>📊</span>Results</button>
       ${tileLink('pyq', '📄', 'PYQs')}
       ${tileLink('notes', '🛒', 'Buy Notes')}
@@ -1026,8 +1039,8 @@ function renderHome() {
     ${footHtml()}`;
   if ($('#hia')) $('#hia').onclick = installApp;
   if (USER && PROFILE) homePractice();
-  bindChips(renderHome);
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+  loadPIdx().then(() => { const n = (PIDX || []).length; if (n && $('#hpm')) $('#hpm').innerHTML = `<b>${n} mocks</b> · ${esc(freeTxt())} in every subject`; });
   $$('[data-soon]').forEach(b => b.onclick = () => toast(b.dataset.soon + ' – coming soon! 🚀', 'info'));
   if ($('#hr')) $('#hr').onclick = () => go('register');
   bindStrips();
@@ -1035,6 +1048,27 @@ function renderHome() {
 }
 const tileLink = (k, ic, label) => { const u = linkOf(k); return u ? `<a class="tl" href="${esc(u)}" target="_blank" rel="noopener"><span>${ic}</span>${label}</a>` : `<button class="tl" type="button" data-soon="${label}"><span>${ic}</span>${label}<em>SOON</em></button>`; };
 const maskMail = m => { const [a, b] = String(m || '').split('@'); return b ? a.slice(0, 2) + '•••••@' + b : m; };
+// 📈 small line graph (values in %), labels under the points
+function lineSvg(P, color) {
+  const W = 320, H = 130, l = 30, r = 10, t = 12, b = 26, n = P.length, X = i => l + (n === 1 ? (W - l - r) / 2 : i * (W - l - r) / (n - 1)), Y = v => t + (100 - Math.max(0, Math.min(100, v))) * (H - t - b) / 100;
+  const grid = [0, 50, 100].map(v => `<line x1="${l}" x2="${W - r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#E7E8EC"/><text x="${l - 5}" y="${Y(v) + 3}" text-anchor="end" font-size="9" fill="#6B7280">${v}%</text>`).join('');
+  const pts = P.map((p, i) => `${X(i)},${Y(p.v)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Progress graph">${grid}${n > 1 ? `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>` : ''}
+    ${P.map((p, i) => `<circle cx="${X(i)}" cy="${Y(p.v)}" r="4" fill="${color}"/><text x="${X(i)}" y="${Y(p.v) - 7}" text-anchor="middle" font-size="9" font-weight="700" fill="#111318">${Math.round(p.v)}</text><text x="${X(i)}" y="${H - 8}" text-anchor="middle" font-size="8.5" fill="#6B7280">${esc(p.l)}</text>`).join('')}</svg>`;
+}
+// 📊 Results → Live: tests taken · best score · best rank + score graph
+async function liveProgress() {
+  const done = EXAMS.filter(x => ATT[x.id] && st(x) !== 'resume').sort((a, b) => ms(a.startAt) - ms(b.startAt));
+  if (!done.length) return '';
+  let best = null, rank = null; const P = [];
+  await Promise.all(done.filter(resOpen).slice(-12).map(async x => {
+    if (!(x.id in MYR)) { try { const s = await getDoc(doc(db, 'myresults', x.id, 'u', USER.uid)); MYR[x.id] = s.exists() ? s.data() : null; } catch (e) { MYR[x.id] = null; } }
+  }));
+  done.filter(resOpen).slice(-12).forEach((x, i) => { const m = MYR[x.id]; if (!m) return;
+    const p = x.total ? m.score / x.total * 100 : 0; if (best === null || p > best) best = p; if (rank === null || m.rank < rank) rank = m.rank; P.push({ v: p, l: 'M' + (i + 1) }); });
+  return `<div class="stats" style="margin-top:0"><div><b>${done.length}</b><small>Tests taken</small></div><div><b>${best === null ? '–' : Math.round(best) + '%'}</b><small>Best score</small></div><div><b>${rank === null ? '–' : rankTxt(rank)}</b><small>Best rank</small></div></div>
+    ${P.length ? `<div class="gph"><b class="small">📈 My score in live mocks (%)</b>${lineSvg(P, '#111318')}</div>` : ''}<div style="height:12px"></div>`;
+}
 async function homeStats() {
   const done = EXAMS.filter(x => ATT[x.id] && st(x) !== 'resume');
   let best = null, rank = null;
@@ -1053,8 +1087,10 @@ async function tests() {
   try { await loadExams(); } catch (e) { $('#ts').innerHTML = `<div class="msg err">${esc(errText(e))}</div>`; return; }
   renderTests();
 }
+function catCount() { return new Set(EXAMS.map(x => x.category || 'Other').filter(c => c !== ALLX)).size; }
 function renderTests() {
   if (!$('#ts')) return;
+  const showCats = catCount() >= 2; if (!showCats) CAT = 'All';
   const L = EXAMS.filter(catOk);
   const G = { live: L.filter(x => ['live', 'resume'].includes(st(x))), up: L.filter(x => st(x) === 'up'), done: L.filter(x => ['subm', 'res', 'closed'].includes(st(x))).reverse() };
   const F0 = L.filter(x => !needsPass(x)), ord = { live: 0, resume: 0, up: 1, subm: 2, res: 2, closed: 2 };
@@ -1062,12 +1098,12 @@ function renderTests() {
   if (!TTAB) TTAB = G.live.length ? 'live' : G.up.length ? 'up' : 'done';
   const names = { live: 'Live', up: 'Upcoming', done: 'Completed', free: '🆓 Free' };
   $('#ts').innerHTML = pTabs('live') + `<div class="tabs">${Object.keys(G).map(k => `<button type="button" data-tt="${k}" class="${k === TTAB ? 'on' : ''}">${names[k]} (${G[k].length})</button>`).join('')}</div>
-    ${chipsHtml()}<div style="height:10px"></div>
+    ${showCats ? chipsHtml() : ''}<div style="height:10px"></div>
     ${G[TTAB].map(x => examCard(x)).join('') || `<div class="empty"><div class="ic">📭</div><b>No ${TTAB === 'free' ? 'free' : names[TTAB].toLowerCase()} tests${CAT !== 'All' ? ' in ' + esc(CAT) : ''}</b><br><span class="small">Follow us on Instagram for the next mock.</span></div>`}
     ${footHtml()}`;
   bindPTabs();
   $$('[data-tt]').forEach(b => b.onclick = () => { TTAB = b.dataset.tt; renderTests(); });
-  bindChips(renderTests); bindCards($('#ts'));
+  if (showCats) bindChips(renderTests); bindCards($('#ts'));
 }
 function freeTab() { TTAB = 'free'; $$('.ov').forEach(o => o.remove()); go('tests'); }
 window.__freeTab = freeTab;
@@ -1176,7 +1212,8 @@ function profileForm(p, btn) {
     <label class="l" for="pm">Mobile number</label><div class="mob"><b>+91</b><input class="inp" id="pm" type="tel" inputmode="numeric" maxlength="16" value="${esc(p.mobile || '')}"></div>
     <label class="l" for="ps">State</label><select class="inp" id="ps">${stateOpts(p.state || '')}</select>
     <label class="l">Gmail</label><input class="inp" value="${esc(USER.email || '')}" disabled style="background:#F3F4F6;color:var(--mut)">
-    <div class="note">🔒 Mobile &amp; Gmail are private. Only <b>name + state</b> show in the merit list.</div>
+    <label class="sw" style="margin-top:12px"><input type="checkbox" id="phn" ${p.hideName ? '' : 'checked'}> Show my name in merit lists &amp; Top 10</label>
+    <div class="note">🔒 Mobile &amp; Gmail are private. Merit list shows only <b>name + state</b>. Switch OFF → it shows <b>IQ Student 🔒</b> instead of your name (your rank stays the same).</div>
     <button class="btn dk block" id="pb" type="button" style="margin-top:14px">${btn}</button><div id="pmsg"></div>`;
 }
 function bindProfileForm(after) {
@@ -1190,9 +1227,9 @@ function bindProfileForm(after) {
     $('#pb').disabled = true;
     try {
       const ref = doc(db, 'users', USER.uid), cur = await getDoc(ref);
-      const d = { name, mobile, state, email: (USER.email || '').toLowerCase(), updatedAt: serverTimestamp() };
-      // registration time: new profile → now; existing profile → keep the same (never changes)
-      if (!cur.exists()) d.createdAt = serverTimestamp(); else if (cur.data().createdAt) d.createdAt = cur.data().createdAt;
+      const d = { name, mobile, state, email: (USER.email || '').toLowerCase(), updatedAt: serverTimestamp(), hideName: !$('#phn').checked };
+      // registration time: new profile → now; existing profile → keep the same (never changes). Roll number is kept as it is.
+      if (!cur.exists()) d.createdAt = serverTimestamp(); else { if (cur.data().createdAt) d.createdAt = cur.data().createdAt; if (cur.data().roll) d.roll = cur.data().roll; }
       await setDoc(ref, d); PROFILE = d; toast('Saved ✓', 'ok'); after();
     }
     catch (e) { $('#pb').disabled = false; err(esc(errText(e))); }
@@ -1210,7 +1247,7 @@ function profile() {
   topBack('My Profile', 'home'); $('#topin').innerHTML = `<div class="ttl" style="font-size:18px">My Profile</div>`;
   const pwd = isPwdUser(USER);
   shell(`<div class="pf"><div class="av">${esc((PROFILE.name || '?')[0].toUpperCase())}</div><div style="font-weight:800;font-size:17px;margin-top:8px">${esc(PROFILE.name)}</div>
-      <div class="small" style="color:#BFC3CC">${esc(PROFILE.state)} · +91 ${esc(PROFILE.mobile)}</div><div class="tiny" style="color:#BFC3CC">${esc(USER.email || '')}${pwd ? (USER.emailVerified ? ' · ✓ verified' : ' · not verified') : ''}</div></div>
+      <div class="small" style="color:#BFC3CC">${esc(PROFILE.state)} · +91 ${esc(PROFILE.mobile)}</div>${PROFILE.roll ? `<div style="margin-top:6px"><span class="chip" style="background:var(--y);color:var(--ink);font-weight:900">🎫 Roll No. ${esc(PROFILE.roll)}</span></div>` : '<div class="tiny" style="color:#BFC3CC;margin-top:4px">🎫 Roll number will be given in a few minutes</div>'}<div class="tiny" style="color:#BFC3CC">${esc(USER.email || '')}${pwd ? (USER.emailVerified ? ' · ✓ verified' : ' · not verified') : ''}</div></div>
     <div class="wrapw fade">
       ${pwd && !USER.emailVerified ? `<div class="banner v"><b>📧 Verify your Gmail (optional)</b><br><span class="small">We sent a link to <b>${esc(maskMail(USER.email))}</b>. Tapping it once helps you reset your password if you forget it. Tests work without it.</span>
         <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn gh sm" id="vr" type="button">Resend link</button><button class="btn gh sm" id="vd" type="button">I have verified ✓</button><button class="btn gh sm" id="vw" type="button">Wrong Gmail?</button></div></div>` : ''}
@@ -1232,7 +1269,7 @@ function profile() {
         <button type="button" data-go="page/privacy">🔒 Privacy Policy<span class="ar">›</span></button>
       </div>
       <button class="btn red block" id="lo" type="button">Logout</button>
-      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v5.0.1 · <a href="#/admin">Admin login</a></div>
+      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v5.1 · <a href="#/admin">Admin login</a></div>
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#pp').onclick = () => toast('Paid mocks & purchases – coming soon.', 'info');
@@ -1429,13 +1466,13 @@ function renderExam() {
       <div class="timer" id="tm">--:--</div><button class="sb" id="xs" type="button">${X.preview ? 'Close' : 'Submit'}</button></div>
       <div class="prog"><i style="width:${Math.round(answered / n * 100)}%"></i></div></div>
     ${X.secs.length > 1 ? `<div class="stabs">${X.secs.map(s => `<button type="button" data-sec="${esc(s)}" class="${s === q.sec ? 'on' : ''}">${esc(s)} ${secCount(s)}</button>`).join('')}</div>` : ''}
-    <div class="xmain"><div class="xq">${X.preview ? '' : wmHtml()}
+    <div class="xmain"><div class="xq">
       <div class="qh"><b>Question ${X.cur + 1} of ${n}</b><span>+${X.x.mark} / −${X.x.neg}${X.preview ? '' : ` · <button class="rep" id="rp" type="button">🚩 Report</button>`}</span></div>
       <p class="qt">${esc(q.q)}</p>
       <div class="opts2">${q.o.map((o, i) => { const L = 'ABCD'[i], c = 'ABCD'[q.om ? q.om[i] : i]; return `<button type="button" class="op ${a === c ? 'sel' : ''}" data-l="${c}"><i>${L}</i><span>${esc(o)}</span></button>`; }).join('')}</div>
       ${a ? '<button class="clr" id="cl" type="button">Clear response</button>' : ''}
       ${X.preview && X.key ? `<div class="msg ok">Correct answer: <b>${esc(showL(q, X.key[q.id]) || '?')}</b></div>` : ''}
-    </div><aside class="side" id="side">${palHtml()}</aside></div>
+    ${X.preview ? '' : wmHtml()}</div><aside class="side" id="side">${palHtml()}</aside></div>
     <div class="ab"><div class="in"><button type="button" id="pv" ${X.cur === 0 ? 'disabled' : ''}>‹ Prev</button><button type="button" class="mkb" id="mk">⚑ Mark &amp; Next</button><button type="button" class="palb" id="pl">⊞ ${n}</button><button type="button" class="nx" id="nx">${X.cur === n - 1 ? 'Save &amp; Finish' : 'Save &amp; Next ›'}</button></div></div>`;
   window.scrollTo(0, 0); tick();
   bindPal($('#side'));
@@ -1540,6 +1577,7 @@ async function results(id, mode) {
   const list = EXAMS.filter(x => now() > ms(x.startAt) && (ATT[x.id] || resOpen(x))).sort((a, b) => ms(b.startAt) - ms(a.startAt));
   if (!list.length) { $('#rs').innerHTML = `<div class="empty"><div class="ic">📊</div><b>No results yet</b><br><span class="small">Write a mock test — your score, rank and merit list will appear here.</span><br><br><button class="btn" type="button" onclick="location.hash='#/tests'">Go to Tests →</button></div>`; return; }
   if (!id || !list.find(x => x.id === id)) id = (list.find(x => ATT[x.id] && resOpen(x)) || list.find(resOpen) || list[0]).id;
+  if (!$('#rprog')) { const d = document.createElement('div'); d.id = 'rprog'; $('#rs').before(d); d.className = 'wrapw'; d.style.paddingTop = '0'; d.style.paddingBottom = '0'; liveProgress().then(h => { if ($('#rprog')) $('#rprog').innerHTML = h; }).catch(() => {}); }
   if (RS.id !== id) RS = { id, tab: 'score', R: null, M: null, filt: 'all' };
   const x = EXAMS.find(e => e.id === id);
   const sel = `<select class="inp" id="rsel" style="font-weight:700">${list.map(e => `<option value="${esc(e.id)}" ${e.id === id ? 'selected' : ''}>${esc(e.title)} · ${esc(fmtD(e.startAt))}</option>`).join('')}</select>`;
@@ -1580,13 +1618,13 @@ function rTab(x) {
     $('#dl').onclick = () => responseSheet(x); $('#sh').onclick = () => shareScore(x);
   } else if (RS.tab === 'merit') {
     const TOP = 50, L = (R.merit || []).slice(0, TOP);   // only the Top 50 are shown
-    const meIdx = M ? L.findIndex(e => e.r === M.rank && e.n === PROFILE.name) : -1;
+    const meIdx = M ? L.findIndex(e => e.r === M.rank && (e.k ? e.k === USER.uid.slice(0, 8) : e.n === PROFILE.name)) : -1;
     el.innerHTML = `${M ? `<div class="mine"><div class="rk">${rankTxt(M.rank, R)}</div><div class="small"><b>Your rank</b>${showN(R) ? ' out of ' + R.n : ''}${meIdx < 0 ? ' · not in Top ' + TOP + ' yet – keep practising! 💪' : ' · you are in the Top ' + TOP + ' 🎉'}<br>Score ${M.score} · Accuracy ${M.acc}%</div></div>` : ''}
       <div class="sec" style="margin-top:4px">🏆 Top ${TOP} merit list${showN(R) ? ` <span class="tiny mut">${R.n} students</span>` : ''}</div>
       <table class="mt"><tr><th>Rank</th><th>Name</th><th>State</th><th class="n">Score</th><th class="n">Acc.</th></tr>
       ${L.map((e, i) => `<tr class="${i === meIdx ? 'me' : ''}"><td>${e.r <= 3 ? ['🥇', '🥈', '🥉'][e.r - 1] + ' ' : ''}${e.r}</td><td>${esc(e.n)}${i === meIdx ? ' (You)' : ''}</td><td>${esc(e.st || '')}</td><td class="n">${e.s}</td><td class="n">${e.a === '–' ? '–' : e.a + '%'}</td></tr>`).join('')}
       ${M && meIdx < 0 ? `<tr><td colspan="5" class="center mut">• • •</td></tr><tr class="me"><td>${rankTxt(M.rank, R)}</td><td>${esc(PROFILE.name)} (You)</td><td>${esc(PROFILE.state || '')}</td><td class="n">${M.score}</td><td class="n">${M.acc}%</td></tr>` : ''}</table>
-      <div class="tiny mut" style="margin-top:8px">Ranking: higher <b>score</b> first. Same score → higher <b>accuracy</b> first.</div>`;
+      <div class="tiny mut" style="margin-top:8px">Ranking: higher <b>score</b> first. Same score → higher <b>accuracy</b> → <b>less time</b> first. 🔒 = student chose to hide the name.</div>`;
   } else {
     el.innerHTML = '<div class="card center mut">Loading questions…</div>';
     getPaper(x.id).then(P0 => {
@@ -1606,21 +1644,28 @@ function rTab(x) {
 }
 async function responseSheet(x) {
   let P; try { P = setPaper(x, await getPaper(x.id), examSet(x, USER.uid)); } catch (e) { return toast(errText(e), 'err'); }
-  const R = RS.R, M = RS.M, key = R.key || {}, my = M.answers || {}, can = R.cancelled || [];
-  const att = ATT[x.id] || {};
-  $('#print').innerHTML = `<div class="ph"><img src="logo.png" alt=""><div><div style="font-weight:900;font-size:18px">${esc(NAME)}</div><div style="color:#666">${esc(TAG)}</div></div><div class="tag">RESPONSE SHEET</div></div>
-    <table class="det" style="margin:8px 0"><tr><td style="color:#666">Name</td><td><b>${esc(PROFILE.name)}</b></td><td style="color:#666">State</td><td><b>${esc(PROFILE.state)}</b></td></tr>
-      <tr><td style="color:#666">Exam</td><td><b>${esc(x.title)}</b></td><td style="color:#666">Date</td><td><b>${esc(fmtD(att.startedAt || x.startAt))}</b></td></tr>
-      <tr><td style="color:#666">Category</td><td><b>${esc(x.category || '')}${setName(x, USER.uid) ? ' · ' + setName(x, USER.uid) : ''}</b></td><td style="color:#666">Time taken</td><td><b>${M.mins != null ? M.mins + ' min' : '–'}</b></td></tr></table>
-    <div class="cards"><div class="k"><b>${M.score}</b>Score / ${R.total}</div><div><b>${rankTxt(M.rank, R)}</b>Rank${showN(R) ? ' / ' + R.n : ''}</div><div><b>${M.acc}%</b>Accuracy</div><div><b>${M.cor} / ${M.wrong} / ${M.skip}</b>Correct / Wrong / Skipped</div></div>
+  printSheets([rsHtml({ x, P, R: RS.R, M: RS.M, p: PROFILE, uid: USER.uid, date: (ATT[x.id] || {}).startedAt || x.startAt })]);
+}
+// one response sheet page (student app + admin "print all")
+function rsHtml(o) {
+  const { x, P, R, M, p, uid } = o, key = R.key || {}, my = M.answers || {}, can = R.cancelled || [], showRank = o.rankTxt || rankTxt(M.rank, R);
+  return `<div class="pg"><div class="ph"><img src="logo.png" alt=""><div><div style="font-weight:900;font-size:18px">${esc(NAME)}</div><div style="color:#666">${esc(TAG)}</div></div><div class="tag">RESPONSE SHEET</div></div>
+    <table class="det" style="margin:8px 0"><tr><td style="color:#666">Name</td><td><b>${esc(p.name)}</b></td><td style="color:#666">State</td><td><b>${esc(p.state || '')}</b></td></tr>
+      ${p.roll ? `<tr><td style="color:#666">Roll No.</td><td><b>${esc(p.roll)}</b></td><td></td><td></td></tr>` : ''}
+      <tr><td style="color:#666">Exam</td><td><b>${esc(x.title)}</b></td><td style="color:#666">Date</td><td><b>${esc(fmtD(o.date || x.startAt))}</b></td></tr>
+      <tr><td style="color:#666">Category</td><td><b>${esc(x.category || '')}${setName(x, uid) ? ' · ' + setName(x, uid) : ''}</b></td><td style="color:#666">Time taken</td><td><b>${M.mins != null ? M.mins + ' min' : '–'}</b></td></tr></table>
+    <div class="cards"><div class="k"><b>${M.score}</b>Score / ${R.total}</div><div><b>${showRank}</b>Rank${showN(R) ? ' / ' + R.n : ''}</div><div><b>${M.acc}%</b>Accuracy</div><div><b>${M.cor} / ${M.wrong} / ${M.skip}</b>Correct / Wrong / Skipped</div></div>
     ${M.secs ? `<table class="qt2" style="margin-bottom:8px"><tr><th>Section</th><th>Correct</th><th>Wrong</th><th>Score</th></tr>${Object.keys(M.secs).map(k => `<tr><td>${esc(k)}</td><td>${M.secs[k].c}</td><td>${M.secs[k].w}</td><td>${M.secs[k].score} / ${M.secs[k].total}</td></tr>`).join('')}</table>` : ''}
     <table class="qt2"><tr><th style="width:28px">Q</th><th>Question</th><th style="width:44px">Yours</th><th style="width:50px">Correct</th><th style="width:34px">✓/✗</th></tr>
     ${P.map((q, i) => { const k = key[q.id], u = my[q.id], c = can.includes(q.id); const mk = c ? '<span>Bonus</span>' : !u ? '–' : u === k ? '<span class="g">✓</span>' : '<span class="r">✗</span>';
       return `<tr><td>${i + 1}</td><td>${esc(q.q)}<div style="color:#666;margin-top:2px">${q.o.map((o, j) => `(${'ABCD'[j]}) ${esc(o)}`).join(' &nbsp; ')}</div></td><td>${showL(q, u) || '–'}</td><td><b>${showL(q, k) || ''}</b></td><td>${mk}</td></tr>`; }).join('')}</table>
-    <div class="ft"><span>${IG_HANDLE ? '📷 @' + esc(IG_HANDLE) + ' · Instagram' : esc(NAME)}</span><span>Generated ${esc(new Date().toLocaleString('en-IN'))}</span></div>`;
+    <div class="ft"><span>${IG_HANDLE ? '📷 @' + esc(IG_HANDLE) + ' · Instagram' : esc(NAME)}</span><span>Generated ${esc(new Date().toLocaleString('en-IN'))}</span></div></div>`;
+}
+function printSheets(pages) {
+  $('#print').innerHTML = pages.join('');
   const img = $('#print img'); const doPrint = () => { document.body.classList.add('printing'); setTimeout(() => { window.print(); }, 50); };
   window.onafterprint = () => document.body.classList.remove('printing');
-  if (img.complete) doPrint(); else { img.onload = doPrint; img.onerror = doPrint; }
+  if (!img || img.complete) doPrint(); else { img.onload = doPrint; img.onerror = doPrint; }
 }
 async function shareScore(x) {
   const R = RS.R, M = RS.M, c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const g = c.getContext('2d');
@@ -1648,9 +1693,9 @@ async function openAdmin() {
   shell('<div class="wrapw"><div class="card center mut">Opening admin…</div></div>', null);
   topBack('Admin', 'home');
   try {
-    const m = await import('./admin.js?v=5');
+    const m = await import('./admin.js?v=51');
     m.openAdmin({ app, auth, db, $, $$, esc, ms, fmtDT, fmtD, r2, toast, sheet, confirmBox, errText, runExam, stopExam, go, CATS, NAME, IG_HANDLE, setPaper, examSet,
-      getUser: () => USER, setPub: p => { PUB = p; }, getPub: () => PUB });
+      rsHtml, printSheets, getUser: () => USER, setPub: p => { PUB = p; }, getPub: () => PUB });
   } catch (e) { $('#app').innerHTML = `<div class="wrapw"><div class="msg err">Could not open admin: ${esc(e.message || e)}<br>Is <b>admin.js</b> uploaded to GitHub?</div></div>`; }
 }
 </script>

@@ -10,7 +10,7 @@ import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, 
 
 let C, db, auth, $, $$, esc, ms, fmtDT, fmtD, r2, toast;
 let EX = [];
-let ROLE = 'owner';   // 'owner' (admin Gmail in Rules) or 'editor' (team member)
+let ROLE = 'owner', TEAMDOC = {};   // 'owner' (admin Gmail in Rules) or 'editor' (team member)
 // ---- phone Back button: every admin screen gets its own history step
 let POP = false, REPL = false, QE = null;
 const VIEWS = {};
@@ -66,7 +66,7 @@ function css() {
   .bar2 i{display:block;height:100%}
   .sw{display:flex;align-items:center;gap:10px;font-weight:700;margin-top:12px}
   .sw input{width:22px;height:22px}
-  .ast.six{grid-template-columns:repeat(3,1fr)} .ast .up{color:var(--ok)}
+  .ast.six{grid-template-columns:repeat(3,minmax(0,1fr))} .ast .up{color:var(--ok)} .ast button{font:inherit;color:inherit;cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;min-width:0} .ast button:active{background:var(--y2)} .ast small{overflow-wrap:anywhere}
   .at{grid-template-columns:repeat(3,1fr)} @media(min-width:700px){.at{grid-template-columns:repeat(6,1fr)}}
   .livepill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:#15803D;background:var(--ok2);border-radius:20px;padding:2px 9px}
   .livepill i{width:7px;height:7px;border-radius:50%;background:#16A34A;animation:pl 1.3s infinite}
@@ -122,7 +122,7 @@ async function gate() {
     try { const s = await getDoc(doc(db, 'settings', 'admin')); allowed = true; adminDoc = s.exists() ? s.data() : null; ROLE = 'owner'; }
     catch (e) {
       allowed = false;
-      try { const t = await getDoc(doc(db, 'team', (u.email || '').toLowerCase())); if (t.exists()) { allowed = true; ROLE = 'editor'; adminDoc = t.data().hash ? { hash: t.data().hash } : null; } } catch (e2) {}
+      try { const t = await getDoc(doc(db, 'team', (u.email || '').toLowerCase())); if (t.exists()) { allowed = true; ROLE = 'editor'; TEAMDOC = t.data(); adminDoc = t.data().hash ? { hash: t.data().hash } : null; } } catch (e2) {}
     }
   }
   if (!allowed) {
@@ -202,12 +202,21 @@ async function edDash() {
   try { await loadEx(); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
   page(`<div class="card small">👋 <b>${esc(auth.currentUser.email)}</b> · ✏️ Editor<br>You can add &amp; edit <b>draft</b> mocks. The owner checks and publishes them.</div>
     <div class="at" style="grid-template-columns:1fr 1fr"><button class="tl" type="button" data-a="new"><span>＋</span>New Live Mock</button><button class="tl" type="button" data-a="practice"><span>📚</span>Practice Library</button></div>
+    ${TEAMDOC.canPublish ? '<div class="card small">✅ The owner allowed you to <b>publish results</b>. The server calculates them – students\' mobile / Gmail stay hidden from you.</div>' : ''}
     <div class="sec">Live mocks (${EX.length})</div>
-    ${EX.map(x => `<div class="xc"><div style="display:flex;gap:5px;flex-wrap:wrap">${x.published ? '<span class="chip c-free">Published</span>' : '<span class="chip c-paid">Draft</span>'}<span class="chip c-cat">${esc(x.category || 'Other')}</span></div>
-      <h3>${esc(x.title)}</h3><div class="meta"><span>${x.count} Q · ${x.duration} min</span>${x.createdBy ? `<span>✏️ ${esc(x.createdBy)}</span>` : ''}</div>
+    ${EX.map(x => `<div class="xc"><div style="display:flex;gap:5px;flex-wrap:wrap">${x.published ? '<span class="chip c-free">Published</span>' : '<span class="chip c-paid">Draft</span>'}<span class="chip c-cat">${esc(x.category || 'Other')}</span>${x.resultsOut ? '<span class="chip c-free">RESULT OUT</span>' : ''}</div>
+      <h3>${esc(x.title)}</h3><div class="meta"><span>${x.count} Q · ${x.duration} min</span><span>📅 Result: ${x.resultAt ? esc(fmtDT(x.resultAt)) : 'not set'}</span>${x.createdBy ? `<span>✏️ ${esc(x.createdBy)}</span>` : ''}</div>
+      ${x.published && TEAMDOC.canPublish ? `<div class="acts"><button class="btn sm" type="button" data-cr="${esc(x.id)}" ${Date.now() < ms(x.endAt) ? 'disabled title="Mock is still open"' : ''}>🧮 Calculate &amp; Publish now</button>
+        <button class="btn ${x.autoCalc ? 'dk' : 'gh'} sm" type="button" data-ac="${esc(x.id)}">⏰ Publish on time: ${x.autoCalc ? 'ON' : 'OFF'}</button></div>
+        ${x.calcReq && !x.calcReq.done ? '<div class="tiny" style="color:var(--or);font-weight:700;margin-top:6px">⏳ Requested – the server publishes within ~5 minutes.</div>' : ''}` : ''}
       <div class="acts">${x.published ? '<span class="tiny mut">Published – only the owner can change it</span>' : `<button class="btn gh sm" type="button" data-edit="${esc(x.id)}">✏️ Edit draft</button>`}</div></div>`).join('') || '<div class="card mut">No mocks yet.</div>'}`);
   $$('[data-a]').forEach(b => b.onclick = () => b.dataset.a === 'new' ? editMock(null) : practiceAdmin());
   $$('[data-edit]').forEach(b => b.onclick = () => editMock(b.dataset.edit));
+  $$('[data-cr]').forEach(b => b.onclick = async () => { const x = EX.find(e => e.id === b.dataset.cr);
+    if (!await C.confirmBox(`<h3 style="margin:0 0 6px">Publish result of ${esc(x.title)}?</h3><p class="small">The server calculates ranks and opens the result for students within ~5 minutes, with a notification.</p>`, 'Publish')) return;
+    try { await updateDoc(doc(db, 'exams', x.id), { calcReq: { publish: true, by: auth.currentUser.email, at: Timestamp.now(), done: false } }); toast('✓ Requested – result in ~5 minutes', 'ok'); edDash(); } catch (e) { toast(errText(e), 'err'); } });
+  $$('[data-ac]').forEach(b => b.onclick = async () => { const x = EX.find(e => e.id === b.dataset.ac);
+    try { await updateDoc(doc(db, 'exams', x.id), { autoCalc: !x.autoCalc }); toast(!x.autoCalc ? '⏰ ON – result publishes automatically at the result time' : 'Auto publish OFF', 'ok'); edDash(); } catch (e) { toast(errText(e), 'err'); } });
 }
 async function dash() {
   mark('dash');
@@ -218,11 +227,12 @@ async function dash() {
   try { await loadEx(); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
   const live = EX.filter(x => x.published && Date.now() >= ms(x.startAt) && Date.now() <= ms(x.endAt));
   const latest = live[0] || EX.find(x => Date.now() >= ms(x.startAt));
-  const box = (id, l) => `<div id="${id}"><b>…</b><small>${l}</small></div>`;
+  const box = (id, l) => `<button type="button" id="${id}"><b>…</b><small>${l}</small></button>`;
   page(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b class="small">📈 Registrations</b><span class="livepill"><i></i>auto-updates every minute</span></div>
-    <div class="ast six">${box('k1', 'Students')}${box('k2', 'New today')}${box('k3', 'Last 7 days')}</div>
-    <div class="ast six" style="margin-top:8px"><div><b>${live.length}</b><small>Live mocks</small></div>${box('k4', 'Attempts' + (latest ? ' (latest)' : ''))}${box('k5', 'Attempted %')}</div>
-    ${latest ? `<div class="tiny mut" style="margin-top:4px">Latest mock: <b>${esc(latest.title)}</b> · <button class="link tiny" id="la" type="button">👥 Live attempts ›</button></div>` : ''}
+    <div class="ast six">${box('k1', 'Registered')}${box('k2', '🎟 Pass students')}${box('k3', 'Last 7 days')}</div>
+    <div class="ast six" style="margin-top:8px">${box('k6', '⏳ Pass ends in 3 days')}${box('k7', '📚 Practice today')}${box('k4', 'Latest mock')}</div>
+    ${latest ? `<div class="tiny mut" style="margin-top:4px">Latest mock: <b>${esc(latest.title)}</b>${live.length ? ` · <b style="color:var(--no)">${live.length} live now</b>` : ''} · <button class="link tiny" id="la" type="button">👥 Live attempts ›</button></div>` : ''}
+    <div class="tiny mut" style="margin-top:2px">Tap a box to see the students.</div>
     <div class="at">
       <button class="tl" type="button" data-a="new"><span>＋</span>New Mock</button>
       <button class="tl" type="button" data-a="practice"><span>📚</span>Practice<em id="pdc" class="hide">0</em></button>
@@ -255,23 +265,29 @@ async function dash() {
     if (!$('#k1')) return;
     try {
       const users = collection(db, 'users'), wk = dayStart(); wk.setDate(wk.getDate() - 6);
-      const [u, t, w, a, s] = await Promise.all([getCountFromServer(users),
-        getCountFromServer(query(users, where('createdAt', '>=', Timestamp.fromDate(dayStart())))),
+      const [u, ps, w, a, s, stt] = await Promise.all([getCountFromServer(users),
+        getDocs(collection(db, 'passes')),
         getCountFromServer(query(users, where('createdAt', '>=', Timestamp.fromDate(wk)))),
         latest ? getCountFromServer(collection(db, 'attempts', latest.id, 'u')) : null,
-        latest ? getCountFromServer(query(collection(db, 'attempts', latest.id, 'u'), where('submitted', '==', true))) : null]);
-      const N = u.data().count, A = a ? a.data().count : 0, S = s ? s.data().count : 0;
-      set('k1', N.toLocaleString('en-IN'), 'Students');
-      set('k2', '<span class="up">+' + t.data().count + '</span>', 'New today');
+        latest ? getCountFromServer(query(collection(db, 'attempts', latest.id, 'u'), where('submitted', '==', true))) : null,
+        getDoc(doc(db, 'settings', 'stats')).catch(() => null)]);
+      const N = u.data().count, A = a ? a.data().count : 0, S = s ? s.data().count : 0, PS = ps.docs.map(d => d.data());
+      const soon = PS.filter(p => passOn(p) && p.until != null && ms(p.until) - Date.now() < 3 * 86400000).length;
+      const today = new Date().toLocaleDateString('en-CA'), sd = stt && stt.exists() ? stt.data() : {};
+      set('k1', N.toLocaleString('en-IN'), 'Registered');
+      set('k2', PS.filter(passOn).length, '🎟 Pass students');
       set('k3', '<span class="up">+' + w.data().count + '</span>', 'Last 7 days');
-      set('k4', A + (A ? ` <span class="tiny mut">(${S} ✓)</span>` : ''), latest ? 'Started · ' + esc(latest.title.slice(0, 16)) : 'Attempts');
-      set('k5', N ? Math.round(A / N * 100) + '%' : '–', 'of students wrote it');
+      set('k6', soon ? `<span style="color:var(--or)">${soon}</span>` : '0', '⏳ Pass ends in 3 days');
+      set('k7', sd.pday === today ? sd.pcount || 0 : 0, '📚 Practice today');
+      set('k4', latest ? `${A}${N ? ` <span class="tiny mut">· ${Math.round(A / N * 100)}%</span>` : ''}` : '–', latest ? `wrote · ${S} submitted` : 'Latest mock');
       // keep the Home badge count fresh (written only when it changes)
       const p = C.getPub() || {};
       if (p.regCount !== N) { try { await savePub({ regCount: N }); } catch (e) {} }
     } catch (e) {}
   };
   refresh();
+  $('#k1').onclick = () => allStudents(); $('#k2').onclick = () => passesView('on'); $('#k3').onclick = () => allStudents('week');
+  $('#k6').onclick = () => passesView('soon'); $('#k7').onclick = () => practiceAdmin(); $('#k4').onclick = () => latest ? attempts(latest.id) : toast('No mock yet', 'info');
   const iv = setInterval(() => { if (!$('#k1')) return stopLive(); refresh(); }, 60000);
   UNSUB.push(() => clearInterval(iv));
 }
@@ -345,6 +361,8 @@ async function editMock(id, copy) {
     <div class="g2"><div><label class="l" for="sa">Opens</label><input class="inp" id="sa" type="datetime-local" value="${toLocal(sA)}"></div><div><label class="l" for="ea">Closes</label><input class="inp" id="ea" type="datetime-local" value="${toLocal(eA)}"></div></div>
     <div class="g3"><div><label class="l" for="du">Minutes</label><input class="inp" id="du" type="number" min="5" max="300" value="${x ? x.duration : 60}"></div><div><label class="l" for="mk">+ Mark</label><input class="inp" id="mk" type="number" step="0.25" min="0.25" value="${x ? x.mark : 1}"></div><div><label class="l" for="ng">− Neg</label><input class="inp" id="ng" type="number" step="0.05" min="0" value="${x ? x.neg : 0.25}"></div></div>
     <label class="l" for="ra">Result date &amp; time</label><input class="inp" id="ra" type="datetime-local" value="${toLocal(rA)}" style="background:var(--y2)">
+    <label class="sw"><input type="checkbox" id="aco" ${!x || x.autoCalc ? 'checked' : ''}> ⏰ Calculate &amp; publish the result <b>automatically</b> at this time</label>
+    <div class="tiny mut">The server (Apps Script) does it within ~5 minutes after the result time and sends the “Result out” notification. You can still calculate yourself any time.</div>
     <div><label class="l" for="ac">Who can write this mock?</label><select class="inp" id="ac" style="font-weight:700"><option value="free" ${x && needsPass(x) ? '' : 'selected'}>🆓 Free for all</option><option value="pass" ${x && needsPass(x) ? 'selected' : ''}>🎟 Monthly Pass required</option></select></div>
     <div class="g2"><div><label class="l" for="qset">Question paper sets</label><select class="inp" id="qset"><option value="1">Only 1 set (same order for all)</option><option value="2" ${x && x.sets === 2 ? 'selected' : ''}>2 sets – A, B</option><option value="4" ${x && x.sets === 4 ? 'selected' : ''}>4 sets – A, B, C, D</option></select></div>
       <div><label class="l">&nbsp;</label><label class="sw" style="margin-top:0"><input type="checkbox" id="qso" ${x && x.shuffleOpts ? 'checked' : ''}> Also mix options (A–D)</label></div></div>
@@ -397,7 +415,7 @@ async function editMock(id, copy) {
       b.set(doc(db, 'exams', eid), { title, desc: $('#de').value.trim(), category: $('#ca').value, startAt: Timestamp.fromDate(sa), endAt: Timestamp.fromDate(ea), resultAt: Timestamp.fromDate(ra),
         duration, mark, neg, price, access, count: qs.length, total: r2(qs.length * mark), sections: secs, secs: secs.map(s => ({ name: s, count: cnt[s] })), cancelled: [...new Set(can)],
         published: $('#pb').checked, resultsOut: id ? !!x.resultsOut : false, resultsHold: id ? !!x.resultsHold : false, calcAt: id && x.calcAt ? x.calcAt : null, updatedAt: serverTimestamp(),
-        sets: +$('#qset').value > 1 ? +$('#qset').value : 1, shuffleOpts: +$('#qset').value > 1 && $('#qso').checked,
+        sets: +$('#qset').value > 1 ? +$('#qset').value : 1, shuffleOpts: +$('#qset').value > 1 && $('#qso').checked, autoCalc: $('#aco').checked,
         notifiedAt: id && x.notifiedAt ? x.notifiedAt : null, liveNote: id && x.liveNote ? x.liveNote : null, resultNote: id && x.resultNote ? x.resultNote : null,
         createdBy: x && x.createdBy && !copy ? x.createdBy : (ROLE === 'owner' ? '' : auth.currentUser.email) });
       b.set(doc(db, 'exams', eid, 'paper', 'main'), { questions: paper });
@@ -624,6 +642,7 @@ function importButtons(preview) {
   const box = $('#qs');
   const take = async (list, from) => {
     if (!list.length) { C.sheet(`<h3 style="margin:0 0 6px">No questions found</h3><p class="small">Could not find questions in this ${from}.</p><div class="note">Works best when questions look like <b>1. Question…</b> with options <b>(a) (b) (c) (d)</b> or <b>A. B. C. D.</b>, and answers as <b>Ans: b</b> or an answer key like <b>1-b, 2-c</b>.${from === 'PDF' ? ' Scanned (photo) PDFs have no text – they cannot be read.' : ''}</div><button class="btn gh block" style="margin-top:10px" type="button" onclick="this.closest('.ov').remove()">OK</button>`); return; }
+    if (list.length > 100 && $('#pno')) return C.sheet(`<h3 style="margin:0 0 6px">${list.length} questions found</h3><p class="small">One practice mock should have 30 / 50 / 100 questions. To split this into many mocks automatically, go back and use <b>🗂 Question Bank</b> → <b>📄 PDF file</b>.</p><button class="btn dk block" type="button" onclick="this.closest('.ov').remove()">OK</button>`);
     const old = tsvModel(box.value), mode = await addOrReplace(list.length, old.length); if (!mode) return;
     const L = mode === 'add' ? old.concat(list) : list;
     const bad = list.filter(q => problems(q).length).length;
@@ -788,25 +807,77 @@ async function resultsPage(id) {
         <button class="btn gh" id="co" type="button">🧮 Calculate only (opens at result time)</button>
         ${R ? `<button class="btn ${x.resultsHold ? 'dk' : 'red'}" id="hd" type="button">${x.resultsHold ? '📢 Un-hide results' : '🙈 Hide results'}</button><button class="btn gh" id="csv" type="button">⬇ Download Excel (CSV)</button><button class="btn dk" id="t10" type="button">🏆 Top 10 image</button><button class="btn" id="wa" type="button" style="background:#25D366;color:#fff;border-color:#128C7E">💬 WhatsApp message</button>` : ''}
       </div><div id="rm"></div>
+      <label class="sw"><input type="checkbox" id="aut" ${x.autoCalc ? 'checked' : ''}> ⏰ Publish on time – the server calculates &amp; publishes automatically at the result time</label>
+      ${x.calcReq && !x.calcReq.done ? `<div class="tiny" style="color:var(--or);font-weight:700">⏳ ${esc(x.calcReq.by || 'Team')} asked the server to publish – within ~5 minutes.</div>` : ''}
+      ${R ? '<button class="btn dk block" id="rsa" type="button" style="margin-top:8px">📄 Response sheets – view · print · download (all students)</button>' : ''}
       <div class="tiny mut" style="margin-top:8px">Fixed an answer key or cancelled a question? Just calculate again – ranks update.</div></div>
     ${R ? `<p class="small mut">Calculated ${esc(fmtDT(R.calcAt))} · Participants <b>${R.n}</b> · Highest ${R.high} · Average ${R.avg}</p>
-      <div class="tbl"><table><tr><th>Rank</th><th>Name</th>${x.sets > 1 ? '<th>Set</th>' : ''}<th>State</th><th>Mobile</th><th>Gmail</th>${(R.sections || []).map(s => `<th class="n">${esc(s)}</th>`).join('')}<th class="n">Score</th><th class="n">Acc.</th><th class="n">✓</th><th class="n">✗</th><th class="n">Min</th></tr>
-      ${(R.all || []).map(t => `<tr><td>${t.rank}</td><td><b>${esc(t.name)}</b>${t.submitted ? '' : ' <span class="chip c-paid">auto</span>'}</td>${x.sets > 1 ? `<td>${esc(t.set || '')}</td>` : ''}<td>${esc(t.state || '')}</td><td>${esc(t.mobile || '')}</td><td>${esc(t.email || '')}</td>
+      <div class="tbl"><table><tr><th>Rank</th><th>Roll No.</th><th>Name</th>${x.sets > 1 ? '<th>Set</th>' : ''}<th>State</th><th>Mobile</th><th>Gmail</th>${(R.sections || []).map(s => `<th class="n">${esc(s)}</th>`).join('')}<th class="n">Score</th><th class="n">Acc.</th><th class="n">✓</th><th class="n">✗</th><th class="n">Min</th></tr>
+      ${(R.all || []).map(t => `<tr><td>${t.rank}</td><td style="white-space:nowrap">${esc(t.roll || '')}</td><td><b>${esc(t.name)}</b>${t.submitted ? '' : ' <span class="chip c-paid">auto</span>'}</td>${x.sets > 1 ? `<td>${esc(t.set || '')}</td>` : ''}<td>${esc(t.state || '')}</td><td>${esc(t.mobile || '')}</td><td>${esc(t.email || '')}</td>
         ${(R.sections || []).map(s => `<td class="n">${t.secs && t.secs[s] ? t.secs[s].score : '–'}</td>`).join('')}<td class="n"><b>${t.score}</b></td><td class="n">${t.acc}%</td><td class="n">${t.cor}</td><td class="n">${t.wrong}</td><td class="n">${t.mins}</td></tr>`).join('')}</table></div>` : '<p class="mut">Not calculated yet.</p>'}`);
   $('#cp').onclick = () => calculate(x, true);
   $('#co').onclick = () => calculate(x, false);
+  $('#aut').onchange = async e => { try { await updateDoc(doc(db, 'exams', id), { autoCalc: e.target.checked }); x.autoCalc = e.target.checked; toast(e.target.checked ? '⏰ Auto publish ON' : 'Auto publish OFF', 'ok'); } catch (er) { e.target.checked = !e.target.checked; toast(errText(er), 'err'); } };
+  if ($('#rsa')) $('#rsa').onclick = () => responseSheets(x);
   if ($('#hd')) $('#hd').onclick = async () => { try { const h = !x.resultsHold; await updateDoc(doc(db, 'exams', id), h ? { resultsHold: true, resultsOut: false } : { resultsHold: false }); x.resultsHold = h; if (h) x.resultsOut = false; replace(() => resultsPage(id)); } catch (e) { toast(errText(e), 'err'); } };
   if ($('#t10')) $('#t10').onclick = () => top10Image(x, R);
   if ($('#wa')) $('#wa').onclick = () => { const t = waText(x, R); window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank'); };
   if ($('#csv')) $('#csv').onclick = () => {
     const secs = R.sections || [];
-    csv((x.title.replace(/[^\w]+/g, '_') || 'results') + '.csv', [['Rank', 'Name', 'Set', 'State', 'Mobile', 'Gmail', ...secs, 'Score', 'Accuracy %', 'Correct', 'Wrong', 'Not answered', 'Minutes', 'Submitted']]
-      .concat((R.all || []).map(t => [t.rank, t.name, t.set || '', t.state || '', t.mobile || '', t.email || '', ...secs.map(s => t.secs && t.secs[s] ? t.secs[s].score : ''), t.score, t.acc, t.cor, t.wrong, t.skip, t.mins, t.submitted ? 'Yes' : 'Auto'])));
+    csv((x.title.replace(/[^\w]+/g, '_') || 'results') + '.csv', [['Rank', 'Roll No.', 'Name', 'Set', 'State', 'Mobile', 'Gmail', ...secs, 'Score', 'Accuracy %', 'Correct', 'Wrong', 'Not answered', 'Minutes', 'Submitted']]
+      .concat((R.all || []).map(t => [t.rank, t.roll || '', t.name, t.set || '', t.state || '', t.mobile || '', t.email || '', ...secs.map(s => t.secs && t.secs[s] ? t.secs[s].score : ''), t.score, t.acc, t.cor, t.wrong, t.skip, t.mins, t.submitted ? 'Yes' : 'Auto'])));
   };
+}
+// 📄 Response sheets of all students (owner only): view one, or print / save all as one PDF (one page per student)
+async function responseSheets(x) {
+  const o = C.sheet('<div class="center mut">Loading answer sheets…</div>');
+  let L = [];
+  try {
+    const [rs, ps, my, at] = await Promise.all([getDoc(doc(db, 'results', x.id)), getDoc(doc(db, 'exams', x.id, 'paper', 'main')), getDocs(collection(db, 'myresults', x.id, 'u')), getDocs(collection(db, 'attempts', x.id, 'u'))]);
+    if (!rs.exists()) { o.remove(); return toast('Calculate the result first.', 'info'); }
+    const R = rs.data(), qs = ps.data().questions, A = Object.fromEntries(at.docs.map(d => [d.id, d.data()]));
+    const ar = (await getDoc(doc(db, 'adminresults', x.id))).data() || {}, byUid = Object.fromEntries((ar.all || []).filter(t => t.uid).map(t => [t.uid, t]));
+    L = my.docs.map(d => { const M = d.data(), a = A[d.id] || {}, t = byUid[d.id] || {}; return { uid: d.id, M: Object.assign({}, M, { rank: t.rank || M.rank }), p: { name: a.name || t.name || '', state: a.state || t.state || '', roll: t.roll || '' }, date: a.startedAt }; })
+      .sort((a, b) => a.M.rank - b.M.rank);
+    const page1 = s => C.rsHtml({ x, P: C.setPaper(x, qs, C.examSet(x, s.uid)), R, M: s.M, p: s.p, uid: s.uid, date: s.date, rankTxt: '#' + s.M.rank });
+    o.querySelector('.sheet').innerHTML = `<h3 style="margin:0 0 4px">📄 Response sheets · ${esc(x.title)}</h3><div class="small mut">${L.length} students · rank order. Print → choose <b>Save as PDF</b> to download.</div>
+      <button class="btn dk block" id="pall" type="button" style="margin:10px 0">🖨 Print / PDF – all ${L.length} students</button>
+      <div style="max-height:55vh;overflow:auto">${L.map((s, i) => `<div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:7px 0"><b style="width:38px">#${s.M.rank}</b><div style="flex:1;min-width:0"><b>${esc(s.p.name)}</b><div class="tiny mut">${esc(s.p.roll || '')} · ${s.M.score} marks</div></div><button class="btn gh sm" type="button" data-one="${i}">📄 View / Print</button></div>`).join('') || '<div class="mut">No students.</div>'}</div>`;
+    o.querySelector('#pall').onclick = () => { o.remove(); C.printSheets(L.map(page1)); };
+    o.querySelectorAll('[data-one]').forEach(b => b.onclick = () => { o.remove(); C.printSheets([page1(L[+b.dataset.one])]); });
+  } catch (e) { o.remove(); toast(errText(e), 'err'); }
 }
 function csv(name, lines) {
   const s = '﻿' + lines.map(r => r.map(v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',')).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s], { type: 'text/csv' })); a.download = name; a.click();
+}
+// ---- result calculation core (same code runs in the Apps Script for "Publish on time")
+// atts: [{ uid, a: { name, state, answers, submitted, startedAt, savedAt, submittedAt (ms numbers) } }], prof: { uid: user profile }
+function calcCore(X2, key, qs, atts, prof) {
+  const can = X2.cancelled || [], mark = X2.mark, neg = X2.neg, rr = v => Math.round(v * 100) / 100;
+  const secs = []; qs.forEach(q => { if (!secs.includes(q.sec)) secs.push(q.sec); });
+  const QS = {}; qs.forEach(q => QS[q.id] = { A: 0, B: 0, C: 0, D: 0, s: 0, c: 0 });
+  const rows = atts.map(({ uid, a }) => {
+    const ans = a.answers || {}; let cor = 0, wrong = 0, bonus = 0; const S = {};
+    secs.forEach(s => S[s] = { c: 0, w: 0, n: 0, b: 0 });
+    qs.forEach(q => {
+      const s = S[q.sec], u = ans[q.id]; s.n++;
+      if (u) QS[q.id][u] = (QS[q.id][u] || 0) + 1; else QS[q.id].s++;
+      if (u && u === key[q.id]) QS[q.id].c++;
+      if (can.includes(q.id)) { bonus += mark; s.b += mark; return; }
+      if (!u) return; if (u === key[q.id]) { cor++; s.c++; } else { wrong++; s.w++; }
+    });
+    const SS = {}; secs.forEach(k => { const s = S[k]; SS[k] = { c: s.c, w: s.w, score: rr(s.c * mark - s.w * neg + s.b), total: rr(s.n * mark) }; });
+    const end = a.submittedAt ? a.submittedAt : Math.min(a.savedAt, a.startedAt + X2.duration * 60000);
+    const p = prof[uid] || {}, att = cor + wrong, secsUsed = Math.max(0, Math.round((end - a.startedAt) / 1000));
+    return { uid, name: a.name, state: a.state || '', email: p.email || '', mobile: p.mobile || '', roll: p.roll || '', hide: !!p.hideName, submitted: !!a.submitted,
+      cor, wrong, skip: qs.length - can.length - att, bonus: rr(bonus), score: rr(cor * mark - wrong * neg + bonus), acc: att ? Math.round(cor / att * 1000) / 10 : 0,
+      secs: SS, answers: ans, mins: Math.round(secsUsed / 60), tsec: secsUsed };
+  }).sort((a, b) => b.score - a.score || b.acc - a.acc || a.tsec - b.tsec);   // same score → accuracy → less time
+  rows.forEach((r, i) => { const p = rows[i - 1]; r.rank = i > 0 && r.score === p.score && r.acc === p.acc && r.tsec === p.tsec ? p.rank : i + 1; });
+  const n = rows.length, high = n ? rows[0].score : 0, avg = n ? rr(rows.reduce((s, r) => s + r.score, 0) / n) : 0;
+  const merit = rows.slice(0, 50).map(r => ({ r: r.rank, n: r.hide ? 'IQ Student 🔒' : r.name, st: r.state, s: r.score, a: r.acc, k: r.uid.slice(0, 8) }));
+  return { rows, secs, QS, n, high, avg, merit };
 }
 async function calculate(x, publish) {
   const m = $('#rm'); msg(m, 'Calculating… please wait, do not close this page.', 'info'); $$('#cp,#co').forEach(b => b.disabled = true);
@@ -816,27 +887,8 @@ async function calculate(x, publish) {
     // profiles (mobile, Gmail) only for students who attempted
     const prof = {}, uids = as.docs.map(d => d.id);
     for (let i = 0; i < uids.length; i += 50) await Promise.all(uids.slice(i, i + 50).map(async u => { try { const s = await getDoc(doc(db, 'users', u)); prof[u] = s.exists() ? s.data() : {}; } catch (e) { prof[u] = {}; } }));
-    const secs = []; qs.forEach(q => { if (!secs.includes(q.sec)) secs.push(q.sec); });
-    const QS = {}; qs.forEach(q => QS[q.id] = { A: 0, B: 0, C: 0, D: 0, s: 0, c: 0 });
-    const rows = as.docs.map(d => {
-      const a = d.data(), ans = a.answers || {}; let cor = 0, wrong = 0, bonus = 0; const S = {};
-      secs.forEach(s => S[s] = { c: 0, w: 0, n: 0, b: 0 });
-      qs.forEach(q => {
-        const s = S[q.sec], u = ans[q.id]; s.n++;
-        if (u) QS[q.id][u] = (QS[q.id][u] || 0) + 1; else QS[q.id].s++;
-        if (u && u === key[q.id]) QS[q.id].c++;
-        if (can.includes(q.id)) { bonus += mark; s.b += mark; return; }
-        if (!u) return; if (u === key[q.id]) { cor++; s.c++; } else { wrong++; s.w++; }
-      });
-      const SS = {}; secs.forEach(k => { const s = S[k]; SS[k] = { c: s.c, w: s.w, score: r2(s.c * mark - s.w * neg + s.b), total: r2(s.n * mark) }; });
-      const end = a.submittedAt ? ms(a.submittedAt) : Math.min(ms(a.savedAt), ms(a.startedAt) + X2.duration * 60000);
-      const p = prof[d.id] || {}, att = cor + wrong;
-      return { uid: d.id, name: a.name, state: a.state || '', email: p.email || '', mobile: p.mobile || '', submitted: !!a.submitted,
-        cor, wrong, skip: qs.length - can.length - att, bonus: r2(bonus), score: r2(cor * mark - wrong * neg + bonus), acc: att ? Math.round(cor / att * 1000) / 10 : 0,
-        secs: SS, answers: ans, mins: Math.max(0, Math.round((end - ms(a.startedAt)) / 60000)) };
-    }).sort((a, b) => b.score - a.score || b.acc - a.acc);
-    rows.forEach((r, i) => r.rank = i > 0 && r.score === rows[i - 1].score && r.acc === rows[i - 1].acc ? rows[i - 1].rank : i + 1);
-    const n = rows.length, high = n ? rows[0].score : 0, avg = n ? r2(rows.reduce((s, r) => s + r.score, 0) / n) : 0;
+    const atts = as.docs.map(d => { const a = d.data(); return { uid: d.id, a: Object.assign({}, a, { startedAt: ms(a.startedAt), savedAt: ms(a.savedAt), submittedAt: a.submittedAt ? ms(a.submittedAt) : 0 }) }; });
+    const { rows, secs, QS, n, high, avg, merit } = calcCore(X2, key, qs, atts, prof);
     // students see only the Top 50 + their own rank. Total count & ranks above 100 stay hidden unless "Show total participants" is ON.
     const showTotal = !!(await readPub()).showTotal, nPub = showTotal ? { n } : {};
     for (let i = 0; i < rows.length; i += 400) {
@@ -847,10 +899,10 @@ async function calculate(x, publish) {
       msg(m, `Calculating… ${Math.min(i + 400, rows.length)} / ${rows.length} students saved`, 'info');
     }
     await setDoc(doc(db, 'results', x.id), { title: X2.title, total: X2.total, ...nPub, high, avg, sections: secs, key, cancelled: can, calcAt: serverTimestamp(),
-      merit: rows.slice(0, 50).map(r => ({ r: r.rank, n: r.name, st: r.state, s: r.score, a: r.acc })) });
+      merit });
     await setDoc(doc(db, 'adminresults', x.id), { title: X2.title, total: X2.total, n, high, avg, sections: secs, calcAt: serverTimestamp(),
       qstats: qs.map(q => Object.assign({ id: q.id }, QS[q.id])),
-      all: rows.map(r => ({ set: (X2.sets || 1) > 1 ? 'ABCD'[C.examSet({ id: x.id, sets: X2.sets }, r.uid)] : '', rank: r.rank, name: r.name, state: r.state, email: r.email, mobile: r.mobile, score: r.score, acc: r.acc, cor: r.cor, wrong: r.wrong, skip: r.skip, mins: r.mins, submitted: r.submitted,
+      all: rows.map(r => ({ uid: r.uid, roll: r.roll, set: (X2.sets || 1) > 1 ? 'ABCD'[C.examSet({ id: x.id, sets: X2.sets }, r.uid)] : '', rank: r.rank, name: r.name, state: r.state, email: r.email, mobile: r.mobile, score: r.score, acc: r.acc, cor: r.cor, wrong: r.wrong, skip: r.skip, mins: r.mins, submitted: r.submitted,
         secs: Object.fromEntries(secs.map(s => [s, { score: r.secs[s].score }])) })) });
     await updateDoc(doc(db, 'exams', x.id), publish ? { calcAt: serverTimestamp(), resultsOut: true, resultsHold: false } : { calcAt: serverTimestamp() });
     // 🔔 "Result out" – only to students who wrote this mock; at the result time (or now when publishing)
@@ -895,13 +947,14 @@ async function students() {
   getCountFromServer(collection(db, 'users')).then(c => { N = c.data().count; if ($('#cnt')) $('#cnt').textContent = `${N.toLocaleString('en-IN')} students · opens full list with Excel & Print (uses ${N.toLocaleString('en-IN')} reads of your free 50,000/day)`; }).catch(() => {});
   $('#all').onclick = allStudents;
 }
-async function allStudents() {
-  mark('allStudents');
+async function allStudents(per0) {
+  mark('allStudents', [per0]);
   top('All students', students); loading('Loading all students…');
   let L = [];
   try { L = (await getDocs(collection(db, 'users'))).docs.map(d => ({ uid: d.id, ...d.data() })); }
   catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
-  let F = L, st = 'All', per = 'all', sort = 'new';
+  try { const n = await assignRolls(L); if (n) toast(`🎫 Roll numbers given to ${n} student(s)`, 'ok'); } catch (e) {}
+  let F = L, st = 'All', per = per0 || 'all', sort = 'new';
   const states = ['All', ...[...new Set(L.map(u => u.state || '—'))].sort()];
   const jt = u => u.createdAt ? fmtJ(u.createdAt) : '—';
   const t0 = dayStart().getTime(), w0 = t0 - 6 * 86400000;
@@ -909,35 +962,46 @@ async function allStudents() {
   const draw = () => {
     const q = ($('#fq') ? $('#fq').value : '').trim().toLowerCase();
     F = L.filter(u => (st === 'All' || (u.state || '—') === st) && (per === 'all' || ms(u.createdAt) >= (per === 'today' ? t0 : w0))
-      && (!q || [u.name, u.mobile, u.email, u.state].some(v => String(v || '').toLowerCase().includes(q))));
+      && (!q || [u.name, u.mobile, u.email, u.state, u.roll].some(v => String(v || '').toLowerCase().includes(q))));
     // newest first (students who joined before the joined-time update have no time → at the end)
     F.sort(sort === 'name' ? (a, b) => String(a.name || '').localeCompare(String(b.name || '')) : (a, b) => ms(b.createdAt) - ms(a.createdAt) || ms(b.updatedAt) - ms(a.updatedAt));
-    $('#tb').innerHTML = F.map((u, i) => `<tr data-u="${esc(u.uid)}" style="cursor:pointer"><td>${i + 1}</td><td><b>${esc(u.name || '')}</b></td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td style="white-space:nowrap">${esc(jt(u))}</td></tr>`).join('') || '<tr><td colspan="6" class="mut">No students.</td></tr>';
+    $('#tb').innerHTML = F.map((u, i) => `<tr data-u="${esc(u.uid)}" style="cursor:pointer"><td>${i + 1}</td><td style="white-space:nowrap">${esc(u.roll || '—')}</td><td><b>${esc(u.name || '')}</b>${u.hideName ? ' 🔒' : ''}</td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td style="white-space:nowrap">${esc(jt(u))}</td></tr>`).join('') || '<tr><td colspan="7" class="mut">No students.</td></tr>';
     $('#fc').textContent = `${F.length} of ${L.length} students`;
     $$('[data-u]').forEach(r => r.onclick = () => student(r.dataset.u));
   };
   page(`<div class="ast"><div><b>${L.length.toLocaleString('en-IN')}</b><small>Total</small></div><div><b class="up">+${nT}</b><small>Joined today</small></div><div><b class="up">+${nW}</b><small>Last 7 days</small></div></div>
-    <div class="card" style="margin-top:10px"><input class="inp" id="fq" placeholder="🔍 Filter by any part of name / mobile / Gmail">
+    <div class="card" style="margin-top:10px"><input class="inp" id="fq" placeholder="🔍 Filter by name / mobile / Gmail / roll no.">
       <div class="g3" style="margin-top:8px"><select class="inp" id="fs">${states.map(s => `<option>${esc(s)}</option>`).join('')}</select>
-        <select class="inp" id="fp"><option value="all">Joined: any time</option><option value="today">Joined today</option><option value="week">Last 7 days</option></select>
+        <select class="inp" id="fp"><option value="all">Joined: any time</option><option value="today" ${per === 'today' ? 'selected' : ''}>Joined today</option><option value="week" ${per === 'week' ? 'selected' : ''}>Last 7 days</option></select>
         <select class="inp" id="fo"><option value="new">Newest first</option><option value="name">Name A–Z</option></select></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px"><b id="fc" class="small" style="flex:1"></b>
       <button class="btn gh sm" id="xl" type="button">⬇ Excel (CSV)</button><button class="btn dk sm" id="pr" type="button">🖨 Print / PDF</button></div>
       <div class="tiny mut" style="margin-top:6px">🔒 This list has mobile numbers &amp; Gmails – keep the Excel / PDF private. Tap a student to Give Pass / Reset / Block. “—” = joined before join-time was recorded.</div></div>
-    <div class="tbl"><table><tr><th>#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Joined</th></tr><tbody id="tb"></tbody></table></div>`);
+    <div class="tbl"><table><tr><th>#</th><th>Roll No.</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Joined</th></tr><tbody id="tb"></tbody></table></div>`);
   $('#fq').oninput = draw; $('#fs').onchange = e => { st = e.target.value; draw(); }; $('#fp').onchange = e => { per = e.target.value; draw(); }; $('#fo').onchange = e => { sort = e.target.value; draw(); };
   draw();
-  $('#xl').onclick = () => csv('IQFORU_students.csv', [['#', 'Name', 'State', 'Mobile', 'Gmail', 'Joined', 'Updated']].concat(F.map((u, i) => [i + 1, u.name || '', u.state || u.district || '', u.mobile || '', u.email || '', jt(u), u.updatedAt ? fmtJ(u.updatedAt) : ''])));
+  $('#xl').onclick = () => csv('IQFORU_students.csv', [['#', 'Roll No.', 'Name', 'State', 'Mobile', 'Gmail', 'Joined', 'Updated']].concat(F.map((u, i) => [i + 1, u.roll || '', u.name || '', u.state || u.district || '', u.mobile || '', u.email || '', jt(u), u.updatedAt ? fmtJ(u.updatedAt) : ''])));
   $('#pr').onclick = () => {
     const P = document.getElementById('print');
     P.innerHTML = `<div class="ph"><img src="logo.png" alt=""><div><div style="font-weight:900;font-size:18px">IQ FOR U</div><div style="color:#666">Registered students${st !== 'All' ? ' · ' + esc(st) : ''}${per !== 'all' ? ' · ' + (per === 'today' ? 'joined today' : 'last 7 days') : ''}</div></div><div class="tag">${F.length} STUDENTS</div></div>
-      <table class="qt2" style="margin-top:10px"><tr><th style="width:30px">#</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Joined</th></tr>
-      ${F.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.name || '')}</td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td>${esc(jt(u))}</td></tr>`).join('')}</table>
+      <table class="qt2" style="margin-top:10px"><tr><th style="width:30px">#</th><th>Roll No.</th><th>Name</th><th>State</th><th>Mobile</th><th>Gmail</th><th>Joined</th></tr>
+      ${F.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.roll || '')}</td><td>${esc(u.name || '')}</td><td>${esc(u.state || u.district || '')}</td><td>${esc(u.mobile || '')}</td><td>${esc(u.email || '')}</td><td>${esc(jt(u))}</td></tr>`).join('')}</table>
       <div class="ft"><span>Private – admin only</span><span>Printed ${esc(new Date().toLocaleString('en-IN'))}</span></div>`;
     window.onafterprint = () => document.body.classList.remove('printing');
     const img = P.querySelector('img'), go = () => { document.body.classList.add('printing'); setTimeout(() => window.print(), 50); };
     if (img.complete) go(); else { img.onload = go; img.onerror = go; }
   };
+}
+// 🎫 Roll numbers IQ26-0001 … in joining order. Never changed once given. (The Apps Script also gives them to new students every 5 min.)
+const rollOf = (n, t) => 'IQ' + String(new Date(t || Date.now()).getFullYear()).slice(2) + '-' + String(n).padStart(4, '0');
+async function assignRolls(L) {
+  const need = L.filter(u => !u.roll && u.name); if (!need.length) return 0;
+  const c = await getDoc(doc(db, 'settings', 'rollctr')), C0 = c.exists() ? c.data() : {};
+  let n = Math.max(C0.n || 0, ...L.map(u => parseInt(String(u.roll || '').split('-')[1], 10) || 0));
+  need.sort((a, b) => (ms(a.createdAt) || 0) - (ms(b.createdAt) || 0) || a.uid.localeCompare(b.uid));
+  for (let i = 0; i < need.length; i += 400) { const b = writeBatch(db); need.slice(i, i + 400).forEach(u => { u.roll = rollOf(++n, ms(u.createdAt) || Date.now()); b.update(doc(db, 'users', u.uid), { roll: u.roll }); }); await b.commit(); }
+  await setDoc(doc(db, 'settings', 'rollctr'), { n, lastAt: Math.max(C0.lastAt || 0, ...L.map(u => ms(u.createdAt) || 0)) });
+  return need.length;
 }
 async function student(uid) {
   mark('student', [uid]);
@@ -957,7 +1021,8 @@ async function student(uid) {
   rows.sort((p, q) => ms(q.x.startAt) - ms(p.x.startAt));
   page(`<div class="card"><div style="display:flex;gap:10px;align-items:center"><div style="width:44px;height:44px;border-radius:50%;background:var(--y);border:1.5px solid var(--ink);display:grid;place-items:center;font-weight:900;font-size:18px">${esc((u.name || '?')[0].toUpperCase())}</div>
       <div><b style="font-size:16px">${esc(u.name)}</b><div class="tiny mut">${esc(u.state)} · joined ${esc(fmtJ(u.createdAt))}${u.updatedAt ? ' · updated ' + esc(fmtD(u.updatedAt)) : ''}</div></div>${blocked ? '<span class="chip c-live" style="margin-left:auto">BLOCKED</span>' : '<span class="chip c-free" style="margin-left:auto">Active</span>'}</div>
-      <div class="small" style="margin-top:10px;line-height:1.7">📱 ${esc(u.mobile || '')}<br>✉ ${esc(u.email || '')}</div></div>
+      <div class="small" style="margin-top:10px;line-height:1.7">🎫 Roll No. <b>${esc(u.roll || '—')}</b><br>📱 ${esc(u.mobile || '')}<br>✉ ${esc(u.email || '')}</div>
+      <label class="sw"><input type="checkbox" id="hn" ${u.hideName ? 'checked' : ''}> 🔒 Hide name in merit lists / Top 10 (shows “IQ Student 🔒”)</label></div>
     <div class="card" style="${passOn(pass) ? 'border:1.5px solid var(--ink);background:var(--y2)' : ''}"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>🎟 Monthly Pass</b><div class="small">${passTxt(pass)}</div>${pass && pass.note ? `<div class="tiny mut">Note: ${esc(pass.note)}</div>` : ''}</div>
       <button class="btn dk sm" id="gp" type="button">🎁 ${passOn(pass) ? 'Extend pass' : 'Give Pass'}</button>${pass ? '<button class="btn red sm" id="rp" type="button">Remove pass</button>' : ''}</div></div>
     <div class="tbl"><table><tr><th>Mock</th><th>Status</th><th class="n">Score</th><th class="n">Rank</th><th></th></tr>
@@ -965,6 +1030,7 @@ async function student(uid) {
     <button class="btn ${blocked ? 'dk' : 'red'} block" id="bl" type="button" style="margin-top:12px">${blocked ? '✅ Unblock student' : '⛔ Block student'}</button>`);
   $$('[data-rs]').forEach(b => b.onclick = async () => { if (!await C.confirmBox('<h3 style="margin:0">Reset this attempt?</h3><p class="small">The student can write this mock again.</p>', 'Reset')) return; try { await resetAttempt(b.dataset.rs, uid); toast('Reset ✓', 'ok'); replace(() => student(uid)); } catch (e) { toast(errText(e), 'err'); } });
   $('#gp').onclick = () => givePass(uid, u, pass);
+  $('#hn').onchange = async e => { try { await updateDoc(doc(db, 'users', uid), { hideName: e.target.checked }); toast(e.target.checked ? 'Name hidden ✓ – applies from the next Calculate' : 'Name visible ✓', 'ok'); } catch (er) { e.target.checked = !e.target.checked; toast(errText(er), 'err'); } };
   if ($('#rp')) $('#rp').onclick = async () => { if (!await C.confirmBox(`<h3 style="margin:0">Remove ${esc(u.name)}'s pass?</h3><p class="small">🎟 Pass mocks will be locked for this student again.</p>`, 'Remove')) return;
     try { await deleteDoc(doc(db, 'passes', uid)); toast('Pass removed', 'ok'); replace(() => student(uid)); } catch (e) { toast(errText(e), 'err'); } };
   $('#bl').onclick = async () => {
@@ -1002,18 +1068,20 @@ function givePass(uid, u, cur) {
     } catch (e) { o.querySelector('#gk').disabled = false; toast(errText(e), 'err'); }
   };
 }
-async function passesView() {
-  mark('passes');
-  top('Monthly Pass students', dash); loading();
+async function passesView(f) {
+  mark('passes', [f]);
+  top(f === 'soon' ? '⏳ Pass ends in 3 days' : f === 'on' ? '🎟 Active pass students' : 'Monthly Pass students', dash); loading();
   let P = [];
   try { P = (await getDocs(collection(db, 'passes'))).docs.map(d => ({ uid: d.id, ...d.data() })); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
+  if (f === 'on') P = P.filter(passOn); else if (f === 'soon') P = P.filter(p => passOn(p) && p.until != null && ms(p.until) - Date.now() < 3 * 86400000);
   P.sort((a, b) => (passOn(b) - passOn(a)) || (b.until == null) - (a.until == null) || ms(a.until) - ms(b.until));
   const act = P.filter(passOn).length, soon = P.filter(p => passOn(p) && p.until != null && ms(p.until) - Date.now() < 7 * 86400000).length;
   page(`<div class="ast"><div><b>${act}</b><small>Active passes</small></div><div><b style="color:var(--or)">${soon}</b><small>Expire in 7 days</small></div><div><b>${P.length - act}</b><small>Expired</small></div></div>
+    ${f ? '<div class="card small" style="margin-top:10px">Showing: <b>' + (f === 'soon' ? 'passes ending in the next 3 days – remind them on WhatsApp to renew' : 'active passes only') + '</b> · <button class="link small" id="pa" type="button">Show all passes</button></div>' : ''}
     <div class="card small" style="margin-top:10px">To give a pass: <b>Students</b> → search the student → <b>🎁 Give Pass</b>. Online pass payment (Razorpay) comes later. <button class="btn dk sm" id="ps" type="button" style="margin-left:6px">👥 Students</button></div>
     <div class="tbl"><table><tr><th>Name</th><th>Mobile</th><th>Gmail</th><th>Status</th><th>Note</th></tr>
       ${P.map(p => `<tr data-u="${esc(p.uid)}" style="cursor:pointer"><td><b>${esc(p.name || '')}</b></td><td>${esc(p.mobile || '')}</td><td>${esc(p.email || '')}</td><td style="white-space:nowrap">${passTxt(p)}</td><td>${esc(p.note || '')}</td></tr>`).join('') || '<tr><td colspan="5" class="mut">No passes given yet.</td></tr>'}</table></div>`);
-  $('#ps').onclick = students;
+  $('#ps').onclick = students; if ($('#pa')) $('#pa').onclick = () => passesView();
   $$('[data-u]').forEach(r => r.onclick = () => student(r.dataset.u));
 }
 
@@ -1105,14 +1173,16 @@ async function top10Image(x, R) {
 }
 
 // ------------------------------------------------------------------ 📚 PRACTICE LIBRARY (admin)
-const PG = { gs: { n: 'General Studies', e: '📚' }, sci: { n: 'General Science', e: '🔬' }, apt: { n: 'Aptitude', e: '🧮' }, ca: { n: 'Current Affairs', e: '📰' } };
-const DEF_SUBJ = { gs: ['History', 'Geography', 'Polity', 'Economics', 'Art & Culture', 'EVS'], sci: ['Physics', 'Chemistry', 'Biology'], apt: ['Maths', 'Reasoning', 'Computer'] };
+const PG = { gs: { n: 'General Studies', e: '📚' }, sci: { n: 'General Science', e: '🔬' }, apt: { n: 'Aptitude', e: '🧮' }, ca: { n: 'Current Affairs', e: '📰' }, mix: { n: 'Combined Mocks', e: '🎯' } };
+const DEF_SUBJ = { gs: ['History', 'Geography', 'Polity', 'Economics', 'Art & Culture', 'EVS'], sci: ['Physics', 'Chemistry', 'Biology'], apt: ['Maths', 'Reasoning', 'Computer'], mix: ['OSSSC Full Mock', 'SSC Full Mock', 'Railway Full Mock'] };
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const pSubjects = (g, P) => g === 'ca' ? [] : ((P.psubj && P.psubj[g] && P.psubj[g].length) ? P.psubj[g] : DEF_SUBJ[g]);
 const pYears = P => (P.cayears && P.cayears.length ? P.cayears : [2026]).map(Number).sort((a, b) => b - a);
 const pName = (g, s) => g === 'ca' ? (MONTHS[+s.split('-')[1] - 1] || s) + ' ' + s.split('-')[0] : s;
 const defMin = n => n <= 30 ? 20 : n <= 50 ? 30 : n <= 100 ? 60 : Math.round(n * 0.6);
 const owner = () => ROLE === 'owner';
+const pFreeN = P => { const n = parseInt(P.pfree, 10); return n >= 0 ? n : 3; };   // ⚙️ Settings → Free mocks per subject (default 3)
+const isFreeP = (x, P) => x.access === 'free' || x.no <= pFreeN(P);
 // published practice mocks are listed in settings/pindex (students read the whole library with ONE read)
 const pEntry = (id, d) => ({ id, g: d.g, s: d.s, no: d.no, ch: d.ch || '', c: d.count, d: d.duration, m: d.mark, n: d.neg, a: d.access, t: d.title });
 async function pIndexPatch(changes) {   // changes: { id: data | null }
@@ -1135,11 +1205,11 @@ async function practiceAdmin(g) {
   try { L = (await getDocs(query(collection(db, 'pexams'), where('g', '==', g)))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
   const subs = g === 'ca' ? pYears(P).flatMap(y => MONTHS.map((m, i) => y + '-' + String(i + 1).padStart(2, '0'))) : pSubjects(g, P);
   page(`<div class="tabs">${Object.keys(PG).map(k => `<button type="button" data-g="${k}" class="${k === g ? 'on' : ''}">${PG[k].e} ${PG[k].n}</button>`).join('')}</div>
-    <div class="card small">Each subject: <b>Mock 1 = FREE</b>, others need the Monthly Pass. ${owner() ? 'Drafts from your team wait here until you <b>Publish</b>.' : 'You save mocks as <b>Draft</b>; the owner checks and publishes.'}
+    <div class="card small">Each subject: <b>${pFreeN(P) === 1 ? 'Mock 1' : 'first ' + pFreeN(P) + ' mocks'} = FREE</b> (change in ⚙️ Settings), others need the Monthly Pass. ${owner() ? 'Drafts from your team wait here until you <b>Publish</b>.' : 'You save mocks as <b>Draft</b>; the owner checks and publishes.'}
       ${owner() ? '<button class="link tiny" id="rbi" type="button" style="margin-left:6px">🔄 Repair student list</button>' : ''}</div>
     ${subs.map(s => { const M = L.filter(x => x.s === s), pub = M.filter(x => x.published).length, dr = M.length - pub;
       return `<button type="button" class="xc" data-s="${esc(s)}" style="width:100%;text-align:left;display:flex;align-items:center;gap:10px"><b style="flex:1">${esc(pName(g, s))}</b><span class="tiny mut">${pub} published${dr ? ` · <b style="color:var(--or)">${dr} draft</b>` : ''}</span><span>›</span></button>`; }).join('')}
-    ${g !== 'ca' && owner() ? '<div class="tiny mut" style="margin-top:6px">Change subject names in ⚙️ Settings → 📚 Practice subjects.</div>' : ''}`);
+    ${g !== 'ca' && owner() ? '<div class="tiny mut" style="margin-top:6px">＋ Add subjects in ⚙️ Settings → 📚 Practice subjects.</div>' : ''}`);
   $$('[data-g]').forEach(b => b.onclick = () => replace(() => practiceAdmin(b.dataset.g)));
   $$('[data-s]').forEach(b => b.onclick = () => practiceSubject(g, b.dataset.s));
   if ($('#rbi')) $('#rbi').onclick = async () => { try { const n = await pIndexRebuild(); toast(`✓ Student list rebuilt – ${n} published mocks`, 'ok'); } catch (e) { toast(errText(e), 'err'); } };
@@ -1150,10 +1220,10 @@ async function practiceSubject(g, s) {
   let L = [];
   try { L = (await getDocs(query(collection(db, 'pexams'), where('g', '==', g), where('s', '==', s)))).docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.no - b.no); }
   catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
-  const next = (L.reduce((m, x) => Math.max(m, x.no), 0) || 0) + 1;
+  const next = (L.reduce((m, x) => Math.max(m, x.no), 0) || 0) + 1, P = await readPub();
   page(`<div class="impb" style="grid-template-columns:repeat(3,1fr)"><button class="btn dk sm" id="pn" type="button">＋ New mock</button><button class="btn gh sm" id="pbx" type="button">📊 Bulk Excel</button><button class="btn gh sm" id="pqb" type="button">🗂 Question Bank</button></div>
     ${L.map(x => `<div class="xc"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><b>Mock ${x.no}</b>${x.ch ? `<span class="tiny mut">${esc(x.ch)}</span>` : ''}
-        ${x.access === 'free' ? '<span class="chip c-free">FREE</span>' : '<span class="chip c-pass">🎟 PASS</span>'}${x.published ? '<span class="chip c-free">Published</span>' : '<span class="chip c-paid">Draft</span>'}</div>
+        ${isFreeP(x, P) ? '<span class="chip c-free">FREE</span>' : '<span class="chip c-pass">🎟 PASS</span>'}${x.published ? '<span class="chip c-free">Published</span>' : '<span class="chip c-paid">Draft</span>'}</div>
       <div class="meta"><span>${x.count} Q · ${x.duration} min · +${x.mark} / −${x.neg}</span>${x.createdBy ? `<span>✏️ ${esc(x.createdBy)}</span>` : ''}</div>
       <div class="acts"><button class="btn gh sm" type="button" data-pe="${esc(x.id)}">✏️ Edit</button><button class="btn gh sm" type="button" data-pv="${esc(x.id)}">👁 Preview</button>
         ${owner() ? `<button class="btn ${x.published ? 'gh' : ''} sm" type="button" data-pp="${esc(x.id)}">${x.published ? 'Hide' : '✅ Publish'}</button><button class="btn red sm" type="button" data-pd="${esc(x.id)}">🗑</button>` : ''}</div></div>`).join('') || '<div class="card mut">No mocks yet. Tap <b>＋ New mock</b>, <b>📊 Bulk Excel</b> or <b>🗂 Question Bank</b>.</div>'}
@@ -1193,7 +1263,7 @@ async function pEdit(id, x) {
     tsv = toTSV(p.exists() ? p.data().questions : [], k.exists() ? k.data().ans : {}, k.exists() ? k.data().exp || {} : {}); } catch (e) { toast(errText(e), 'err'); } }
   page(`<div class="card"><div class="g3"><div><label class="l" for="pno">Mock No.</label><input class="inp" id="pno" type="number" min="1" value="${x.no || 1}"></div><div style="grid-column:span 2"><label class="l" for="pch">Chapter (optional)</label><input class="inp" id="pch" maxlength="40" value="${esc(x.ch || '')}" placeholder="Ancient India"></div></div>
     <div class="g3"><div><label class="l" for="du">Minutes</label><input class="inp" id="du" type="number" min="5" max="300" value="${x.duration || ''}" placeholder="auto"></div><div><label class="l" for="mk">+ Mark</label><input class="inp" id="mk" type="number" step="0.25" min="0.25" value="${x.mark || 1}"></div><div><label class="l" for="ng">− Neg</label><input class="inp" id="ng" type="number" step="0.05" min="0" value="${x.neg ?? 0.25}"></div></div>
-    <label class="l" for="ac">Access</label><select class="inp" id="ac"><option value="free" ${(x.access || (x.no === 1 ? 'free' : 'pass')) === 'free' ? 'selected' : ''}>🆓 Free (usually Mock 1)</option><option value="pass" ${(x.access || (x.no === 1 ? 'free' : 'pass')) === 'pass' ? 'selected' : ''}>🎟 Monthly Pass</option></select>
+    <label class="l" for="ac">Access</label><select class="inp" id="ac"><option value="pass" ${x.access !== 'free' ? 'selected' : ''}>Automatic – first mocks free, others 🎟 Pass (⚙️ Settings)</option><option value="free" ${x.access === 'free' ? 'selected' : ''}>🆓 Always FREE (any mock number)</option></select>
     <label class="l">Add questions (30 / 50 / 100 – any number)</label>
     <div class="impb"><button class="btn gh sm" type="button" id="ipdf">📄 Import PDF</button><button class="btn gh sm" type="button" id="ixl">📊 Import Excel</button><button class="btn gh sm" type="button" id="itx">📋 Paste text</button><button class="btn sm" type="button" id="ied">👁 Preview &amp; edit</button></div>
     <input type="file" id="fpdf" accept="application/pdf,.pdf" class="hide"><input type="file" id="fxl" accept=".xlsx,.xls,.csv" class="hide">
@@ -1208,6 +1278,7 @@ async function pEdit(id, x) {
     const { qs, errs } = preview(), m = $('#sm'), no = parseInt($('#pno').value, 10), mark2 = Number($('#mk').value), neg = Number($('#ng').value);
     if (!(no >= 1)) return msg(m, 'Mock No. must be 1 or more.');
     if (!qs.length || errs.length) return msg(m, 'Fix the questions first (see the red box).');
+    if (qs.length > 100) return msg(m, `A practice mock can have at most <b>100</b> questions (now ${qs.length}). To split many questions into mocks, go back and use <b>🗂 Question Bank</b>.`);
     if (!(mark2 > 0) || neg < 0) return msg(m, 'Check + Mark and − Neg.');
     const duration = parseInt($('#du').value, 10) || defMin(qs.length), pubd = owner() ? $('#pb').checked : false, nid = id || pid(x.g, x.s, no);
     const meta = { title: pName(x.g, x.s) + ' · Mock ' + no, g: x.g, s: x.s, no, ch: $('#pch').value.trim(), duration, mark: mark2, neg, access: $('#ac').value, published: pubd, createdBy: x.createdBy || auth.currentUser.email };
@@ -1255,7 +1326,7 @@ function pBulk(g, s, L) {
       bt.disabled = true; const neg = Number(o.querySelector('#bxn').value) || 0, dm = parseInt(o.querySelector('#bxd').value, 10), pub = owner() && o.querySelector('#bxp') && o.querySelector('#bxp').checked, idx = {};
       try { let b = writeBatch(db), n = 0;
         for (const no of nos) { if (clash.includes(no)) continue; const qs = by[no], id = pid(g, s, no);
-          idx[id] = pWrite(b, id, { title: pName(g, s) + ' · Mock ' + no, g, s, no, ch: qs[0].ch, duration: dm || defMin(qs.length), mark: 1, neg, access: no === 1 ? 'free' : 'pass', published: pub, createdBy: auth.currentUser.email }, qs);
+          idx[id] = pWrite(b, id, { title: pName(g, s) + ' · Mock ' + no, g, s, no, ch: qs[0].ch, duration: dm || defMin(qs.length), mark: 1, neg, access: 'pass', published: pub, createdBy: auth.currentUser.email }, qs);
           if (++n % 120 === 0) { await b.commit(); b = writeBatch(db); } }
         await b.commit(); if (pub) await pIndexPatch(idx);
         o.remove(); toast(`✓ ${Object.keys(idx).length} mocks created${pub ? ' & published' : ' as drafts'}`, 'ok'); replace(() => practiceSubject(g, s)); }
@@ -1265,11 +1336,21 @@ function pBulk(g, s, L) {
 }
 // 🗂 Question Bank: all questions of a subject once → app makes 30 / 50 / 100 Q mocks (duplicates removed)
 const normQ = t => String(t || '').toLowerCase().replace(/[^a-z0-9ऀ-෿]+/g, ' ').trim();
+// read questions → Excel (Section | Topic | Question | A–D | Answer | Explanation) so the admin can fix answers and upload again
+async function bankXlsx(list, name) {
+  try { const X = await loadLib(LIBS.xlsx);
+    const aoa = [['Section', 'Topic', 'Question', 'A', 'B', 'C', 'D', 'Answer', 'Explanation', 'Problem']].concat(list.map(q => { const o = fix4(q.o); return [q.sec || name, q.topic || '', q.q || '', o[0], o[1], o[2], o[3], q.ans || '', q.exp || '', problems(q).join(', ')]; }));
+    const wb = X.utils.book_new(), ws = X.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 60 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 8 }, { wch: 30 }, { wch: 28 }];
+    X.utils.book_append_sheet(wb, ws, 'Questions'); X.writeFile(wb, 'IQFORU_' + String(name).replace(/\W+/g, '_') + '_questions.xlsx');
+    toast('Excel downloaded ✓ Fill the empty Answer cells, delete the Problem column if you like, then choose it with 📊 Excel file.', 'ok'); }
+  catch (e) { toast(e.message || String(e), 'err'); }
+}
 function pBank(g, s, L) {
   const nextNo = (L.reduce((m, x) => Math.max(m, x.no), 0) || 0) + 1;
-  const o = C.sheet(`<h3 style="margin:0 0 4px">🗂 Question Bank · ${esc(pName(g, s))}</h3><div class="small mut">Paste all questions (app Excel format: Section | Topic | Question | A | B | C | D | Answer | Explanation) or choose a file. The app makes mocks automatically.</div>
-    <button class="btn gh block" id="qbf" type="button" style="margin-top:8px">📁 Choose Excel file</button><input type="file" id="qbi" accept=".xlsx,.xls,.csv" class="hide">
-    <textarea class="inp tsv" id="qbt" rows="6" style="margin-top:8px"></textarea>
+  const o = C.sheet(`<h3 style="margin:0 0 4px">🗂 Question Bank · ${esc(pName(g, s))}</h3><div class="small mut">Give all questions of this subject – <b>Excel</b>, <b>PDF</b> (text PDF, not scanned) or <b>paste</b> text. The app makes mocks automatically.</div>
+    <div class="g2" style="margin-top:8px"><button class="btn gh" id="qbf" type="button">📊 Excel file</button><button class="btn gh" id="qbpdf" type="button">📄 PDF file</button></div>
+    <input type="file" id="qbi" accept=".xlsx,.xls,.csv" class="hide"><input type="file" id="qbpi" accept="application/pdf,.pdf" class="hide">
+    <textarea class="inp tsv" id="qbt" rows="6" style="margin-top:8px" placeholder="Or paste here: copied from Excel, or questions like&#10;1. Question…&#10;(a) … (b) … (c) … (d) …&#10;Ans: b"></textarea>
     <label class="l">Make mocks of</label><div class="tagc one" id="qbs">${[30, 50, 100].map(n => `<button type="button" data-n="${n}" class="${n === 50 ? 'on' : ''}">${n} Q</button>`).join('')}</div>
     <div class="g3"><div><label class="l">Start at Mock No.</label><input class="inp" id="qbno" type="number" value="${nextNo}"></div><div><label class="l">− Neg</label><input class="inp" id="qbn" type="number" step="0.05" value="0.25"></div><div><label class="l">&nbsp;</label>${owner() ? '<label class="sw" style="margin:0"><input type="checkbox" id="qbp"> Publish</label>' : '<div class="tiny mut">Draft</div>'}</div></div>
     <label class="sw"><input type="checkbox" id="qbc" checked> Chapter name = Topic column</label>
@@ -1277,9 +1358,20 @@ function pBank(g, s, L) {
   let size = 50, rows = null;
   o.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { size = +b.dataset.n; o.querySelectorAll('[data-n]').forEach(z => z.classList.toggle('on', z === b)); o.querySelector('#qbg').textContent = '🔍 Check questions'; o.querySelector('#qbg').onclick = check; });
   o.querySelector('#qbf').onclick = () => o.querySelector('#qbi').click();
-  o.querySelector('#qbi').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const R0 = await excelRows(f); rows = fromRows(R0); o.querySelector('#qbm').innerHTML = `<div class="msg ok">${esc(f.name)} – ${rows.length} questions read</div>`; } catch (er) { toast(er.message || String(er), 'err'); } };
+  const got = (f, from) => { const bad = rows.filter(q => problems(q).length).length; o.querySelector('#qbt').value = '';
+    o.querySelector('#qbm').innerHTML = `<div class="msg ${rows.length ? (bad ? 'info' : 'ok') : 'err'}">${esc(f)} – <b>${rows.length}</b> questions read from ${from}${bad ? `<br>⚠ <b>${bad}</b> have a problem (answer / option missing) – they will be skipped. <button class="btn gh sm" type="button" id="qbx">⬇ Download Excel to fix</button>` : ''}${!rows.length ? '<br>Questions should look like <b>1. Question…</b> with options <b>(a) (b) (c) (d)</b> and answers <b>Ans: b</b> or an answer key <b>1-b, 2-c</b>.' : ''}</div>`;
+    const x = o.querySelector('#qbx'); if (x) x.onclick = () => bankXlsx(rows, pName(g, s)); };
+  o.querySelector('#qbi').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { rows = fromRows(await excelRows(f)); got(f.name, 'Excel'); } catch (er) { toast(er.message || String(er), 'err'); } };
+  o.querySelector('#qbpdf').onclick = () => o.querySelector('#qbpi').click();
+  o.querySelector('#qbpi').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const b = o.querySelector('#qbpdf'), t0 = b.innerHTML; b.disabled = true; b.innerHTML = '⏳ Reading PDF…';
+    try { const t = await pdfText(f); b.disabled = false; b.innerHTML = t0;
+      if (t.replace(/\s/g, '').length < 30) { rows = null; o.querySelector('#qbm').innerHTML = '<div class="msg err">This PDF has no text (scanned / photo PDF). Only PDFs where you can select and copy text can be read.</div>'; return; }
+      rows = parseText(t); got(f.name, 'PDF'); }
+    catch (er) { b.disabled = false; b.innerHTML = t0; toast(er.message || String(er), 'err'); } };
+  o.querySelector('#qbt').oninput = () => { rows = null; };
   const check = async () => {
-    const box = o.querySelector('#qbm'), list = rows || toQuestions(o.querySelector('#qbt').value).qs, bad = rows ? rows.filter(q => problems(q).length) : toQuestions(o.querySelector('#qbt').value).errs;
+    const tx = o.querySelector('#qbt').value; if (!rows && tx.trim() && !tx.includes('\t')) rows = parseText(tx);
+    const box = o.querySelector('#qbm'), list = rows || toQuestions(tx).qs, bad = rows ? rows.filter(q => problems(q).length) : toQuestions(tx).errs;
     const good = (rows ? list.filter(q => !problems(q).length) : list);
     box.innerHTML = '<div class="msg info">Checking duplicates with existing mocks…</div>';
     const seen = new Set(); let dupOld = 0, dupNew = 0;
@@ -1293,7 +1385,7 @@ function pBank(g, s, L) {
       bt.disabled = true; const neg = Number(o.querySelector('#qbn').value) || 0, pub = owner() && o.querySelector('#qbp') && o.querySelector('#qbp').checked, idx = {}, useCh = o.querySelector('#qbc').checked;
       try { let b = writeBatch(db);
         for (let i = 0; i < n; i++) { const no = start + i, qs = fin.slice(i * size, (i + 1) * size).map(q => Object.assign({}, q, { sec: s })), id = pid(g, s, no);
-          idx[id] = pWrite(b, id, { title: pName(g, s) + ' · Mock ' + no, g, s, no, ch: useCh ? (qs[0].topic || '') : '', duration: defMin(size), mark: 1, neg, access: no === 1 ? 'free' : 'pass', published: pub, createdBy: auth.currentUser.email }, qs);
+          idx[id] = pWrite(b, id, { title: pName(g, s) + ' · Mock ' + no, g, s, no, ch: useCh ? (qs[0].topic || '') : '', duration: defMin(size), mark: 1, neg, access: 'pass', published: pub, createdBy: auth.currentUser.email }, qs);
           if ((i + 1) % 120 === 0) { await b.commit(); b = writeBatch(db); } }
         await b.commit(); if (pub) await pIndexPatch(idx);
         o.remove(); toast(`✓ ${n} mocks created${pub ? ' & published' : ' as drafts'}`, 'ok'); replace(() => practiceSubject(g, s)); }
@@ -1310,7 +1402,8 @@ async function teamView() {
   let T = [];
   try { T = (await getDocs(collection(db, 'team'))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { page(`<div class="msg err">${esc(errText(e))}</div>`); return; }
   page(`<div class="card"><b>✏️ Editors</b><div class="small mut" style="margin:2px 0 8px">Editors log in at <b>${esc(location.host)}/#/admin</b> with their <b>own Gmail</b> (Google) and set their <b>own 8-digit code</b>. They can add &amp; edit <b>draft</b> mocks only. You check and publish.</div>
-      <div class="tbl"><table><tr><th>Gmail</th><th>Name</th><th>Code set</th><th></th></tr>${T.map(t => `<tr><td>${esc(t.id)}</td><td>${esc(t.name || '')}</td><td>${t.hash ? '✓' : '—'}</td><td><button class="btn red sm" type="button" data-rm="${esc(t.id)}">Remove</button></td></tr>`).join('') || '<tr><td colspan="4" class="mut">No editors yet.</td></tr>'}</table></div>
+      <div class="tbl"><table><tr><th>Gmail</th><th>Name</th><th>Code set</th><th>✅ Results</th><th></th></tr>${T.map(t => `<tr><td>${esc(t.id)}</td><td>${esc(t.name || '')}</td><td>${t.hash ? '✓' : '—'}</td><td><label class="sw" style="margin:0"><input type="checkbox" data-cp="${esc(t.id)}" ${t.canPublish ? 'checked' : ''}> can publish</label></td><td><button class="btn red sm" type="button" data-rm="${esc(t.id)}">Remove</button></td></tr>`).join('') || '<tr><td colspan="5" class="mut">No editors yet.</td></tr>'}</table></div>
+      <div class="tiny mut" style="margin-top:6px">✅ <b>can publish</b> = this editor can press <b>Calculate &amp; Publish now</b> and turn on <b>Publish on time</b> for live mocks. The server calculates – the editor never sees students' mobile / Gmail.</div>
       <div class="g2" style="margin-top:10px"><div><label class="l" for="te">Friend's Gmail</label><input class="inp" id="te" type="email" placeholder="friend@gmail.com"></div><div><label class="l" for="tn">Name</label><input class="inp" id="tn" maxlength="40" placeholder="Ravi"></div></div>
       <button class="btn dk block" id="ta" type="button" style="margin-top:10px">＋ Add editor</button><div id="tm"></div></div>
     <div class="card small"><b>Editor can:</b> ✅ create / edit draft mocks (live &amp; practice), import Excel / PDF, preview<br><b>Editor cannot:</b> ❌ publish · students data · passes · results · notifications · settings · payments · team</div>`);
@@ -1318,6 +1411,7 @@ async function teamView() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return msg($('#tm'), 'Enter a valid Gmail.');
     if (e === (auth.currentUser.email || '').toLowerCase()) return msg($('#tm'), 'That is your own owner Gmail.');
     try { await setDoc(doc(db, 'team', e), { name: n, addedAt: serverTimestamp(), hash: '' }); toast('Editor added ✓ Ask them to open ' + location.host + '/#/admin', 'ok'); replace(teamView); } catch (er) { msg($('#tm'), esc(errText(er))); } };
+  $$('[data-cp]').forEach(c => c.onchange = async () => { try { await updateDoc(doc(db, 'team', c.dataset.cp), { canPublish: c.checked }); toast(c.checked ? '✓ Can publish results' : 'Result permission removed', 'ok'); } catch (e) { c.checked = !c.checked; toast(errText(e), 'err'); } });
   $$('[data-rm]').forEach(b => b.onclick = async () => { if (!await C.confirmBox(`<h3 style="margin:0">Remove ${esc(b.dataset.rm)}?</h3><p class="small">Their access stops immediately.</p>`, 'Remove')) return;
     try { await deleteDoc(doc(db, 'team', b.dataset.rm)); toast('Removed', 'ok'); replace(teamView); } catch (e) { toast(errText(e), 'err'); } });
 }
@@ -1442,8 +1536,10 @@ async function settings() {
     <div class="card"><div style="font-weight:800">🔗 Home links</div><div class="tiny mut">Empty → the tile shows SOON. Changing a link needs no code update.</div>
       ${[['pyq', '📄 PYQs (Google Drive link)', 'https://drive.google.com/…'], ['notes', '🛒 Buy Notes (store link)', 'https://…'], ['tg', '🆓 Free Notes (Telegram link)', 'https://t.me/…'], ['wa', '🎁 Buy Combo (WhatsApp Business link or number)', 'https://wa.me/91XXXXXXXXXX or 91XXXXXXXXXX'], ['ig', '📷 Instagram', 'https://instagram.com/…']].map(([k, l, ph]) => `<label class="l" for="lk_${k}">${l}</label><input class="inp" id="lk_${k}" value="${esc((p.links || {})[k] || '')}" placeholder="${esc(ph)}">`).join('')}
       <button class="btn dk block" id="lks" type="button" style="margin-top:10px">💾 Save links</button><div id="lkm"></div></div>
-    <div class="card"><div style="font-weight:800">📚 Practice subjects</div><div class="tiny mut">Comma separated. Renaming a subject hides its old mocks – add new names only.</div>
-      ${[['gs', 'General Studies'], ['sci', 'General Science'], ['apt', 'Aptitude']].map(([k, l]) => `<label class="l" for="ps_${k}">${l}</label><input class="inp" id="ps_${k}" value="${esc(pSubjects(k, p).join(', '))}">`).join('')}
+    <div class="card"><div style="font-weight:800">📚 Practice subjects</div><div class="tiny mut">＋ Add a subject, then add mocks to it. A subject can be removed (✕) only while it has no mocks.</div>
+      <div id="psx"></div>
+      <label class="l" for="pfn">🆓 Free mocks per subject</label><input class="inp" id="pfn" type="number" min="0" max="50" value="${pFreeN(p)}" style="max-width:120px">
+      <div class="tiny mut">Mock 1 … this number are FREE in every subject; the rest need the Monthly Pass. Applies to old mocks too.</div>
       <label class="l" for="ps_ca">Current Affairs years</label><input class="inp" id="ps_ca" value="${esc(pYears(p).join(', '))}" placeholder="2026, 2027">
       <button class="btn dk block" id="pss" type="button" style="margin-top:10px">💾 Save subjects</button><div id="psm"></div></div>
     <div class="card"><div style="font-weight:800">🔐 Change 8-digit security code</div>
@@ -1456,9 +1552,21 @@ async function settings() {
     const bad = Object.entries(L).filter(([k, v]) => v && !/^https?:\/\//i.test(v) && !(k === 'wa' && /^\+?\d[\d\s-]{8,}$/.test(v)));
     if (bad.length) return msg($('#lkm'), 'Links must start with https:// (WhatsApp can also be a number like 919876543210).');
     try { await savePub({ links: L }); msg($('#lkm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#lkm'), esc(errText(e))); } };
+  // subject chips: ＋ Add · ✕ remove (only when the subject has no mocks)
+  const SUB = Object.fromEntries(['gs', 'sci', 'apt', 'mix'].map(k => [k, pSubjects(k, p).slice()]));
+  const drawSub = () => { $('#psx').innerHTML = ['gs', 'sci', 'apt', 'mix'].map(k => `<label class="l">${PG[k].e} ${PG[k].n}</label><div style="display:flex;flex-wrap:wrap;gap:6px">${SUB[k].map((n, i) => `<span class="chip" style="font-size:13px;padding:5px 6px 5px 10px">${esc(n)} <button type="button" class="link" data-rm="${k}|${i}" aria-label="Remove" style="margin-left:4px;font-weight:900;text-decoration:none">✕</button></span>`).join('')}</div>
+      <div style="display:flex;gap:6px;margin-top:6px"><input class="inp" id="na_${k}" maxlength="30" placeholder="New subject name" style="flex:1"><button class="btn gh sm" type="button" data-add="${k}">＋ Add</button></div>`).join('');
+    $$('[data-add]').forEach(b => b.onclick = () => { const k = b.dataset.add, v = $('#na_' + k).value.trim().replace(/\s+/g, ' ');
+      if (!v) return; if (SUB[k].some(z => z.toLowerCase() === v.toLowerCase())) return toast('Already in the list', 'info'); if (SUB[k].length >= 20) return toast('Max 20 subjects', 'info');
+      SUB[k].push(v); drawSub(); msg($('#psm'), 'Added – press 💾 Save subjects', 'info'); });
+    $$('[data-rm]').forEach(b => b.onclick = async () => { const [k, i] = b.dataset.rm.split('|'), n = SUB[k][+i];
+      try { const q = await getDocs(query(collection(db, 'pexams'), where('g', '==', k), where('s', '==', n), limit(1)));
+        if (!q.empty) return toast(`“${n}” has mocks – delete its mocks first.`, 'err'); } catch (e) { return toast(errText(e), 'err'); }
+      SUB[k].splice(+i, 1); drawSub(); msg($('#psm'), 'Removed – press 💾 Save subjects', 'info'); }); };
+  drawSub();
   $('#pss').onclick = async () => { const sp = v => [...new Set(v.split(',').map(z => z.trim()).filter(Boolean))].slice(0, 20);
-    const ps = { gs: sp($('#ps_gs').value), sci: sp($('#ps_sci').value), apt: sp($('#ps_apt').value) }, yrs = sp($('#ps_ca').value).map(Number).filter(y => y >= 2020 && y <= 2100);
-    try { await savePub({ psubj: ps, cayears: yrs.length ? yrs : [2026] }); msg($('#psm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#psm'), esc(errText(e))); } };
+    const yrs = sp($('#ps_ca').value).map(Number).filter(y => y >= 2020 && y <= 2100), fn = Math.max(0, Math.min(50, parseInt($('#pfn').value, 10) || 0));
+    try { await savePub({ psubj: SUB, cayears: yrs.length ? yrs : [2026], pfree: fn }); msg($('#psm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#psm'), esc(errText(e))); } };
   $('#vks').onclick = async () => { const v = $('#vk').value.trim(); if (v && !/^[A-Za-z0-9_-]{60,120}$/.test(v)) return msg($('#vkm'), 'This does not look like a Web Push key (long text starting with B…).');
     try { await savePub({ vapidKey: v }); msg($('#vkm'), 'Saved ✓', 'ok'); } catch (e) { msg($('#vkm'), esc(errText(e))); } };
   getCountFromServer(collection(db, 'tokens')).then(c => { if ($('#vkn')) $('#vkn').innerHTML += ` <b>${c.data().count}</b> students have turned on phone alerts.`; }).catch(() => {});
