@@ -158,7 +158,7 @@ label.l{display:block;font-size:11.5px;font-weight:800;color:var(--mut);text-tra
 .stabs button{flex:none;border:0;background:#F1F2F4;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:700;color:var(--ink2)}
 .stabs button.on{background:var(--ink);color:var(--y)}
 .xmain{display:flex;max-width:1200px;margin:auto}
-.xq{flex:1;min-width:0;padding:14px 14px 90px}
+.xq{flex:1;min-width:0;padding:14px 14px 90px;position:relative;overflow:hidden}
 .qh{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut);margin-bottom:9px;gap:8px}
 .qh b{color:var(--ink);font-size:14px}
 .rep{background:none;border:0;font-size:12.5px;color:var(--mut);font-weight:700}
@@ -322,6 +322,7 @@ body.inexam #app,.nocopy{-webkit-user-select:none;user-select:none;-webkit-touch
 .xq,.nocopy{position:relative}
 .wm{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;display:flex;flex-wrap:wrap;align-content:flex-start;gap:46px 30px;padding:20px 0;transform:rotate(-24deg) scale(1.3);opacity:.075;font-weight:900;font-size:15px;color:var(--ink)}
 .wm span{white-space:nowrap}
+#rv{position:relative;overflow:hidden}
 @media print{body.inexam *{display:none!important}}
 </style>
 </head>
@@ -1231,7 +1232,7 @@ function profile() {
         <button type="button" data-go="page/privacy">🔒 Privacy Policy<span class="ar">›</span></button>
       </div>
       <button class="btn red block" id="lo" type="button">Logout</button>
-      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v5.0 · <a href="#/admin">Admin login</a></div>
+      <div class="center tiny" style="margin-top:14px;color:#A0A4AC">v5.0.1 · <a href="#/admin">Admin login</a></div>
     </div>`, 'profile');
   $$('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   $('#pp').onclick = () => toast('Paid mocks & purchases – coming soon.', 'info');
